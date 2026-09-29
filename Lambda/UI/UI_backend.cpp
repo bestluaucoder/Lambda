@@ -85,10 +85,10 @@ void CMenu::Draw() {
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-
     static bool insert_pressed = false;
+    const bool is_active = ctx.active_app || (GetForegroundWindow() == FindWindowA("Valve001", nullptr));
 
-    if (ctx.active_app && !ctx.console_visible && !ctx.chat_open && (GetAsyncKeyState(VK_INSERT) & 0x8000 || GetAsyncKeyState(VK_DELETE) & 0x8000)) {
+    if (is_active && (GetAsyncKeyState(VK_INSERT) & 0x8000 || GetAsyncKeyState(VK_DELETE) & 0x8000)) {
         if (!insert_pressed) {
             m_bMenuOpened = !m_bMenuOpened;
             insert_pressed = true;

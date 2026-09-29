@@ -163,6 +163,9 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 	if (!cmd || !cmd->command_number || !Cheat.LocalPlayer || !Cheat.LocalPlayer->IsAlive() || !active)
 		return;
 
+	if (Menu->IsOpened())
+		cmd->buttons &= ~(IN_ATTACK | IN_ATTACK2);
+
 	ctx.active_weapon = Cheat.LocalPlayer->GetActiveWeapon();
 	ctx.weapon_info = ctx.active_weapon ? ctx.active_weapon->GetWeaponInfo() : nullptr;
 
@@ -474,21 +477,11 @@ void __fastcall hkPaintTraverse(IPanel* thisptr, void* edx, unsigned int panel, 
 	static tPaintTraverse oPaintTraverse = (tPaintTraverse)Hooks::PanelVMT->GetOriginal(41);
 	static unsigned int hud_zoom_panel = 0;
 
-	if (!hud_zoom_panel || !ctx.chat_panel) {
+	if (!hud_zoom_panel) {
 		const char* panel_name = VPanel->GetName(panel);
 
-		if (panel_name) {
-			if (!hud_zoom_panel && !strcmp(panel_name, "HudZoom"))
-				hud_zoom_panel = panel;
-
-			if (!ctx.chat_panel && !strcmp(panel_name, "ChatInputLine"))
-				ctx.chat_panel = panel;
-		}
-	}
-
-	if (ctx.chat_panel == panel && VPanel->IsVisible(panel)) {
-		ctx.chat_open = true;
-		ctx.text_input = true;
+		if (panel_name && !strcmp(panel_name, "HudZoom"))
+			hud_zoom_panel = panel;
 	}
 
 	if (hud_zoom_panel == panel && config.visuals.effects.remove_scope->get() > 0)
@@ -557,7 +550,12 @@ void __fastcall hkFrameStageNotify(IBaseClientDLL* thisptr, void* edx, EClientFr
 	case FRAME_RENDER_START: {
 		ctx.active_app = EngineClient->IsActiveApp();
 		ctx.console_visible = EngineClient->Con_IsVisible();
-		ctx.chat_open = ctx.chat_panel != 0 && VPanel->IsVisible(ctx.chat_panel);
+
+		static void* hud_chat = nullptr;
+		if (!hud_chat && CSGOHud)
+			hud_chat = CSGOHud->FindHudElement("CCSGO_HudChat");
+
+		ctx.chat_open = hud_chat && *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(hud_chat) + 0x58);
 		ctx.text_input = ctx.chat_open
 			|| (Menu && Menu->IsInitialized() && Menu->IsOpened() && ImGui::GetCurrentContext() && ImGui::GetIO().WantTextInput);
 

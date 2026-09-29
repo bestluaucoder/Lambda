@@ -58,7 +58,16 @@ void LuaSaveConfig(LuaScript_t* script) {
 		}
 	}
 
-	const std::string file_path = std::filesystem::current_path().string() + "/at/scripts/cfg/" + script->name + ".cfg";
+	std::string cfg_dir;
+	if (!script->path.empty() && script->path.has_parent_path()) {
+		cfg_dir = (script->path.parent_path() / "cfg").string();
+	}
+	else {
+		cfg_dir = std::filesystem::current_path().string() + "/at/scripts/cfg";
+	}
+	std::error_code ec;
+	std::filesystem::create_directories(cfg_dir, ec);
+	const std::string file_path = cfg_dir + "/" + script->name + ".cfg";
 
 	std::ofstream file(file_path);
 
@@ -66,8 +75,18 @@ void LuaSaveConfig(LuaScript_t* script) {
 }
 
 void LuaLoadConfig(LuaScript_t* script) {
-	const std::string file_path = std::filesystem::current_path().string() + "/at/scripts/cfg/" + script->name + ".cfg";
-	if (!std::filesystem::exists(file_path)) {
+	std::error_code ec;
+	std::string file_path;
+	if (!script->path.empty() && script->path.has_parent_path()) {
+		file_path = (script->path.parent_path() / "cfg" / (script->name + ".cfg")).string();
+	}
+	if (file_path.empty() || !std::filesystem::exists(file_path, ec)) {
+		file_path = std::filesystem::current_path().string() + "/at/scripts/cfg/" + script->name + ".cfg";
+	}
+	if (!std::filesystem::exists(file_path, ec)) {
+		file_path = std::filesystem::current_path().string() + "/lambda/scripts/cfg/" + script->name + ".cfg";
+	}
+	if (!std::filesystem::exists(file_path, ec)) {
 		// not saved config for lua yet
 		return;
 	}
@@ -471,11 +490,13 @@ namespace api {
 		}
 
 		void create_folder(std::string path) {
-			std::filesystem::create_directory(path);
+			std::error_code ec;
+			std::filesystem::create_directories(path, ec);
 		}
 
 		bool exists(std::string path) {
-			return std::filesystem::exists(path);
+			std::error_code ec;
+			return std::filesystem::exists(path, ec);
 		}
 	}
 
@@ -1509,8 +1530,12 @@ namespace api {
 }
 
 void CLua::Setup() {
-	std::filesystem::create_directory(std::filesystem::current_path().string() + "/at/scripts");
-	std::filesystem::create_directory(std::filesystem::current_path().string() + "/at/scripts/cfg");
+	try {
+		std::error_code ec;
+		std::filesystem::create_directories(std::filesystem::current_path().string() + "/at/scripts/cfg", ec);
+		std::filesystem::create_directories(std::filesystem::current_path().string() + "/lambda/scripts/cfg", ec);
+	}
+	catch (...) {}
 
 	lua = sol::state(sol::c_call<decltype(&LuaErrorHandler), &LuaErrorHandler>);
 	lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::math, sol::lib::table, sol::lib::debug, sol::lib::package, sol::lib::jit, sol::lib::ffi, sol::lib::bit32, sol::lib::os);
@@ -2222,29 +2247,50 @@ void CLua::RefreshScripts() {
 	UnloadAll();
 	scripts.clear();
 
-	for (auto& entry : std::filesystem::directory_iterator(std::filesystem::current_path().string() + "/at/scripts"))
-	{
-		if (entry.path().extension() == ".lua")
-		{
-			LuaScript_t script;
+	std::error_code ec;
+	const std::string script_dirs[] = {
+		std::filesystem::current_path().string() + "/at/scripts",
+		std::filesystem::current_path().string() + "/lambda/scripts"
+	};
 
-			script.path = entry.path();
-			script.name = script.path.stem().string();
-			script.loaded = false;
+	try {
+		for (const auto& dir : script_dirs) {
+			if (!std::filesystem::exists(dir, ec))
+				continue;
 
-			bool was_loaded = false;
-
-			for (auto& o_script : old_scripts) {
-				if (o_script.name == script.name && o_script.loaded) {
-					was_loaded = true;
+			for (auto& entry : std::filesystem::directory_iterator(dir, ec))
+			{
+				if (ec)
 					break;
+
+				if (entry.path().extension() == ".lua")
+				{
+					std::string name = entry.path().stem().string();
+					if (GetScriptID(name) != -1)
+						continue;
+
+					LuaScript_t script;
+
+					script.path = entry.path();
+					script.name = name;
+					script.loaded = false;
+
+					bool was_loaded = false;
+
+					for (auto& o_script : old_scripts) {
+						if (o_script.name == script.name && o_script.loaded) {
+							was_loaded = true;
+							break;
+						}
+					}
+					script.ui_name = was_loaded ? "* " + script.name : script.name;
+
+					scripts.push_back(script);
 				}
 			}
-			script.ui_name = was_loaded ? "* " + script.name : script.name;
-
-			scripts.push_back(script);
 		}
 	}
+	catch (...) {}
 
 	Config->lua_list->UpdateList(GetUIList());
 

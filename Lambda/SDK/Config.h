@@ -353,20 +353,27 @@ public:
     nlohmann::json dump();
 
     CConfig() {
-        std::filesystem::create_directory(std::filesystem::current_path().string() + "/lambda");
+        std::error_code ec;
+        std::filesystem::create_directories(std::filesystem::current_path().string() + "/lambda", ec);
     }
 
     std::vector<std::string> GetAllConfigs() {
         std::vector<std::string> result;
 
-        for (const auto& file : std::filesystem::directory_iterator(std::filesystem::current_path().string() + "/lambda"))
-            if (file.path().extension() == ".cfg") {
-                std::string fname = file.path().stem().string();
-                char* cfg_name = new char[fname.size() + 1];
-                cfg_name[fname.size()] = '\0';
-                std::strcpy(cfg_name, fname.c_str());
-                result.push_back(cfg_name);
+        std::error_code ec;
+        const auto path = std::filesystem::current_path().string() + "/lambda";
+        if (std::filesystem::exists(path, ec)) {
+            for (const auto& file : std::filesystem::directory_iterator(path, ec)) {
+                if (ec) break;
+                if (file.path().extension() == ".cfg") {
+                    std::string fname = file.path().stem().string();
+                    char* cfg_name = new char[fname.size() + 1];
+                    cfg_name[fname.size()] = '\0';
+                    std::strcpy(cfg_name, fname.c_str());
+                    result.push_back(cfg_name);
+                }
             }
+        }
 
         return result;
     }
