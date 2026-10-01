@@ -1,6 +1,5 @@
 #include "Bridge.h"
 
-#include <shlobj.h>
 #include "../../ShotManager/ShotManager.h"
 #include "../../RageBot/LagCompensation.h"
 #include "../../../SDK/Requests.h"
@@ -2249,10 +2248,11 @@ void CLua::RefreshScripts() {
 	scripts.clear();
 
 	std::error_code ec;
-	char docs[MAX_PATH];
-	SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, docs);
+	const char* profile = getenv("USERPROFILE");
+	std::string docs = profile ? std::string(profile) + "\\Documents" : ".";
+	std::filesystem::create_directories(docs + "\\Lambda\\Luas", ec);
 	const std::string script_dirs[] = {
-		std::string(docs) + "\\Lambda\\Luas"
+		docs + "\\Lambda\\Luas"
 	};
 
 	try {

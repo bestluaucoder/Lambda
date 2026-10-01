@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <shlobj.h>
 
 #include "../UI/UI.h"
 #include "../Utils/json.hpp"
@@ -355,18 +354,20 @@ public:
     void parse(nlohmann::json& cfg);
     nlohmann::json dump();
 
-    CConfig() {
-        char docs[MAX_PATH];
-        SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, docs);
+    CConfig() {}
+
+    void EnsureDirs() {
+        const char* profile = getenv("USERPROFILE");
+        std::string docs = profile ? std::string(profile) + "\\Documents" : ".";
         std::error_code ec;
-        std::filesystem::create_directories(std::string(docs) + "\\Lambda\\Configs", ec);
-        std::filesystem::create_directories(std::string(docs) + "\\Lambda\\Luas", ec);
+        std::filesystem::create_directories(docs + "\\Lambda\\Configs", ec);
+        std::filesystem::create_directories(docs + "\\Lambda\\Luas", ec);
     }
 
     std::vector<std::string> GetAllConfigs() {
-        char docs[MAX_PATH];
-        SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, docs);
-        const auto path = std::string(docs) + "\\Lambda\\Configs";
+        const char* profile = getenv("USERPROFILE");
+        std::string docs = profile ? std::string(profile) + "\\Documents" : ".";
+        const auto path = docs + "\\Lambda\\Configs";
 
         std::vector<std::string> result;
         std::error_code ec;

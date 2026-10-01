@@ -442,8 +442,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 
 	record->resolver_data.max_desync_delta = player->GetMaxDesyncDelta();
 
-	// when the player is shooting their desync resets — resolve to 0 so the
-	// animlayer scoring gets a clean baseline rather than a stale side
 	if (record->shooting) {
 		record->resolver_data.side         = 0;
 		record->resolver_data.resolver_type = ResolverType::NONE;
@@ -490,7 +488,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	if (min_delta > animThreshold)
 		record->resolver_data.resolver_type = ResolverType::NONE;
 
-	// LBY — standing only, most reliable
 	{
 		int lbySide = PredictLBYSide(player, record, pdata);
 		if (lbySide != 0) {
@@ -499,7 +496,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 		}
 	}
 
-	// tickbase — overrides everything when active
 	if (record->resolver_data.is_shifting_tickbase) {
 		int tbSide = PredictTickbaseSide(player, record, pdata);
 		if (tbSide != 0) {
@@ -508,8 +504,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 		}
 	}
 
-	// apply miss-based side flip — after enough misses, invert
-	// only applies when we don't have a high-confidence source
 	if (pdata->missed_shots >= 2
 	    && record->resolver_data.resolver_type != ResolverType::LBY
 	    && record->resolver_data.resolver_type != ResolverType::TICKBASE
@@ -534,7 +528,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 		}
 	}
 
-	// standing/air path — static AA always goes to freestand, jitter to logic
 	if (!isMoving || record->resolver_data.resolver_type == ResolverType::NONE || !(record->m_fFlags & FL_ONGROUND)) {
 		if (record->resolver_data.antiaim_type == R_AntiAimType::JITTER && records.size() > 8) {
 			int jitterSide = PredictJitterSide(player, record, pdata);
@@ -549,7 +542,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 				record->resolver_data.resolver_type = ResolverType::LOGIC;
 			}
 		} else {
-			// static / unknown — freestand is more reliable than logic here
 			if (record->resolver_data.resolver_type == ResolverType::NONE
 			    || record->resolver_data.resolver_type == ResolverType::ANIM)
 				DetectFreestand(player, record, records);

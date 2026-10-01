@@ -10,7 +10,10 @@ config_t config;
 CConfig* Config = new CConfig;
 
 static std::string GetDocumentsPath() {
-    char buf[MAX_PATH];
+    const char* profile = getenv("USERPROFILE");
+    if (profile)
+        return std::string(profile) + "\\Documents";
+    char buf[MAX_PATH] = {};
     SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, buf);
     return std::string(buf);
 }
@@ -23,7 +26,6 @@ static std::string GetLuaDir() {
     return GetDocumentsPath() + "\\Lambda\\Luas";
 }
 
-// callbacks
 void on_config_list_changed() {
     std::string cfg_name = Config->config_list->get_name();
     memcpy(Config->config_name->buf, cfg_name.c_str(), min(cfg_name.size() + 1, 63));
@@ -69,6 +71,7 @@ void on_refresh_config() {
 }
 
 void CConfig::Init() {
+    EnsureDirs();
     add(config.ragebot.aimbot.enabled);
     add(config.ragebot.aimbot.extrapolation);
     add(config.ragebot.aimbot.pitch_resolver);
@@ -479,7 +482,6 @@ nlohmann::json CConfig::dump() {
             result[name] = std::string(((CInputBox*)e)->buf);
             break;
         default:
-            // handle any unexpected values of ElementType here
             break;
         }
     }
