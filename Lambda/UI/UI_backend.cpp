@@ -49,7 +49,6 @@ void CMenu::Setup() {
     if (FAILED(DirectXDevice->GetCreationParameters(&creationParameters)))
         return;
 
-    // store window pointer
     HWND hWindow = creationParameters.hFocusWindow;
     if (hWindow == nullptr)
         return;
@@ -67,8 +66,8 @@ void CMenu::Setup() {
     pic::tab::configs = Render->LoadImageFromMemory(configs, sizeof(configs), Vector2(20.f, 20.f));
     pic::tab::scripts = Render->LoadImageFromMemory(scripts, sizeof(scripts), Vector2(20.f, 20.f));
 
-    m_WindowSize = ImVec2(950, 750);
-    m_ItemSpacing = ImVec2(24, 24);
+    m_WindowSize  = ImVec2(950, 700);
+    m_ItemSpacing = ImVec2(8, 8);
 
     SetupUI();
 
@@ -103,72 +102,68 @@ void CMenu::Draw() {
     }
 
     if (m_bMenuOpened) {
-        ImGui::GetStyle().ItemSpacing = ImVec2(24, 24);
+        ImGui::GetStyle().ItemSpacing   = ImVec2(8, 8);
         ImGui::GetStyle().WindowPadding = ImVec2(0, 0);
-        ImGui::GetStyle().ScrollbarSize = 8.f;
+        ImGui::GetStyle().ScrollbarSize = 5.f;
 
         ImGui::SetNextWindowSize(m_WindowSize);
 
-        ImGui::Begin("MENU", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize);
+        ImGui::Begin("##lambda_menu", nullptr,
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoBackground |
+            ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoResize);
         {
-            const ImVec2& window_pos = ImGui::GetWindowPos();
-            const ImVec2& window_size = ImGui::GetContentRegionMax();
-            const ImVec2& item_spacing = ImGui::GetStyle().ItemSpacing;
+            const ImVec2 wp  = ImGui::GetWindowPos();
+            const ImVec2 ws  = ImGui::GetContentRegionMax();
+            const float  sw  = 52.f;
+            const float  sp  = 1.f;
 
-            m_WindowSize = window_size;
-            m_ItemSpacing = item_spacing;
+            m_WindowSize  = ws;
+            m_ItemSpacing = ImGui::GetStyle().ItemSpacing;
 
-            ImGui::GetBackgroundDrawList()->AddRectFilled(window_pos + ImVec2(0, 0), window_pos + ImVec2(window_size), ImGui::GetColorU32(c::background::bg), c::background::rounding);
+            auto* bg_dl = ImGui::GetBackgroundDrawList();
+            auto* dl    = ImGui::GetWindowDrawList();
 
-            ImGui::GetWindowDrawList()->AddRectFilled(window_pos + ImVec2(item_spacing), window_pos + ImVec2(181, (window_size.y - item_spacing.y)), ImGui::GetColorU32(c::child::bg), c::child::rounding);
+            bg_dl->AddRectFilled(wp, wp + ImVec2(ws), ImGui::GetColorU32(c::background::bg), c::background::rounding);
 
-            ImGui::GetWindowDrawList()->AddRectFilled(window_pos + ImVec2(181 + item_spacing.x, item_spacing.y), window_pos + ImVec2((window_size.x - item_spacing.x), (item_spacing.y + 58)), ImGui::GetColorU32(c::child::bg), c::child::rounding);
+            dl->AddRectFilled(wp, wp + ImVec2(sw, ws.y), ImGui::GetColorU32(c::child::bg), 0.f);
+            dl->AddRectFilled(wp + ImVec2(sw, 0), wp + ImVec2(sw + sp, ws.y), ImGui::GetColorU32(ImVec4(0.12f, 0.12f, 0.12f, 1.f)), 0.f);
 
-            const ImVec2 logo_center = window_pos + ImVec2((item_spacing.x + 181.f) * 0.5f, item_spacing.y + 48.f);
-            const ImVec2 logo_half = ImVec2(39.f, 39.f);
-
-            ImGui::GetWindowDrawList()->AddImage(pic::logo.texture, logo_center - logo_half, logo_center + logo_half, ImVec2(0, 0), ImVec2(1, 1));
-
-            ImGui::GetWindowDrawList()->AddText(font::general, font::general->FontSize + 5.f, window_pos + ImVec2(220, 41), ImColor(255, 255, 255, 215), xorstr("lambda"));
+            const float logo_cx = wp.x + sw * 0.5f;
+            const float logo_cy = wp.y + 22.f;
+            dl->AddImage(pic::logo.texture, ImVec2(logo_cx - 14.f, logo_cy - 14.f), ImVec2(logo_cx + 14.f, logo_cy + 14.f));
 
             static int tabs = 0;
 
-            ImGui::SetCursorPos(ImVec2((item_spacing.x * 2), (48 + (item_spacing.y * 3))));
-
+            ImGui::SetCursorPos(ImVec2(4.f, 48.f));
             ImGui::BeginGroup();
-            {
-                for (int i = 0; i < m_Tabs.size(); i++) {
-                    CMenuTab* tab = m_Tabs[i];
-                    if (ImGui::Tab(i == tabs, tab->icon, tab->name.c_str(), ImVec2(133 - ImGui::GetStyle().ItemSpacing.x, 44), tab->icon_size))
-                        tabs = i;
-                }
+            for (int i = 0; i < (int)m_Tabs.size(); i++) {
+                CMenuTab* tab = m_Tabs[i];
+                if (ImGui::Tab(i == tabs, tab->icon, tab->name.c_str(), ImVec2(sw - 8.f, 40.f), tab->icon_size))
+                    tabs = i;
             }
             ImGui::EndGroup();
 
-            static float tab_alpha = 0.f; 
-            static float tab_add; 
-            static int active_tab = 0;
+            static float tab_alpha = 0.f;
+            static float tab_add   = 0.f;
+            static int   active_tab = 0;
 
             tab_alpha = ImClamp(tab_alpha + (4.f * ImGui::GetIO().DeltaTime * (tabs == active_tab ? 1.f : -1.f)), 0.f, 1.f);
-            if (tab_alpha == 0.f && tab_add == 0.f) 
+            if (tab_alpha == 0.f && tab_add == 0.f)
                 active_tab = tabs;
 
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, tab_alpha * ImGui::GetStyle().Alpha);
-
-            for (auto group : m_Tabs[active_tab]->groupboxes) {
+            for (auto group : m_Tabs[active_tab]->groupboxes)
                 group->Render();
-            }
-
             ImGui::PopStyleVar();
-
         }
         ImGui::End();
     }
 
     Elements->Draw();
-
     ImGui::Render();
-
     ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 }
 
@@ -197,33 +192,38 @@ bool CMenu::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 void CMenu::RecalculateGroupboxes() {
-    const float groupbox_width = (m_WindowSize.x / 2) - ((181 / 2) + (m_ItemSpacing.x + 12));
-    const ImVec2 base_position((181 + m_ItemSpacing.x), (m_ItemSpacing.y * 2) + 58);
-    const ImVec2 container_size(groupbox_width * 2 + m_ItemSpacing.x, m_WindowSize.y - base_position.y - m_ItemSpacing.y);
+    const float sw  = 53.f;
+    const float sp  = 8.f;
 
-    // size.x - (181 + (spacing.x + 24)))
+    const float content_w = m_WindowSize.x - sw - sp;
+    const float content_h = m_WindowSize.y - sp * 2.f;
+    const float groupbox_width = (content_w - sp) / 2.f;
+    const ImVec2 base_position(sw, sp);
 
     for (auto tab : m_Tabs) {
         std::vector<CMenuGroupbox*>& groupboxes = tab->groupboxes;
-        const float gb_width = groupboxes.size() > 1 ? groupbox_width : (m_WindowSize.x - (181 + m_ItemSpacing.x + 24));
+        const float gb_width = groupboxes.size() > 1 ? groupbox_width : content_w;
 
         float total_relative[2] = { 0.f, 0.f };
-        int n_groupboxes[2] = { 0, 0 };
+        int   n_groupboxes[2]   = { 0, 0 };
         for (auto gb : groupboxes) {
             total_relative[gb->column] += gb->relative_size;
             n_groupboxes[gb->column]++;
         }
 
-        float available_space[2] = { container_size.y - m_ItemSpacing.y * (n_groupboxes[0] - 1), container_size.y - m_ItemSpacing.y * (n_groupboxes[1] - 1) };
+        float available_space[2] = {
+            content_h - sp * (float)(n_groupboxes[0] - 1),
+            content_h - sp * (float)(n_groupboxes[1] - 1)
+        };
         float current_position[2] = { 0.f, 0.f };
 
         for (auto gb : groupboxes) {
             gb->position.y = base_position.y + current_position[gb->column];
-            gb->position.x = base_position.x + (gb_width + m_ItemSpacing.x) * gb->column;
-            gb->size.x = gb_width;
-            gb->size.y = available_space[gb->column] * (gb->relative_size / total_relative[gb->column]);
+            gb->position.x = base_position.x + (gb_width + sp) * gb->column;
+            gb->size.x     = gb_width;
+            gb->size.y     = available_space[gb->column] * (gb->relative_size / total_relative[gb->column]);
 
-            current_position[gb->column] += gb->size.y + m_ItemSpacing.y;
+            current_position[gb->column] += gb->size.y + sp;
         }
     }
 }
@@ -274,8 +274,18 @@ CMenuGroupbox* CMenu::AddGroupBox(const std::string& tab, const std::string& gro
 void CMenuGroupbox::Render() {
     ImGui::SetCursorPos(position);
 
+    auto* dl       = ImGui::GetWindowDrawList();
+    ImVec2 wp      = ImGui::GetWindowPos();
+    ImVec2 abs_min = wp + position;
+    ImVec2 abs_max = abs_min + size;
+
+    dl->AddRectFilled(abs_min, abs_max, ImGui::GetColorU32(c::child::bg), c::child::rounding);
+    dl->AddRectFilled(abs_min, ImVec2(abs_max.x, abs_min.y + 2.f), ImGui::GetColorU32(c::accent), c::child::rounding);
+
     ImGui::BeginGroup();
     ImGui::BeginChild(name.c_str(), size);
+
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6.f);
 
     for (int i = 0; i < widgets.size(); i++) {
         auto el = widgets[i];

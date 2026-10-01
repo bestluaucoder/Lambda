@@ -1031,25 +1031,20 @@ struct button_state {
 bool ImGui::Tab(bool selected, ImTextureID image, const char* label, const ImVec2& size_arg, const ImVec2& image_size, ImGuiButtonFlags flags)
 {
     ImGuiWindow* window = GetCurrentWindow();
-
     if (window->SkipItems) return false;
 
     ImGuiContext& g = *GImGui;
-    const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
 
     PushFont(font::tab);
     const ImVec2 label_size = CalcTextSize(label, NULL, true);
     PopFont();
 
-    ImVec2 pos = window->DC.CursorPos;
-
+    ImVec2 pos  = window->DC.CursorPos;
     ImVec2 size = CalcItemSize(size_arg, label_size.x, label_size.y);
 
     PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 8));
-    const ImRect bb(pos, pos + size), rect(pos, pos);
-    
-
+    const ImRect bb(pos, pos + size);
     ItemSize(size, 0.f);
     PopStyleVar();
 
@@ -1059,29 +1054,27 @@ bool ImGui::Tab(bool selected, ImTextureID image, const char* label, const ImVec
 
     static std::map<ImGuiID, button_state> anim;
     auto it_anim = anim.find(id);
+    if (it_anim == anim.end()) { anim.insert({ id, button_state() }); it_anim = anim.find(id); }
 
-    if (it_anim == anim.end())
-    {
-        anim.insert({ id, button_state() });
-        it_anim = anim.find(id);
-    }
-
-    it_anim->second.ico_background = ImLerp(it_anim->second.ico_background, selected ? c::accent : hovered ? c::tabs::i_bg_hov : c::tabs::i_bg, g.IO.DeltaTime * 10.f);
-    it_anim->second.background = ImLerp(it_anim->second.background, selected ? c::tabs::bg_active : hovered ? c::tabs::bg_hov : c::tabs::bg, g.IO.DeltaTime * 10.f);
-    it_anim->second.text = ImLerp(it_anim->second.text, selected ? c::text::text_active : hovered ? c::text::text_hov : c::text::text, g.IO.DeltaTime * 10.f);
-
-    GetWindowDrawList()->AddRectFilled(bb.Min + ImVec2(8, 8), bb.Max - ImVec2((size_arg.x - 8) - 28, 8), GetColorU32(it_anim->second.ico_background), c::tabs::rounding);
+    it_anim->second.background    = ImLerp(it_anim->second.background,    selected ? c::tabs::bg_active : hovered ? c::tabs::bg_hov : c::tabs::bg, g.IO.DeltaTime * 10.f);
+    it_anim->second.ico_background = ImLerp(it_anim->second.ico_background, selected ? c::accent : hovered ? ImVec4(c::accent.x, c::accent.y, c::accent.z, 0.4f) : ImVec4(c::text::text.x, c::text::text.y, c::text::text.z, 0.35f), g.IO.DeltaTime * 10.f);
+    it_anim->second.text          = ImLerp(it_anim->second.text,          selected ? c::text::text_active : hovered ? c::text::text_hov : c::text::text, g.IO.DeltaTime * 10.f);
 
     GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max, GetColorU32(it_anim->second.background), c::tabs::rounding);
 
-    ImGui::GetWindowDrawList()->AddImage(image, rect.Min + ImVec2( ( (28 + 16) / 2), ( (28 + 16) / 2) ) - (image_size / 2), rect.Max + ImVec2( ( (28 + 16) / 2), ( (28 + 16) / 2) ) + (image_size / 2), ImVec2(0, 0), ImVec2(1, 1), GetColorU32(it_anim->second.text));
+    if (selected) {
+        GetWindowDrawList()->AddRectFilled(
+            ImVec2(bb.Min.x, bb.Min.y + 6.f),
+            ImVec2(bb.Min.x + 3.f, bb.Max.y - 6.f),
+            GetColorU32(c::accent), 2.f);
+    }
 
-
-    PushStyleColor(ImGuiCol_Text, GetColorU32(it_anim->second.text));
-    PushFont(font::tab);
-    RenderTextClipped(bb.Min + ImVec2( (style.ItemSpacing.x * 2) - 4, 0), bb.Max, label, NULL, &label_size, ImVec2(0.0, 0.5), &bb);
-    PopFont();
-    PopStyleColor();
+    const float icon_cx = bb.Min.x + size.x * 0.5f;
+    const float icon_cy = bb.Min.y + size.y * 0.5f;
+    GetWindowDrawList()->AddImage(image,
+        ImVec2(icon_cx - image_size.x * 0.5f, icon_cy - image_size.y * 0.5f),
+        ImVec2(icon_cx + image_size.x * 0.5f, icon_cy + image_size.y * 0.5f),
+        ImVec2(0, 0), ImVec2(1, 1), GetColorU32(it_anim->second.ico_background));
 
     return pressed;
 }
@@ -1097,28 +1090,26 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
     const ImVec2 label_size = CalcTextSize(label, NULL, true), pos = window->DC.CursorPos;
-    
+
     ImVec2 size = CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
 
     const ImRect bb(pos, pos + size);
     ItemSize(size, 0.f);
-
     if (!ItemAdd(bb, id)) return false;
 
     bool hovered, held, pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
 
     static std::map<ImGuiID, button_state> anim;
     auto it_anim = anim.find(id);
+    if (it_anim == anim.end()) { anim.insert({ id, button_state() }); it_anim = anim.find(id); }
 
-    if (it_anim == anim.end())
-    {
-        anim.insert({ id, button_state() });
-        it_anim = anim.find(id);
-    }
+    it_anim->second.background = ImLerp(it_anim->second.background, held ? c::button::i_bg_hov : hovered ? ImVec4(c::button::i_bg_hov.x, c::button::i_bg_hov.y, c::button::i_bg_hov.z, c::button::i_bg_hov.w * 0.6f) : c::button::i_bg, g.IO.DeltaTime * 8.f);
+    it_anim->second.text       = ImLerp(it_anim->second.text, hovered || held ? c::accent : c::text::text_hov, g.IO.DeltaTime * 8.f);
 
-    GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max, GetColorU32(c::accent), c::button::rounding);
+    GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max, GetColorU32(it_anim->second.background), c::button::rounding);
+    GetWindowDrawList()->AddRect(bb.Min, bb.Max, GetColorU32(ImVec4(c::accent.x, c::accent.y, c::accent.z, hovered || held ? 0.5f : 0.15f)), c::button::rounding, 0, 1.f);
 
-    PushStyleColor(ImGuiCol_Text, GetColorU32(c::text::text_active));
+    PushStyleColor(ImGuiCol_Text, GetColorU32(it_anim->second.text));
     RenderTextClipped(bb.Min, bb.Max, label, NULL, &label_size, style.ButtonTextAlign, &bb);
     PopStyleColor();
 
@@ -1510,6 +1501,7 @@ bool ImGui::ImageButton(ImTextureID user_texture_id, const ImVec2& size, const I
 
 struct checkbox_state {
     ImVec4 background, mark, text;
+    float slide;
 };
 
 bool ImGui::Checkbox(const char* label, bool* v)
@@ -1519,46 +1511,40 @@ bool ImGui::Checkbox(const char* label, bool* v)
         return false;
 
     ImGuiContext& g = *GImGui;
-    const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
     const ImVec2 label_size = CalcTextSize(label, NULL, true);
 
-    const float square_sz = 18;
-    const ImVec2 pos = window->DC.CursorPos;
-    const ImRect total_bb(pos, pos + ImVec2(square_sz + label_size.x, label_size.y));
-    ItemSize(total_bb, 0.f);
+    const float track_w = 34.f;
+    const float track_h = 18.f;
+    const float knob_r  = 7.f;
 
+    const ImVec2 pos = window->DC.CursorPos;
+    const ImRect total_bb(pos, pos + ImVec2(track_w + 10.f + label_size.x, track_h));
+    ItemSize(total_bb, 0.f);
     if (!ItemAdd(total_bb, id)) return false;
-    
 
     bool hovered, held, pressed = ButtonBehavior(total_bb, id, &hovered, &held);
-    if (IsItemClicked())
-    {
-        *v = !(*v);
-        MarkItemEdited(id);
-    }
+    if (IsItemClicked()) { *v = !(*v); MarkItemEdited(id); }
 
     static std::map<ImGuiID, checkbox_state> anim;
     auto it_anim = anim.find(id);
-
-    if (it_anim == anim.end())
-    {
-        anim.insert({ id, checkbox_state() });
-        it_anim = anim.find(id);
+    if (it_anim == anim.end()) {
+        checkbox_state s; s.slide = *v ? 1.f : 0.f;
+        anim.insert({ id, s }); it_anim = anim.find(id);
     }
 
-    it_anim->second.background = ImLerp(it_anim->second.background, *v ? c::accent : hovered ? c::checkbox::i_bg_hov : c::checkbox::i_bg, g.IO.DeltaTime * 6.f);
-    it_anim->second.text = ImLerp(it_anim->second.text, *v ? c::text::text_active : hovered ? c::text::text_hov : c::text::text, g.IO.DeltaTime * 6.f);
+    it_anim->second.slide      = ImLerp(it_anim->second.slide, *v ? 1.f : 0.f, g.IO.DeltaTime * 10.f);
+    it_anim->second.background = ImLerp(it_anim->second.background, *v ? c::accent : hovered ? c::checkbox::i_bg_hov : c::checkbox::i_bg, g.IO.DeltaTime * 8.f);
+    it_anim->second.text       = ImLerp(it_anim->second.text, *v ? c::text::text_active : hovered ? c::text::text_hov : c::text::text, g.IO.DeltaTime * 6.f);
 
-    it_anim->second.mark = ImLerp(it_anim->second.mark, *v ? c::checkbox::checkmark_active : c::checkbox::checkmark_inactive, g.IO.DeltaTime * 6.f);
+    const ImRect track(pos, pos + ImVec2(track_w, track_h));
+    GetWindowDrawList()->AddRectFilled(track.Min, track.Max, GetColorU32(it_anim->second.background), track_h * 0.5f);
 
-    const ImRect check_bb(pos, pos + ImVec2(square_sz, square_sz));
+    const float knob_x = track.Min.x + knob_r + 2.f + (track_w - (knob_r + 2.f) * 2.f) * it_anim->second.slide;
+    const float knob_y = track.Min.y + track_h * 0.5f;
+    GetWindowDrawList()->AddCircleFilled(ImVec2(knob_x, knob_y), knob_r - 1.f, GetColorU32(c::slider::circle), 32);
 
-    GetWindowDrawList()->AddRectFilled(check_bb.Min, check_bb.Max, GetColorU32(it_anim->second.background), c::checkbox::rounding);
-
-    RenderCheckMark(window->DrawList, check_bb.Min + ImVec2( (square_sz / 2) / 2, (square_sz / 2) / 2 ), GetColorU32(it_anim->second.mark), (square_sz / 2) );
-    
-    GetWindowDrawList()->AddText(ImVec2(check_bb.Max.x + 8, check_bb.Min.y - 2), GetColorU32(it_anim->second.text), label);
+    GetWindowDrawList()->AddText(ImVec2(track.Max.x + 10.f, pos.y + (track_h - label_size.y) * 0.5f), GetColorU32(it_anim->second.text), label);
 
     return pressed;
 }
@@ -3458,34 +3444,36 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* p_dat
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
-    float w = GetContentRegionMax().x - style.WindowPadding.x;
+    const float w = GetContentRegionMax().x - style.WindowPadding.x;
 
     const ImVec2 label_size = CalcTextSize(label, NULL, true);
-    const ImRect frame_bb(window->DC.CursorPos + ImVec2(0, label_size.y), window->DC.CursorPos + ImVec2(w, label_size.y + 17.f));
-    const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? label_size.x : 0.0f, 0.0f));
+    const float  row_h      = label_size.y + 2.f;
+    const float  track_h    = 6.f;
+    const float  total_h    = row_h + track_h + 8.f;
+
+    const ImVec2 start = window->DC.CursorPos;
+
+    const ImRect track_bb(start + ImVec2(0.f, row_h + 4.f), start + ImVec2(w, row_h + 4.f + track_h));
+    const ImRect total_bb(start, start + ImVec2(w, total_h));
 
     const bool temp_input_allowed = (flags & ImGuiSliderFlags_NoInput) == 0;
-    ItemSize(ImRect(total_bb.Min, total_bb.Max + ImVec2(0, 18.f)));
-    if (!ItemAdd(total_bb, id, &frame_bb, temp_input_allowed ? ImGuiItemFlags_Inputable : 0))
+    ItemSize(total_bb);
+    if (!ItemAdd(total_bb, id, &track_bb, temp_input_allowed ? ImGuiItemFlags_Inputable : 0))
         return false;
 
     if (format == NULL) format = DataTypeGetInfo(data_type)->PrintFmt;
 
-    const bool hovered = ItemHoverable(frame_bb, id);
+    const bool hovered = ItemHoverable(track_bb, id);
     bool temp_input_is_active = temp_input_allowed && TempInputIsActive(id);
-    if (!temp_input_is_active)
-    {
+    if (!temp_input_is_active) {
         const bool input_requested_by_tabbing = temp_input_allowed && (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_FocusedByTabbing) != 0;
         const bool clicked = hovered && IsMouseClicked(0, id);
         const bool make_active = (input_requested_by_tabbing || clicked || g.NavActivateId == id);
-        if (make_active && clicked)
-            SetKeyOwner(ImGuiKey_MouseLeft, id);
+        if (make_active && clicked) SetKeyOwner(ImGuiKey_MouseLeft, id);
         if (make_active && temp_input_allowed)
             if (input_requested_by_tabbing || (clicked && g.IO.KeyCtrl) || (g.NavActivateId == id && (g.NavActivateFlags & ImGuiActivateFlags_PreferInput)))
                 temp_input_is_active = true;
-
-        if (make_active && !temp_input_is_active)
-        {
+        if (make_active && !temp_input_is_active) {
             SetActiveID(id, window);
             SetFocusID(id, window);
             FocusWindow(window);
@@ -3493,47 +3481,39 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* p_dat
         }
     }
 
-
     ImRect grab_bb;
 
     static std::map<ImGuiID, slider_state> anim;
     auto it_anim = anim.find(id);
-
-    if (it_anim == anim.end())
-    {
-        anim.insert({ id, slider_state() });
-        it_anim = anim.find(id);
+    if (it_anim == anim.end()) {
+        slider_state s; s.slow_anim = 0.f; s.circle_anim = 0.f;
+        anim.insert({ id, s }); it_anim = anim.find(id);
     }
 
-    it_anim->second.background = ImLerp(it_anim->second.background, IsItemActive() || hovered ? c::slider::i_bg_hov : c::slider::i_bg, g.IO.DeltaTime * 6.f);
+    const bool active = IsItemActive();
+    it_anim->second.background = ImLerp(it_anim->second.background, active || hovered ? c::slider::i_bg_hov : c::slider::i_bg, g.IO.DeltaTime * 8.f);
+    it_anim->second.text       = ImLerp(it_anim->second.text, active ? c::text::text_active : hovered ? c::text::text_hov : c::text::text, g.IO.DeltaTime * 8.f);
 
-    it_anim->second.text = ImLerp(it_anim->second.text, IsItemActive() ? c::text::text_active : hovered ? c::text::text_hov : c::text::text, g.IO.DeltaTime * 6.f);
-
-    const bool value_changed = SliderBehavior(frame_bb, id, data_type, p_data, p_min, p_max, format, flags, &grab_bb);
-    if (value_changed)
-        MarkItemEdited(id);
+    const bool value_changed = SliderBehavior(track_bb, id, data_type, p_data, p_min, p_max, format, flags, &grab_bb);
+    if (value_changed) MarkItemEdited(id);
 
     char value_buf[64];
     const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_ARRAYSIZE(value_buf), data_type, p_data, format);
 
-    GetWindowDrawList()->AddRectFilled(frame_bb.Min + ImVec2(0, 4), frame_bb.Max - ImVec2(0, 4), GetColorU32(it_anim->second.background), 100.f);
+    GetWindowDrawList()->AddText(start, GetColorU32(it_anim->second.text), label);
 
+    const ImVec2 val_sz = CalcTextSize(value_buf, value_buf_end);
+    GetWindowDrawList()->AddText(ImVec2(start.x + w - val_sz.x, start.y), GetColorU32(active ? c::accent : it_anim->second.text), value_buf);
+
+    GetWindowDrawList()->AddRectFilled(track_bb.Min, track_bb.Max, GetColorU32(it_anim->second.background), track_h);
 
     if (grab_bb.Max.x > grab_bb.Min.x) {
+        it_anim->second.slow_anim = ImLerp(it_anim->second.slow_anim, grab_bb.GetCenter().x - track_bb.Min.x, g.IO.DeltaTime * 22.f);
+        const float fill_x = track_bb.Min.x + it_anim->second.slow_anim;
 
-        it_anim->second.slow_anim = ImLerp(it_anim->second.slow_anim, grab_bb.Min.x - frame_bb.Min.x, g.IO.DeltaTime * 25.f);
-
-        GetWindowDrawList()->AddRectFilled(frame_bb.Min + ImVec2(0, 5), ImVec2(it_anim->second.slow_anim + frame_bb.Min.x, grab_bb.Max.y - 3), GetColorU32(c::accent), 100.f);
-
-        GetWindowDrawList()->AddCircleFilled(ImVec2(it_anim->second.slow_anim + frame_bb.Min.x + 5, grab_bb.Max.y - 7), 8.f, GetColorU32(c::slider::circle), 100.f);
-
+        GetWindowDrawList()->AddRectFilled(track_bb.Min, ImVec2(fill_x, track_bb.Max.y), GetColorU32(c::accent), track_h);
+        GetWindowDrawList()->AddCircleFilled(ImVec2(fill_x, track_bb.GetCenter().y), track_h * 0.85f, GetColorU32(c::slider::circle), 16);
     }
-
-    PushStyleColor(ImGuiCol_Text, GetColorU32(it_anim->second.text));
-    RenderTextClipped(frame_bb.Min - ImVec2(0, 26), frame_bb.Max - ImVec2(0, 20), value_buf, value_buf_end, NULL, ImVec2(1.0f, 1.0f));
-    PopStyleColor();
-
-    GetWindowDrawList()->AddText(ImVec2(frame_bb.Max.x - w, frame_bb.Min.y - 22), GetColorU32(it_anim->second.text), label);
 
     return value_changed;
 }
