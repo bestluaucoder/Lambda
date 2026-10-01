@@ -557,6 +557,7 @@ void __fastcall hkFrameStageNotify(IBaseClientDLL* thisptr, void* edx, EClientFr
 
 		ctx.chat_open = hud_chat && *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(hud_chat) + 0x58);
 		ctx.text_input = ctx.chat_open
+			|| ctx.console_visible
 			|| (Menu && Menu->IsInitialized() && Menu->IsOpened() && ImGui::GetCurrentContext() && ImGui::GetIO().WantTextInput);
 
 		AnimationSystem->RunInterpolation();

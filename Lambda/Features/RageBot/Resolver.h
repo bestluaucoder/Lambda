@@ -52,6 +52,7 @@ struct ResolverData_t {
 	int   side                 = 0;
 	bool  is_shifting_tickbase = false;
 	int   detected_shift_ticks = 0;
+	float resolved_body_yaw    = 0.f;
 };
 
 struct ResolverDataStatic_t {
@@ -65,15 +66,13 @@ struct ResolverDataStatic_t {
 	float lby_delta       = 0.f;
 	float lby_last_update = 0.f;
 	float lby_value       = 0.f;
-	bool  lby_updated     = false;
 
-	static constexpr int JITTER_HISTORY = 16;
+	static constexpr int JITTER_HISTORY = 20;
 	std::array<float, JITTER_HISTORY> eye_yaw_history = {};
 	int eye_yaw_head  = 0;
 	int eye_yaw_count = 0;
 
 	float prev_speed    = 0.f;
-	float prev_move_yaw = 0.f;
 	int   accel_side    = 0;
 
 	float move_yaw_delta_sum = 0.f;
@@ -87,6 +86,8 @@ struct ResolverDataStatic_t {
 	int   shift_vote_count     = 0;
 	int   tickbase_side        = 0;
 
+	float resolved_body_yaw    = 0.f;
+
 	void reset() {
 		brute_side           = 0;
 		brute_time           = 0.f;
@@ -97,12 +98,10 @@ struct ResolverDataStatic_t {
 		lby_delta            = 0.f;
 		lby_last_update      = 0.f;
 		lby_value            = 0.f;
-		lby_updated          = false;
 		eye_yaw_history.fill(0.f);
 		eye_yaw_head         = 0;
 		eye_yaw_count        = 0;
 		prev_speed           = 0.f;
-		prev_move_yaw        = 0.f;
 		accel_side           = 0;
 		move_yaw_delta_sum   = 0.f;
 		move_yaw_samples     = 0;
@@ -113,6 +112,7 @@ struct ResolverDataStatic_t {
 		shift_side_votes     = 0;
 		shift_vote_count     = 0;
 		tickbase_side        = 0;
+		resolved_body_yaw    = 0.f;
 	}
 };
 
@@ -122,15 +122,26 @@ class CResolver {
 	float GetTime();
 	float GetLatency();
 
-	void  UpdateLBYPrediction (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
-	void  UpdateJitterHistory (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
-	void  UpdateVelocitySide  (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
-	void  UpdateMoveYawSide   (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
-	void  DetectTickbaseShift (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
+	R_AntiAimType DetectAntiAim      (CBasePlayer* player, const std::deque<LagRecord>& records);
+	R_PlayerState DetectPlayerState  (CBasePlayer* player, AnimationLayer* animlayers);
 
-	int   PredictLBYSide      (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
-	int   PredictJitterSide   (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
-	int   PredictTickbaseSide (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* pdata);
+	void  UpdateLBY          (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	void  UpdateJitterHistory(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	void  UpdateVelocity     (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	void  UpdateMoveYaw      (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	void  DetectTickbaseShift(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+
+	int   ResolveLBY         (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p, float& out_body_yaw);
+	int   ResolveTickbase    (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	int   ResolveAnim        (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	int   ResolveJitter      (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
+	int   ResolveFreestand   (CBasePlayer* player, LagRecord* record, const std::deque<LagRecord>& records);
+
+	void  SetupLayer         (LagRecord* record, int idx, float delta);
+	void  SetupResolverLayers(CBasePlayer* player, LagRecord* record);
+
+public:
+	void  Apply              (LagRecord* record);
 
 public:
 	CResolver() {
@@ -138,20 +149,10 @@ public:
 			resolver_data[i].reset();
 	}
 
-	void          Reset(CBasePlayer* pl = nullptr);
-
-	R_PlayerState DetectPlayerState  (CBasePlayer* player, AnimationLayer* animlayers);
-	R_AntiAimType DetectAntiAim      (CBasePlayer* player, const std::deque<LagRecord>& records);
-
-	void          SetupLayer         (LagRecord* record, int idx, float delta);
-	void          SetupResolverLayers(CBasePlayer* player, LagRecord* record);
-	void          DetectFreestand    (CBasePlayer* player, LagRecord* record, const std::deque<LagRecord>& records);
-
-	void          Apply              (LagRecord* record);
-	void          Run                (CBasePlayer* player, LagRecord* record, std::deque<LagRecord>& records);
-
-	void          OnMiss             (CBasePlayer* player, LagRecord* record);
-	void          OnHit              (CBasePlayer* player, LagRecord* record);
+	void Reset(CBasePlayer* pl = nullptr);
+	void Run  (CBasePlayer* player, LagRecord* record, std::deque<LagRecord>& records);
+	void OnMiss(CBasePlayer* player, LagRecord* record);
+	void OnHit (CBasePlayer* player, LagRecord* record);
 };
 
 extern CResolver* Resolver;
