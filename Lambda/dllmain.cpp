@@ -11,6 +11,7 @@
 #include "SDK/Hooks.h"
 #include "Features/Visuals/SkinChanger.h"
 #include "Features/Lua/Bridge/Bridge.h"
+#include "Utils/Logger.h"
 
 
 static void* cheat_module_base = 0;
@@ -118,6 +119,7 @@ long __stdcall ExceptionHandler(EXCEPTION_POINTERS* info) {
         }
 
         MessageBoxA(nullptr, message.data(), nullptr, MB_ICONERROR | MB_OK);
+        Logger::WriteCrash(message);
         ExitProcess(0);
     }
 
@@ -129,8 +131,9 @@ void Initialize(HMODULE hModule) {
     while (!GetModuleHandle("serverbrowser.dll"))
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-
     setlocale(LC_ALL, "ru_RI.UTF-8");
+
+    Logger::Init();
 
 #ifndef _DEBUG
     AddVectoredExceptionHandler(true, ExceptionHandler);

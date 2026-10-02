@@ -362,6 +362,7 @@ public:
         std::error_code ec;
         std::filesystem::create_directories(docs + "\\Lambda\\Configs", ec);
         std::filesystem::create_directories(docs + "\\Lambda\\Luas", ec);
+        std::filesystem::create_directories(docs + "\\Lambda\\Logs", ec);
     }
 
     std::vector<std::string> GetAllConfigs() {

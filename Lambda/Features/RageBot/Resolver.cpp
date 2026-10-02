@@ -392,16 +392,10 @@ void CResolver::Apply(LagRecord* record)
 
 	auto* as = record->player->GetAnimstate();
 
-	if (record->resolver_data.resolver_type == ResolverType::FREESTAND) {
-		Vector toUs = Cheat.LocalPlayer->m_vecOrigin() - record->player->m_vecOrigin();
-		float  angleToUs = RAD2DEG(std::atan2f(toUs.y, toUs.x));
-		float  bodyYaw   = Math::AngleNormalize(angleToUs + record->resolver_data.side * 90.f);
-		as->flFootYaw = bodyYaw;
-	} else if (std::abs(record->resolver_data.resolved_body_yaw) > 1.f) {
+	if (std::abs(record->resolver_data.resolved_body_yaw) > 1.f)
 		as->flFootYaw = Math::AngleNormalize(as->flEyeYaw + record->resolver_data.resolved_body_yaw);
-	} else {
+	else
 		as->flFootYaw = Math::AngleNormalize(as->flEyeYaw + record->resolver_data.max_desync_delta * record->resolver_data.side);
-	}
 }
 
 void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord>& records)
@@ -463,7 +457,13 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 
 	if (!isMoving) {
 		int fs_side = ResolveFreestand(player, record, records);
-		commit(fs_side, ResolverType::FREESTAND);
+		if (fs_side) {
+			if (resolved_type == ResolverType::NONE) {
+				commit(fs_side, ResolverType::FREESTAND);
+			} else if (resolved_type == ResolverType::LBY && fs_side != resolved_side) {
+				commit(fs_side, ResolverType::FREESTAND);
+			}
+		}
 	}
 
 	int anim_side = ResolveAnim(player, record, p);

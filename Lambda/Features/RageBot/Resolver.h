@@ -25,7 +25,6 @@ enum class ResolverType {
 	FREESTAND,
 	LOGIC,
 	ANIM,
-	BRUTEFORCE,
 	MEMORY,
 	DEFAULT,
 	LBY,

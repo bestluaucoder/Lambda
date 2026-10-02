@@ -2,6 +2,7 @@
 
 #include "../SDK/Interfaces.h"
 #include "../Features/Visuals/Elements.h"
+#include "Logger.h"
 
 
 CGameConsole* Console = new CGameConsole;
@@ -84,15 +85,15 @@ void CGameConsole::Log(const std::string& msg) {
 }
 
 void CGameConsole::Error(const std::string& error) {
-	LambdaTag();
-
-	CVar->ConsoleColorPrintf(Color(255, 50, 50), error.c_str());
-	CVar->ConsolePrintf("\n");
+    LambdaTag();
+    CVar->ConsoleColorPrintf(Color(255, 50, 50), error.c_str());
+    CVar->ConsolePrintf("\n");
+    Logger::Write("[error] " + error);
 }
 
 void CGameConsole::Event(const std::string& msg) {
-	LambdaTag();
-	Print(msg);
-
-	Elements->AddLog(msg);
+    LambdaTag();
+    Print(msg);
+    Elements->AddLog(msg);
+    Logger::Write(msg);
 }

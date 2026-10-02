@@ -182,6 +182,7 @@
     <ClCompile Include="SDK\Render.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
     <ClCompile Include="Utils\VMTHook.cpp" />
+    <ClCompile Include="Utils\Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Features\AntiAim\AntiAim.h" />

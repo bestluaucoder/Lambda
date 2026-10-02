@@ -43,9 +43,6 @@ void CShotManager::LogMiss(RegisteredShot_t* shot) {
 	case ResolverType::ANIM:
 		resolver = "anim";
 		break;
-	case ResolverType::BRUTEFORCE:
-		resolver = "brute";
-		break;
 	case ResolverType::DEFAULT:
 		resolver = "default";
 		break;
@@ -367,9 +364,6 @@ void CShotManager::OnNetUpdate() {
 				break;
 			case ResolverType::ANIM:
 				resolver = "anim";
-				break;
-			case ResolverType::BRUTEFORCE:
-				resolver = "brute";
 				break;
 			case ResolverType::DEFAULT:
 				resolver = "default";

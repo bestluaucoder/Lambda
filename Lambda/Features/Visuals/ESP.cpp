@@ -452,9 +452,6 @@ void CWorldESP::DrawFlags(const ESPInfo_t& info) {
 		case ResolverType::ANIM:
 			rtype = "A";
 			break;
-		case ResolverType::BRUTEFORCE:
-			rtype = "B";
-			break;
 		case ResolverType::MEMORY:
 			rtype = "M";
 			break;
