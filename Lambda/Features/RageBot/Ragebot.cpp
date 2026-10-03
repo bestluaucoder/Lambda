@@ -190,7 +190,7 @@ float CRagebot::CalcHitchance(QAngle angles, LagRecord* target, int hitbox) {
 		if (ctx.active_weapon->m_iItemDefinitionIndex() == 64)
 		{
 			a = 1.f - a * a;
-			a = 1.f - c * c;
+			c = 1.f - c * c;
 		}
 
 		Vector direction = forward + (right * (s_val.bcos * inaccuracy + s_val.dcos * spread)) + (up * (s_val.bsin * inaccuracy + s_val.dsin * spread));
@@ -345,7 +345,7 @@ void CRagebot::GetMultipoints(LagRecord* record, int hitbox_id, float scale) {
 	case HITBOX_HEAD:
 		for (auto& vert : verts)
 			AddPoint(AimPoint_t{ Math::VectorTransform(vert, boneMatrix), hitbox_id, true, dont_shoot_next_points });
-		if (record->m_angEyeAngles.pitch > 85.f && center.z >= ctx.shoot_position.z - 16.f) // extra point on top of head
+		if (record->m_angEyeAngles.pitch > 85.f && center.z >= ctx.shoot_position.z - 16.f)
 			AddPoint(AimPoint_t{ Vector(center.x, center.y, center.z + width * scale * 0.89f), hitbox_id, true, dont_shoot_next_points });
 		break;
 	case HITBOX_STOMACH:
@@ -356,6 +356,17 @@ void CRagebot::GetMultipoints(LagRecord* record, int hitbox_id, float scale) {
 	case HITBOX_UPPER_CHEST:
 		AddPoint(AimPoint_t{ Math::VectorTransform(verts[2], boneMatrix), hitbox_id, true, dont_shoot_next_points });
 		AddPoint(AimPoint_t{ Math::VectorTransform(verts[3], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		break;
+	case HITBOX_LEFT_UPPER_ARM:
+	case HITBOX_RIGHT_UPPER_ARM:
+	case HITBOX_LEFT_FOREARM:
+	case HITBOX_RIGHT_FOREARM:
+	case HITBOX_LEFT_THIGH:
+	case HITBOX_RIGHT_THIGH:
+	case HITBOX_LEFT_CALF:
+	case HITBOX_RIGHT_CALF:
+		AddPoint(AimPoint_t{ Math::VectorTransform(verts[0], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		AddPoint(AimPoint_t{ Math::VectorTransform(verts[1], boneMatrix), hitbox_id, true, dont_shoot_next_points });
 		break;
 	}
 }
@@ -408,18 +419,20 @@ void CRagebot::SelectBestPoint(ScannedTarget_t* target) {
 	ScannedPoint_t best_head_point;
 
 	for (const auto& point : target->points) {
-		// compute effective priority — penalise points from records with negative backtrack
 		int eff_priority = point.priority;
 		if (point.record && GlobalVars->tickcount - point.record->update_tick < 0)
 			eff_priority -= 4;
 
 		if (point.hitbox == HITBOX_HEAD) {
-			if (best_head_point.damage < target->minimum_damage || (eff_priority > best_head_point.priority && point.damage > target->minimum_damage))
+			if (best_head_point.damage < target->minimum_damage || (eff_priority > best_head_point.eff_priority && point.damage > target->minimum_damage)) {
 				best_head_point = point;
-		}
-		else if (point.hitbox != HITBOX_HEAD) {
-			if (best_body_point.damage < target->minimum_damage || (eff_priority > best_body_point.priority && point.damage > target->minimum_damage))
+				best_head_point.eff_priority = eff_priority;
+			}
+		} else {
+			if (best_body_point.damage < target->minimum_damage || (eff_priority > best_body_point.eff_priority && point.damage > target->minimum_damage)) {
 				best_body_point = point;
+				best_body_point.eff_priority = eff_priority;
+			}
 		}
 	}
 

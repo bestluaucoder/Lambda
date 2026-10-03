@@ -31,6 +31,7 @@ enum class ResolverType {
 	VELOCITY,
 	MOVEANGLE,
 	TICKBASE,
+	SAFETICK,
 };
 
 struct ResolverLayer_t {
@@ -45,7 +46,7 @@ struct ResolverData_t {
 	R_AntiAimType antiaim_type  = R_AntiAimType::UNKNOWN;
 	ResolverType  resolver_type = ResolverType::NONE;
 
-	ResolverLayer_t layers[5];
+	ResolverLayer_t layers[8];
 
 	float max_desync_delta     = 0.f;
 	int   side                 = 0;
@@ -70,6 +71,7 @@ struct ResolverDataStatic_t {
 	std::array<float, JITTER_HISTORY> eye_yaw_history = {};
 	int eye_yaw_head  = 0;
 	int eye_yaw_count = 0;
+	int jitter_last_cluster = 0;
 
 	float prev_speed    = 0.f;
 	int   accel_side    = 0;
@@ -84,6 +86,9 @@ struct ResolverDataStatic_t {
 	int   shift_side_votes     = 0;
 	int   shift_vote_count     = 0;
 	int   tickbase_side        = 0;
+
+	int   safe_tick_side       = 0;
+	float safe_tick_simtime    = 0.f;
 
 	float resolved_body_yaw    = 0.f;
 
@@ -100,6 +105,7 @@ struct ResolverDataStatic_t {
 		eye_yaw_history.fill(0.f);
 		eye_yaw_head         = 0;
 		eye_yaw_count        = 0;
+		jitter_last_cluster  = 0;
 		prev_speed           = 0.f;
 		accel_side           = 0;
 		move_yaw_delta_sum   = 0.f;
@@ -111,6 +117,8 @@ struct ResolverDataStatic_t {
 		shift_side_votes     = 0;
 		shift_vote_count     = 0;
 		tickbase_side        = 0;
+		safe_tick_side       = 0;
+		safe_tick_simtime    = 0.f;
 		resolved_body_yaw    = 0.f;
 	}
 };
@@ -135,6 +143,7 @@ class CResolver {
 	int   ResolveAnim        (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
 	int   ResolveJitter      (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
 	int   ResolveFreestand   (CBasePlayer* player, LagRecord* record, const std::deque<LagRecord>& records);
+	int   ResolveSafeTick    (CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p);
 
 	void  SetupLayer         (LagRecord* record, int idx, float delta);
 	void  SetupResolverLayers(CBasePlayer* player, LagRecord* record);

@@ -191,6 +191,7 @@ bool CAutoWall::HandleBulletPenetration(CBasePlayer* attacker, CCSWeaponData* we
 	float combinedPenetrationModifier;
 
 	surfacedata_t* exitSurfaceData = PhysicSurfaceProps->GetSurfaceData(exitTrace.surface.surfaceProps);
+	if (!exitSurfaceData) return false;
 	int exitMaterial = exitSurfaceData->game.material;
 
 	float enterSurfPenetrationModifier = enterSurfaceData->game.flPenetrationModifier;
@@ -289,6 +290,7 @@ bool CAutoWall::FireBullet(CBasePlayer* attacker, const Vector& start, const Vec
 			return !target;
 
 		surfacedata_t* enterSurfaceData = PhysicSurfaceProps->GetSurfaceData(data.enterTrace.surface.surfaceProps);
+		if (!enterSurfaceData) break;
 		const float enterSurfPenetrationModifier = enterSurfaceData->game.flPenetrationModifier;
 
 		currentDistance += data.enterTrace.fraction * maxRange;

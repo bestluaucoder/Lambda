@@ -61,6 +61,9 @@ void CShotManager::LogMiss(RegisteredShot_t* shot) {
 	case ResolverType::TICKBASE:
 		resolver = "tickbase";
 		break;
+	case ResolverType::SAFETICK:
+		resolver = "safetick";
+		break;
 	}
 
 	if (!resolver.empty()) {
@@ -382,6 +385,9 @@ void CShotManager::OnNetUpdate() {
 				break;
 			case ResolverType::TICKBASE:
 				resolver = "tickbase";
+				break;
+			case ResolverType::SAFETICK:
+				resolver = "safetick";
 				break;
 			}
 

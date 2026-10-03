@@ -4468,9 +4468,20 @@ struct input_state {
 
 bool ImGui::TextField(const char* label, const char* hint, char* buf, int buf_size, ImGuiInputTextFlags flags)
 {
- 
-    return ImGui::InputTextEx(label, hint, buf, buf_size, ImVec2(ImGui::GetContentRegionMax().x - GetStyle().WindowPadding.x, 35), flags);
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = GetCurrentWindow();
+    const ImGuiID id = window->GetID(label);
 
+    const ImVec2 cursor_before = window->DC.CursorPos;
+    bool changed = ImGui::InputTextEx(label, hint, buf, buf_size, ImVec2(GetContentRegionMax().x - GetStyle().WindowPadding.x, 35), flags);
+
+    if (g.IO.MouseClicked[0] && g.ActiveId == id) {
+        ImRect bb(cursor_before, cursor_before + ImVec2(GetContentRegionMax().x - GetStyle().WindowPadding.x, 35));
+        if (!bb.Contains(g.IO.MousePos))
+            ClearActiveID();
+    }
+
+    return changed;
 }
 
 bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_size, const ImVec2& size_arg, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* callback_user_data)

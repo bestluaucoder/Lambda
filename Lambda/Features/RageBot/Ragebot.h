@@ -29,6 +29,7 @@ struct ScannedPoint_t {
 	Vector point;
 	int hitbox = -1;
 	int priority = 0;
+	int eff_priority = 0;
 	float damage = 0.f;
 	bool safe_point = false;
 	Vector impacts[5];
@@ -142,9 +143,20 @@ private:
 		case HITBOX_HEAD:
 			return settings.multipoints->get(0);
 		case HITBOX_STOMACH:
+		case HITBOX_PELVIS:
+		case HITBOX_UPPER_CHEST:
 			return settings.multipoints->get(2);
 		case HITBOX_CHEST:
 			return settings.multipoints->get(1);
+		case HITBOX_LEFT_UPPER_ARM:
+		case HITBOX_RIGHT_UPPER_ARM:
+		case HITBOX_LEFT_FOREARM:
+		case HITBOX_RIGHT_FOREARM:
+		case HITBOX_LEFT_THIGH:
+		case HITBOX_RIGHT_THIGH:
+		case HITBOX_LEFT_CALF:
+		case HITBOX_RIGHT_CALF:
+			return settings.multipoints->get(2);
 		default:
 			return false;
 		}

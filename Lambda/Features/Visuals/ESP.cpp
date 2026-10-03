@@ -470,6 +470,9 @@ void CWorldESP::DrawFlags(const ESPInfo_t& info) {
 		case ResolverType::TICKBASE:
 			rtype = "TB";
 			break;
+		case ResolverType::SAFETICK:
+			rtype = "ST";
+			break;
 		default:
 			break;
 		}

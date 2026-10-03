@@ -68,19 +68,24 @@ R_AntiAimType CResolver::DetectAntiAim(CBasePlayer* player, const std::deque<Lag
 	if (records.size() < 12) return R_AntiAimType::NONE;
 
 	int jitter = 0, stat = 0;
-	float avg = 0.f, prev = player->m_angEyeAngles().yaw;
+	float total = 0.f, prev = player->m_angEyeAngles().yaw;
+	float max_delta = 0.f;
 	int limit = (int)records.size() - 2;
-	int end   = (std::max)(limit - 8, -1);
+	int end   = (std::max)(limit - 10, -1);
 
 	for (int i = limit; i > end; --i) {
 		float d = std::abs(Math::AngleDiff(records[i].m_angEyeAngles.yaw, prev));
-		avg += d;
-		d > 32.f ? ++jitter : ++stat;
+		total += d;
+		if (d > max_delta) max_delta = d;
+		d > 26.f ? ++jitter : ++stat;
 		prev = records[i].m_angEyeAngles.yaw;
 	}
 
-	if (jitter > stat)       return R_AntiAimType::JITTER;
-	if (avg * 0.5f < 30.f)   return R_AntiAimType::STATIC;
+	int samples = limit - end;
+	float avg = samples > 0 ? total / samples : 0.f;
+
+	if (jitter > stat && max_delta > 35.f) return R_AntiAimType::JITTER;
+	if (avg < 18.f)                        return R_AntiAimType::STATIC;
 	return R_AntiAimType::UNKNOWN;
 }
 
@@ -114,7 +119,7 @@ int CResolver::ResolveLBY(CBasePlayer* player, LagRecord* record, ResolverDataSt
 		return p->lby_delta > 0.f ? 1 : -1;
 	}
 
-	if (std::abs(gap) > 24.f) {
+	if (std::abs(gap) > 15.f) {
 		out_body_yaw = -gap;
 		return gap < 0.f ? 1 : -1;
 	}
@@ -134,33 +139,56 @@ int CResolver::ResolveJitter(CBasePlayer* player, LagRecord* record, ResolverDat
 	if (record->resolver_data.antiaim_type != R_AntiAimType::JITTER || p->eye_yaw_count < 6)
 		return 0;
 
-	auto& recs  = LagCompensation->records(player->EntIndex());
-	float mean  = CircularMean(recs, 10);
-	float cur   = record->m_angEyeAngles.yaw;
+	auto& recs = LagCompensation->records(player->EntIndex());
+	float mean = CircularMean(recs, 12);
+	float cur  = record->m_angEyeAngles.yaw;
 
-	float sum_p = 0.f, sum_n = 0.f, sq_p = 0.f, sq_n = 0.f;
+	float sum_p = 0.f, sum_n = 0.f;
+	float sq_p  = 0.f, sq_n  = 0.f;
+	float max_p = 0.f, max_n = 0.f;
 	int   cnt_p = 0,   cnt_n = 0;
 
 	for (int i = 0; i < p->eye_yaw_count; ++i) {
 		int   idx = (p->eye_yaw_head - 1 - i + ResolverDataStatic_t::JITTER_HISTORY) % ResolverDataStatic_t::JITTER_HISTORY;
 		float d   = Math::AngleDiff(p->eye_yaw_history[idx], mean);
-		if (d >= 0.f) { sum_p += d; sq_p += d * d; ++cnt_p; }
-		else          { sum_n += d; sq_n += d * d; ++cnt_n; }
+		if (d >= 0.f) {
+			sum_p += d; sq_p += d * d;
+			if (d > max_p) max_p = d;
+			++cnt_p;
+		} else {
+			sum_n += d; sq_n += d * d;
+			if (-d > max_n) max_n = -d;
+			++cnt_n;
+		}
 	}
 
 	if (!cnt_p || !cnt_n) return 0;
 
-	float ap = sum_p / cnt_p, an = sum_n / cnt_n;
-	float vp = (sq_p / cnt_p) - ap * ap;
-	float vn = (sq_n / cnt_n) - an * an;
+	float ap = sum_p / cnt_p;
+	float an = sum_n / cnt_n;
+
+	float var_p = (sq_p / cnt_p) - ap * ap;
+	float var_n = (sq_n / cnt_n) - an * an;
+
+	float amp_p = max_p;
+	float amp_n = max_n;
+	float amplitude = (amp_p + amp_n) * 0.5f;
+
+	float var_thresh = amplitude * amplitude * 0.35f;
+	if (var_p > var_thresh || var_n > var_thresh) return 0;
 
 	float cur_d = Math::AngleDiff(cur, mean);
-	float dp    = std::abs(cur_d - ap);
-	float dn    = std::abs(cur_d - an);
 
-	if (vp > 400.f || vn > 400.f) return 0;
+	float dp = std::abs(cur_d - ap);
+	float dn = std::abs(cur_d - an);
 
-	return dp < dn ? 1 : -1;
+	if (dp < dn) {
+		p->jitter_last_cluster = 1;
+		return 1;
+	} else {
+		p->jitter_last_cluster = -1;
+		return -1;
+	}
 }
 
 void CResolver::UpdateVelocity(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
@@ -323,6 +351,9 @@ void CResolver::SetupResolverLayers(CBasePlayer* player, LagRecord* record)
 	SetupLayer(record, 2, -d);
 	SetupLayer(record, 3,  d * 0.5f);
 	SetupLayer(record, 4, -d * 0.5f);
+	SetupLayer(record, 5,  d * 0.75f);
+	SetupLayer(record, 6, -d * 0.75f);
+	SetupLayer(record, 7,  d * 0.25f);
 }
 
 int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
@@ -342,9 +373,9 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 
 	float spread_thresh;
 	switch (record->resolver_data.player_state) {
-	case R_PlayerState::MOVING:   spread_thresh = 15.f; break;
-	case R_PlayerState::AIR:      spread_thresh = 25.f; break;
-	default:                      spread_thresh =  5.f; break;
+	case R_PlayerState::MOVING:   spread_thresh = 12.f; break;
+	case R_PlayerState::AIR:      spread_thresh = 20.f; break;
+	default:                      spread_thresh =  8.f; break;
 	}
 
 	float abs_thresh = 8.f + TIME_TO_TICKS(latency) * 0.25f;
@@ -384,6 +415,44 @@ int CResolver::ResolveFreestand(CBasePlayer* player, LagRecord* record, const st
 	if (trN.fraction == 1.f && trP.fraction == 1.f) return 0;
 
 	return trN.fraction < trP.fraction ? -1 : 1;
+}
+
+int CResolver::ResolveSafeTick(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
+{
+	if (!record->prev_record)
+		return 0;
+
+	const float ival    = GlobalVars->interval_per_tick;
+	const float latency = GetLatency();
+
+	const int   prev_choked = record->prev_record->m_nChokedTicks;
+	const int   cur_choked  = record->m_nChokedTicks;
+
+	bool is_safe_tick = (prev_choked >= 2 && cur_choked <= 1);
+
+	if (!is_safe_tick) {
+		float staleness = TICKS_TO_TIME(16) + latency;
+		if (p->safe_tick_side != 0 && record->m_flSimulationTime - p->safe_tick_simtime < staleness)
+			return p->safe_tick_side;
+		return 0;
+	}
+
+	CCSGOPlayerAnimationState* as = player->GetAnimstate();
+	if (!as) return 0;
+
+	float foot_yaw = as->flFootYaw;
+	float eye_yaw  = as->flEyeYaw;
+	float delta    = Math::AngleDiff(foot_yaw, eye_yaw);
+
+	if (std::abs(delta) < 4.f)
+		return 0;
+
+	int side = delta > 0.f ? 1 : -1;
+
+	p->safe_tick_side    = side;
+	p->safe_tick_simtime = record->m_flSimulationTime;
+
+	return side;
 }
 
 void CResolver::Apply(LagRecord* record)
@@ -445,6 +514,11 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	float lby_body_yaw = 0.f;
 	int lby_side = ResolveLBY(player, record, p, lby_body_yaw);
 	commit(lby_side, ResolverType::LBY, lby_body_yaw);
+
+	{
+		int st_side = ResolveSafeTick(player, record, p);
+		commit(st_side, ResolverType::SAFETICK);
+	}
 
 	if (record->resolver_data.is_shifting_tickbase) {
 		int tb_side = ResolveTickbase(player, record, p);
@@ -520,6 +594,11 @@ void CResolver::OnMiss(CBasePlayer* player, LagRecord* record)
 		p->shift_vote_count     = 0;
 		p->tickbase_side        = 0;
 		p->shift_ticks_observed = 0;
+	}
+
+	if (record->resolver_data.resolver_type == ResolverType::SAFETICK) {
+		p->safe_tick_side    = 0;
+		p->safe_tick_simtime = 0.f;
 	}
 
 	if (record->resolver_data.resolver_type == ResolverType::MOVEANGLE
