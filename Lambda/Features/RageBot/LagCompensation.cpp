@@ -147,7 +147,7 @@ void CLagCompensation::OnNetUpdate() {
         }
 
 		if (prev_valid)
-			new_record->breaking_lag_comp = (prev_record->m_vecOrigin - new_record->m_vecOrigin).LengthSqr() > 4096.f;
+			new_record->breaking_lag_comp = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr() > 4096.f;
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
 			if (config.visuals.esp.share_with_enemies->get() || !pl->IsTeammate()) {
@@ -189,7 +189,7 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	new_record->update_tick += ticks;
 	
 	for (int i = 0; i < ticks; i++) {
-		Vector move = record->m_vecVelocity * GlobalVars->interval_per_tick;
+		Vector move = new_record->m_vecVelocity * GlobalVars->interval_per_tick;
 
 		new_record->m_vecOrigin += move;
 
@@ -224,28 +224,26 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 	if (!record || !record->player || record->shifting_tickbase || record->breaking_lag_comp || record->invalid)
 		return false;
 
-	// correct is the amount of time we have to correct game time
 	float correct = 0.0f;
 
-	// Get true latency
 	INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
 	if (nci)
-	{
-		// add network latency
 		correct += nci->GetLatency(FLOW_OUTGOING) + nci->GetLatency(FLOW_INCOMING);
-	}
 
-	// NOTE:  do these computations in float time, not ticks, to avoid big roundoff error accumulations in the math
-	// add view interpolation latency see C_BaseEntity::GetInterpolationAmount()
 	correct += GetLerpTime();
-
-	// check bounds [0,sv_maxunlag]
 	correct = std::clamp(correct, 0.0f, cvars.sv_maxunlag->GetFloat());
 
-	// calculate difference between tick sent by player and our latency based tick
 	float deltaTime = correct - (TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime);
 
-	return std::abs(deltaTime) < (0.2f - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f));
+	float tolerance = 0.2f - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
+
+	if (std::abs(deltaTime) >= tolerance)
+		return false;
+
+	if (GlobalVars->tickcount - record->update_tick < 0)
+		return false;
+
+	return true;
 }
 
 LagRecord* CLagCompensation::GetLastRecord(int idx) {

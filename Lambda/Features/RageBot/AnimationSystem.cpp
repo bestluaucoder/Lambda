@@ -179,7 +179,8 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 
 	if (player->GetActiveWeapon())
 		if (player->GetActiveWeapon()->m_fLastShotTime() <= player->m_flSimulationTime())
-			if (player->GetActiveWeapon()->m_fLastShotTime() > player->m_flOldSimulationTime())
+			if (player->GetActiveWeapon()->m_fLastShotTime() > player->m_flOldSimulationTime()
+				|| (player->m_flSimulationTime() - player->GetActiveWeapon()->m_fLastShotTime()) < TICKS_TO_TIME(2))
 				record->shooting = true;
 
     QAngle& eye_angles = player->m_angEyeAngles();
@@ -216,13 +217,12 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 		animstate->flMoveWeight = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight;
 		animstate->flPrimaryCycle = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flCycle;
 		animstate->flAccelerationWeight = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight;
-		animstate->flDurationInAir = 0.f;
 
 		float server_time_diff = record->m_flServerTime - record->prev_record->m_flServerTime;
 		float sim_time_diff = record->m_flSimulationTime - record->prev_record->m_flSimulationTime;
 		float time_diff = 0.f;
 
-		if (sim_time_diff < 0.f || abs(sim_time_diff - server_time_diff) > TICKS_TO_TIME(4)) // shifting tickbase
+		if (sim_time_diff < 0.f || abs(sim_time_diff - server_time_diff) > TICKS_TO_TIME(4))
 			time_diff = server_time_diff;
 		else
 			time_diff = sim_time_diff;
@@ -268,18 +268,28 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 				}
 			}
 
-			if (anim_speed > 0.f)
+			if (anim_speed > 0.f && player->m_vecVelocity().Length() > 0.001f)
 				player->m_vecVelocity() *= anim_speed / player->m_vecVelocity().Length();
 
-			if (record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight <= 0.f)
+			if (record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight <= 0.f
+				&& origin_diff.Length2DSqr() < 1.f)
 				player->m_vecVelocity() = Vector(0, 0, 0);
 		}
 		else {
 			float last_vel = record->prev_record->m_vecVelocity.LengthSqr();
-			if (last_vel > (100.f * 100.f) && last_vel * 16.f < player->m_vecVelocity().LengthSqr()) // we teleported
-				player->m_vecVelocity() *= 0.22f; // 3/14 or 2/14 should be more correct
+			float cur_vel  = player->m_vecVelocity().LengthSqr();
 
-			animstate->flDurationInAir = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flCycle / record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flPlaybackRate;
+			if (last_vel > (100.f * 100.f) && last_vel * 16.f < cur_vel)
+				player->m_vecVelocity() *= 0.22f;
+
+			float vel_len = player->m_vecVelocity().Length();
+			if (vel_len > 3500.f)
+				player->m_vecVelocity() *= 3500.f / vel_len;
+
+			const float jumpFallRate = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flPlaybackRate;
+			animstate->flDurationInAir = jumpFallRate > 0.0001f
+				? record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flCycle / jumpFallRate
+				: 0.f;
 		}
 	}
 
@@ -287,6 +297,7 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 		animstate->nLastUpdateFrame = GlobalVars->framecount - 1;
 
 	unupdated_animstate[idx] = *animstate;
+	animstate->flDurationInAir = 0.f;
 
 	auto pose_params = player->m_flPoseParameter();
 
@@ -317,6 +328,8 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 	hook_info.disable_clamp_bones = true;
 	BuildMatrix(player, record->aim_matrix, 128, BONE_USED_BY_ANYTHING, record->animlayers);
 	hook_info.disable_clamp_bones = false;
+
+	record->animlayers[12].m_flWeight = player->GetAnimlayers()[12].m_flWeight;
 
 	interpolate_data_t* lerp_data = &interpolate_data[idx];
 	lerp_data->net_origin = player->m_vecOrigin();

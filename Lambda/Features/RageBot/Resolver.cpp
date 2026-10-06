@@ -326,17 +326,19 @@ void CResolver::SetupLayer(LagRecord* record, int idx, float delta)
 		record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flPlaybackRate
 		- record->player->GetAnimlayers()[ANIMATION_LAYER_MOVEMENT_MOVE].m_flPlaybackRate) * 1000.f * ts;
 
+	float pitch_factor = 1.f - (std::min)(std::abs(record->player->m_angEyeAngles().pitch) / 89.f, 1.f);
+
 	float dLean = std::abs(
 		record->animlayers[ANIMATION_LAYER_LEAN].m_flWeight
-		- record->player->GetAnimlayers()[ANIMATION_LAYER_LEAN].m_flWeight) * 600.f * ts;
+		- record->player->GetAnimlayers()[ANIMATION_LAYER_LEAN].m_flWeight) * 600.f * ts * pitch_factor;
 
 	float dLoop = std::abs(
 		record->animlayers[ANIMATION_LAYER_ALIVELOOP].m_flCycle
-		- record->player->GetAnimlayers()[ANIMATION_LAYER_ALIVELOOP].m_flCycle) * 400.f * ts;
+		- record->player->GetAnimlayers()[ANIMATION_LAYER_ALIVELOOP].m_flCycle) * 400.f;
 
 	float dLand = std::abs(
 		record->animlayers[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB].m_flWeight
-		- record->player->GetAnimlayers()[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB].m_flWeight) * 300.f * ts;
+		- record->player->GetAnimlayers()[ANIMATION_LAYER_MOVEMENT_LAND_OR_CLIMB].m_flWeight) * 300.f;
 
 	layer.delta = dMove + dLean * 0.6f + dLoop * 0.3f + dLand * 0.1f;
 
@@ -354,6 +356,8 @@ void CResolver::SetupResolverLayers(CBasePlayer* player, LagRecord* record)
 	SetupLayer(record, 5,  d * 0.75f);
 	SetupLayer(record, 6, -d * 0.75f);
 	SetupLayer(record, 7,  d * 0.25f);
+	SetupLayer(record, 8,  d * 0.125f);
+	SetupLayer(record, 9, -d * 0.125f);
 }
 
 int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
@@ -371,6 +375,10 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 
 	const float latency = GetLatency();
 
+	float ts = 1.f;
+	if (record->resolver_data.is_shifting_tickbase && record->resolver_data.detected_shift_ticks > 1)
+		ts = 1.f / static_cast<float>(record->resolver_data.detected_shift_ticks);
+
 	float spread_thresh;
 	switch (record->resolver_data.player_state) {
 	case R_PlayerState::MOVING:   spread_thresh = 12.f; break;
@@ -378,7 +386,7 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 	default:                      spread_thresh =  8.f; break;
 	}
 
-	float abs_thresh = 8.f + TIME_TO_TICKS(latency) * 0.25f;
+	float abs_thresh = (8.f + TIME_TO_TICKS(latency) * 0.25f) * ts;
 
 	if (mn > abs_thresh || (mx - mn) < spread_thresh)
 		return 0;
