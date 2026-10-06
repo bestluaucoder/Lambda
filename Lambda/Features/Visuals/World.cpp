@@ -218,25 +218,26 @@ void CWorld::OverrideSensitivity() {
 	if (!Cheat.LocalPlayer || !Cheat.LocalPlayer->IsAlive())
 		return;
 
-	int iDefaultFOV = cvars.default_fov->GetInt();
-	if (iDefaultFOV == 0) return;
-
-	int localFOV = m_flFOVOverriden;
-
-	if (Cheat.LocalPlayer->m_bIsScoped() && ctx.active_weapon) {
-		int wid  = ctx.active_weapon->m_iItemDefinitionIndex();
-		int zoom = ctx.active_weapon->m_zoomLevel();
-
-		if (wid == Awp) {
-			localFOV = (zoom >= 2) ? 15 : 40;
-		} else if (wid == Ssg08 || wid == Scar20 || wid == G3SG1) {
-			localFOV = 40;
-		} else {
-			localFOV = (zoom >= 1) ? 40 : localFOV;
-		}
+	if (!Cheat.LocalPlayer->m_bIsScoped() || !ctx.active_weapon) {
+		CSGOHud->m_flFOVSensitivityAdjust = 1.0f;
+		if (CSGOHud->m_flMouseSensitivityFactor)
+			CSGOHud->m_flMouseSensitivity = cvars.sensitivity->GetFloat() * CSGOHud->m_flMouseSensitivityFactor;
+		else
+			CSGOHud->m_flMouseSensitivity = cvars.sensitivity->GetFloat();
+		return;
 	}
 
-	if (localFOV == 0) return;
+	int wid  = ctx.active_weapon->m_iItemDefinitionIndex();
+	int zoom = ctx.active_weapon->m_zoomLevel();
+
+	int scopedFOV = 40;
+	if (wid == Awp) {
+		scopedFOV = (zoom >= 2) ? 10 : 40;
+	} else if (wid == Ssg08) {
+		scopedFOV = (zoom >= 2) ? 15 : 45;
+	} else if (wid == Scar20 || wid == G3SG1) {
+		scopedFOV = 20;
+	}
 
 	CSGOHud->m_flFOVSensitivityAdjust = 1.0f;
 
@@ -244,7 +245,7 @@ void CWorld::OverrideSensitivity() {
 		CSGOHud->m_flMouseSensitivity = cvars.sensitivity->GetFloat() * CSGOHud->m_flMouseSensitivityFactor;
 	} else {
 		float zoomSensitivity = cvars.zoom_sensitivity_ratio_mouse->GetFloat();
-		CSGOHud->m_flFOVSensitivityAdjust = ((float)localFOV / (float)iDefaultFOV) * zoomSensitivity;
+		CSGOHud->m_flFOVSensitivityAdjust = ((float)scopedFOV / 90.0f) * zoomSensitivity;
 		CSGOHud->m_flMouseSensitivity = CSGOHud->m_flFOVSensitivityAdjust * cvars.sensitivity->GetFloat();
 	}
 }

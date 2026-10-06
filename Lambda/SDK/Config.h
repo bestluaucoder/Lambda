@@ -22,6 +22,7 @@ struct weapon_settings_t {
     CSliderInt* delay_shot{ nullptr };
     CCheckBox* strict_hitchance{ nullptr };
     CCheckBox* aim_head_if_safe{ nullptr };
+    CCheckBox* prediction{ nullptr };
 
     weapon_settings_t() {}
     weapon_settings_t(const std::string& name) : weapon_name(name) {}
@@ -39,6 +40,7 @@ struct weapon_settings_t {
         delay_shot->SetVisible(visible);
         strict_hitchance->SetVisible(visible);
         aim_head_if_safe->SetVisible(visible);
+        prediction->SetVisible(visible);
     };
 };
 

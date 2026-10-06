@@ -101,6 +101,7 @@ void CMenu::SetupUI() {
 		settings.delay_shot = aim_settings->AddSliderInt(std::format("[{}] {}", settings.weapon_name, "Delay shot"), 0, 32, 0);
 		settings.strict_hitchance = aim_settings->AddCheckBox(std::format("[{}] {}", settings.weapon_name, "Strict hitchance"));
 		settings.aim_head_if_safe = aim_settings->AddCheckBox(std::format("[{}] {}", settings.weapon_name, "Aim head if safe"));
+		settings.prediction = aim_settings->AddCheckBox(std::format("[{}] {}", settings.weapon_name, "Prediction"));
 	};
 
 	setup_weapon_config(config.ragebot.weapons.global);

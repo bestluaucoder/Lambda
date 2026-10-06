@@ -3,12 +3,71 @@
 #include "../../SDK/Interfaces.h"
 #include "../../SDK/Globals.h"
 #include <algorithm>
+#include <array>
 #include "../Misc/Prediction.h"
 #include "../RageBot/AutoWall.h"
 #include "../../Utils/Console.h"
 #include "../RageBot/AnimationSystem.h"
 #include "../Lua/Bridge/Bridge.h"
 #include "../Visuals/ESP.h"
+#include "../RageBot/LagCompensation.h"
+
+static int PredictOptimalFakelag(int fakelag_limit) {
+	INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
+	if (!nci)
+		return fakelag_limit;
+
+	float out_latency = nci->GetLatency(FLOW_OUTGOING);
+	float in_latency  = nci->GetLatency(FLOW_INCOMING);
+
+	int our_send_delay = TIME_TO_TICKS(out_latency);
+
+	struct EnemyUpdateInfo {
+		float last_sim_time = -1.f;
+		int   choke_estimate = 1;
+	};
+
+	static std::array<EnemyUpdateInfo, 64> enemy_info{};
+
+	int nearest_idx = -1;
+	float nearest_dist = 1e9f;
+	Vector eye_pos = Cheat.LocalPlayer->GetEyePosition();
+
+	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+		CBasePlayer* pl = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
+		if (!pl || !pl->IsAlive() || pl->IsTeammate() || pl->m_bDormant())
+			continue;
+		float dist = (pl->m_vecOrigin() - eye_pos).LengthSqr();
+		if (dist < nearest_dist) {
+			nearest_dist = dist;
+			nearest_idx  = i;
+		}
+	}
+
+	if (nearest_idx == -1)
+		return fakelag_limit;
+
+	CBasePlayer* enemy = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(nearest_idx));
+	auto& info = enemy_info[nearest_idx];
+
+	float sim = enemy->m_flSimulationTime();
+	if (info.last_sim_time >= 0.f && sim > info.last_sim_time) {
+		int delta = TIME_TO_TICKS(sim - info.last_sim_time);
+		if (delta > 0 && delta <= 17)
+			info.choke_estimate = delta;
+	}
+	info.last_sim_time = sim;
+
+	int enemy_choke = info.choke_estimate;
+
+	int enemy_arrival_in = TIME_TO_TICKS(in_latency) + enemy_choke;
+
+	int desired_choke = enemy_arrival_in - our_send_delay;
+
+	desired_choke = std::clamp(desired_choke, 1, fakelag_limit);
+
+	return desired_choke;
+}
 
 void CAntiAim::FakeLag() {
 	if (Cheat.LocalPlayer->m_MoveType() == MOVETYPE_NOCLIP || Cheat.LocalPlayer->m_fFlags() & FL_FROZEN || GameRules()->IsFreezePeriod())
@@ -27,18 +86,19 @@ void CAntiAim::FakeLag() {
 
 	fakelag = 0;
 	fakelag_limit = min(cvars.sv_maxusrcmdprocessticks->GetInt() - 1, config.antiaim.fakelag.limit->get());
+	fakelag_limit = min(fakelag_limit, 17);
 
 	if (ctx.tickbase_shift > 0)
 		fakelag_limit = max((cvars.sv_maxusrcmdprocessticks->GetInt() - 1) - ctx.tickbase_shift, 1);
 
-	if (config.ragebot.aimbot.doubletap->get() && (GlobalVars->realtime - ctx.last_shot_time) < 0.2f)
+	if (config.ragebot.aimbot.doubletap->get() && (GlobalVars->realtime - ctx.last_shot_time) < 0.02f)
 		fakelag_limit = 2;
 
 	if (config.antiaim.fakelag.enabled->get()) {
 		if (Cheat.LocalPlayer->m_vecVelocity().LengthSqr() < 4096.f) {
 			fakelag = 1;
 		} else {
-			fakelag = fakelag_limit;
+			fakelag = PredictOptimalFakelag(fakelag_limit);
 
 			if (Cheat.LocalPlayer->m_fFlags() & FL_ONGROUND && config.antiaim.fakelag.variability->get() > 0)
 				fakelag -= Utils::RandomInt(0, config.antiaim.fakelag.variability->get());
