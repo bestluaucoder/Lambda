@@ -126,7 +126,7 @@ void CMenu::SetupUI() {
 	config.antiaim.angles.legacy_desync = aa_angles->AddCheckBox("Legacy Desync");
 
 	config.antiaim.fakelag.enabled = fake_lag->AddCheckBox("Enabled");
-	config.antiaim.fakelag.limit = fake_lag->AddSliderInt("Limit", 1, 15, 13);
+	config.antiaim.fakelag.limit = fake_lag->AddSliderInt("Limit", 1, 17, 13);
 	config.antiaim.fakelag.variability = fake_lag->AddSliderInt("Variabaility", 0, 14, 1);
 
 	config.antiaim.misc.fake_duck = aa_other->AddKeyBind("Fake duck");

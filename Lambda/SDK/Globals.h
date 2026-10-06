@@ -29,7 +29,7 @@ struct Ctx_t {
 	unsigned int chat_panel = 0;
 
 	bool KeysBlocked() const {
-		return !active_app || console_visible || text_input;
+		return console_visible || text_input;
 	}
 
 	Vector camera_postion;
