@@ -168,6 +168,15 @@ void CLagCompensation::OnNetUpdate() {
 		while (records.size() > (pl->IsTeammate() ? 4 : (TIME_TO_TICKS(0.4f) + 13))) // super puper proper lagcomp
 			records.pop_front();
 
+		// Experimental mode: maintain a parallel std::vector copy (no pop_front fragmentation)
+		if (config.menu_misc.experimental_lagcomp && config.menu_misc.experimental_lagcomp->get()) {
+			auto& rvec = lag_records_vec[i];
+			rvec.push_back(records.back());
+			const size_t max_vec = pl->IsTeammate() ? 4 : (TIME_TO_TICKS(0.4f) + 13);
+			if (rvec.size() > max_vec)
+				rvec.erase(rvec.begin());
+		}
+
 		INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
 		if (config.visuals.esp.show_server_hitboxes->get() && nci && nci->IsLoopback())
 			pl->DrawServerHitboxes(GlobalVars->interval_per_tick, true);
@@ -187,19 +196,38 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	*new_record = *record;
 	new_record->m_flSimulationTime += time;
 	new_record->update_tick += ticks;
-	
+
+	const float gravity = cvars.sv_gravity->GetFloat();
+	const float ival    = GlobalVars->interval_per_tick;
+
 	for (int i = 0; i < ticks; i++) {
-		Vector move = new_record->m_vecVelocity * GlobalVars->interval_per_tick;
+		if (!(new_record->m_fFlags & FL_ONGROUND))
+			new_record->m_vecVelocity.z -= gravity * ival;
 
-		new_record->m_vecOrigin += move;
+		Vector next_origin = new_record->m_vecOrigin + new_record->m_vecVelocity * ival;
 
-		if (!(record->m_fFlags & FL_ONGROUND))
-			new_record->m_vecVelocity.z -= cvars.sv_gravity->GetFloat() * GlobalVars->interval_per_tick;
+		// Ground collision: trace downward to find the surface so we never predict
+		// the player falling through the floor.
+		if (!(new_record->m_fFlags & FL_ONGROUND)) {
+			CGameTrace tr;
+			CTraceFilterWorldOnly filter;
+			Ray_t ray;
+			ray.Init(next_origin, next_origin - Vector(0, 0, 4.f));
+			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
+
+			if (tr.fraction < 1.f && new_record->m_vecVelocity.z <= 0.f) {
+				next_origin.z  = tr.endpos.z;
+				new_record->m_vecVelocity.z = 0.f;
+				new_record->m_fFlags |= FL_ONGROUND;
+			}
+		}
+
+		new_record->m_vecOrigin = next_origin;
 	}
 
 	new_record->m_vecAbsOrigin = new_record->m_vecOrigin;
 
-	Utils::MatrixMove(new_record->aim_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
+	Utils::MatrixMove(new_record->aim_matrix,     128, record->m_vecOrigin, new_record->m_vecOrigin);
 	Utils::MatrixMove(new_record->opposite_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
 
 	return new_record;
@@ -235,14 +263,17 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 
 	float deltaTime = correct - (TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime);
 
-	float tolerance = 0.2f - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
+	// Widen tolerance for choked records — each choked tick adds one interval of valid
+	// sim-time offset that the server will still accept.
+	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
+	float tolerance = 0.2f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
 
 	if (std::abs(deltaTime) >= tolerance)
 		return false;
 
-	if (GlobalVars->tickcount - record->update_tick < 0)
+	// Allow 1 tick of slack on the negative-BT guard to absorb choke rounding errors.
+	if (GlobalVars->tickcount - record->update_tick < -1)
 		return false;
-
 	return true;
 }
 
@@ -265,12 +296,14 @@ LagRecord* CLagCompensation::GetLastRecord(int idx) {
 void CLagCompensation::Reset(int index) {
 	if (index != -1) {
 		lag_records[index].clear();
+		lag_records_vec[index].clear();
 		max_simulation_time[index] = 0.f;
 		last_update_tick[index] = 0;
 	}
 	else {
-		for (int i = 0; i < lag_records.size(); i++) {
+		for (int i = 0; i < (int)lag_records.size(); i++) {
 			lag_records[i].clear();
+			lag_records_vec[i].clear();
 			max_simulation_time[i] = 0.f;
 			last_update_tick[i] = 0;
 		}

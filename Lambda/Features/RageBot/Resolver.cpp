@@ -373,6 +373,11 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 		if (layer.delta > mx) mx = layer.delta;
 	}
 
+	// All probes gave the same score — animstate isn't sensitive to desync right now.
+	// Returning 0 lets a higher-quality resolver (LBY, safetick) take over cleanly.
+	if ((mx - mn) < 1.0f)
+		return 0;
+
 	const float latency = GetLatency();
 
 	float ts = 1.f;
@@ -600,7 +605,7 @@ void CResolver::OnMiss(CBasePlayer* player, LagRecord* record)
 	if (record->resolver_data.is_shifting_tickbase) {
 		p->shift_side_votes     = 0;
 		p->shift_vote_count     = 0;
-		p->tickbase_side        = 0;
+		p->tickbase_side        = -record->resolver_data.side;
 		p->shift_ticks_observed = 0;
 	}
 
@@ -609,12 +614,21 @@ void CResolver::OnMiss(CBasePlayer* player, LagRecord* record)
 		p->safe_tick_simtime = 0.f;
 	}
 
+	if (record->resolver_data.resolver_type == ResolverType::LBY) {
+		p->lby_delta = -p->lby_delta;
+	}
+
 	if (record->resolver_data.resolver_type == ResolverType::MOVEANGLE
 	    || record->resolver_data.resolver_type == ResolverType::VELOCITY) {
 		p->move_yaw_delta_sum = 0.f;
 		p->move_yaw_samples   = 0;
-		p->move_yaw_side      = 0;
-		p->accel_side         = 0;
+		p->move_yaw_side      = -p->move_yaw_side;
+		p->accel_side         = -p->accel_side;
+	}
+
+	if (record->resolver_data.resolver_type == ResolverType::DEFAULT
+	    || record->resolver_data.resolver_type == ResolverType::MEMORY) {
+		p->last_side = -record->resolver_data.side;
 	}
 
 	++p->missed_shots;

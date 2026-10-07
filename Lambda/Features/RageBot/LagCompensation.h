@@ -57,14 +57,16 @@ struct LagRecord {
 };
 
 class CLagCompensation {
-	std::array<std::deque<LagRecord>, 64> lag_records;
-	std::array<std::deque<LagRecord>, 64> extrapolated_records;
+	std::array<std::deque<LagRecord>, 64>  lag_records;
+	std::array<std::deque<LagRecord>, 64>  extrapolated_records;
+	std::array<std::vector<LagRecord>, 64> lag_records_vec;
 	float max_simulation_time[64];
 	int last_update_tick[64];
 
 public:
 
 	__forceinline std::deque<LagRecord>& records(int index) { return lag_records[index]; };
+	__forceinline std::vector<LagRecord>& records_vec(int index) { return lag_records_vec[index]; };
 
 	LagRecord* BackupData(CBasePlayer* player);
 

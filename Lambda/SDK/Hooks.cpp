@@ -548,7 +548,7 @@ void __fastcall hkFrameStageNotify(IBaseClientDLL* thisptr, void* edx, EClientFr
 
 	switch (stage) {
 	case FRAME_RENDER_START: {
-		ctx.active_app = EngineClient->IsActiveApp();
+		ctx.active_app = EngineClient->IsActiveApp() && (GetForegroundWindow() == FindWindowA("Valve001", nullptr));
 		ctx.console_visible = EngineClient->Con_IsVisible();
 
 		static void* hud_chat = nullptr;

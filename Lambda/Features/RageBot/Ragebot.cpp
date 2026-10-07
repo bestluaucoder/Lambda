@@ -304,20 +304,16 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 		INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
 		if (nci) {
 			float in_latency = nci->GetLatency(FLOW_INCOMING);
-			int in_ticks = TIME_TO_TICKS(in_latency);
+			int pred_ticks = TIME_TO_TICKS(in_latency);
+
+			pred_ticks = std::clamp(pred_ticks, 1, 12);
 
 			LagRecord* newest = target_records.front();
-
-			int choke_ticks = (newest->m_nChokedTicks > 0) ? newest->m_nChokedTicks : 1;
-			int pred_ticks = in_ticks + choke_ticks;
-
-			if (pred_ticks > 0 && pred_ticks <= 17) {
-				LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest, pred_ticks);
-				if (extrapolated) {
-					while (!target_records.empty())
-						target_records.pop();
-					target_records.push(extrapolated);
-				}
+			LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest, pred_ticks);
+			if (extrapolated) {
+				while (!target_records.empty())
+					target_records.pop();
+				target_records.push(extrapolated);
 			}
 		}
 	}
@@ -442,7 +438,14 @@ void CRagebot::SelectBestPoint(ScannedTarget_t* target) {
 	for (const auto& point : target->points) {
 		int eff_priority = point.priority;
 		if (point.record && GlobalVars->tickcount - point.record->update_tick < 0)
-			eff_priority -= 4;
+			eff_priority -= 8;
+
+		// Slightly prefer lower backtrack (more recent) when scores are close
+		if (point.record) {
+			int bt = GlobalVars->tickcount - point.record->update_tick;
+			if (bt >= 0 && bt <= 4)
+				eff_priority += 1;
+		}
 
 		if (point.hitbox == HITBOX_HEAD) {
 			if (best_head_point.damage < target->minimum_damage || (eff_priority > best_head_point.eff_priority && point.damage > target->minimum_damage)) {
@@ -604,15 +607,22 @@ uintptr_t CRagebot::ThreadScan(int threadId) {
 }
 
 void CRagebot::ScanTarget(CBasePlayer* target) {
-	// Add debug message to indicate starting of ScanTarget function
-
 	std::queue<LagRecord*> records;
 	SelectRecords(target, records);
 
 	if (records.empty()) {
-		// Add debug message for empty records
 		WorldESP->AddDebugMessage(std::string(("CRageBot::ScanTarget")).append((" -> Records Empty |")).append((" L") + std::to_string(__LINE__)));
 		return;
+	}
+
+	// If the most recent record has breaking_lag_comp the server just teleported this
+	// enemy — any shot we fire now will get rejected as lagcomp failure. Skip this tick.
+	{
+		auto& recs = LagCompensation->records(target->EntIndex());
+		if (!recs.empty() && recs.back().breaking_lag_comp) {
+			WorldESP->AddDebugMessage(std::string("CRageBot::ScanTarget -> skip breaking_lag_comp"));
+			return;
+		}
 	}
 
 	float minimum_damage = CalcMinDamage(target);
@@ -654,7 +664,6 @@ void CRagebot::ScanTarget(CBasePlayer* target) {
 
 	SelectBestPoint(result);
 	if (!result->best_point.record || result->best_point.damage < 2) {
-		// Add debug message if best point is not selected or damage is low
 		WorldESP->AddDebugMessage(std::string(("CRageBot::ScanTarget")).append((" -> !SelectBestPoint |")).append((" L") + std::to_string(__LINE__)));
 		return;
 	}

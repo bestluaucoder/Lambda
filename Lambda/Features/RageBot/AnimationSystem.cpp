@@ -185,9 +185,6 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 
     QAngle& eye_angles = player->m_angEyeAngles();
 
-    if (config.ragebot.aimbot.pitch_resolver->get() && (std::abs(eye_angles.pitch) > 90 || eye_angles.pitch < -88.f))
-        eye_angles.pitch = 89.f;
-
 	auto backupRealtime = GlobalVars->realtime;
 	auto backupCurtime = GlobalVars->curtime;
 	auto backupFrametime = GlobalVars->frametime;
@@ -214,53 +211,82 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 	memcpy(record->animlayers, player->GetAnimlayers(), 13 * sizeof(AnimationLayer));
 
 	if (record->prev_record) {
-		animstate->flMoveWeight = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight;
-		animstate->flPrimaryCycle = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flCycle;
+		animstate->flMoveWeight        = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight;
+		animstate->flPrimaryCycle      = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flCycle;
 		animstate->flAccelerationWeight = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight;
 
 		float server_time_diff = record->m_flServerTime - record->prev_record->m_flServerTime;
-		float sim_time_diff = record->m_flSimulationTime - record->prev_record->m_flSimulationTime;
-		float time_diff = 0.f;
+		float sim_time_diff    = record->m_flSimulationTime - record->prev_record->m_flSimulationTime;
+		float time_diff;
 
-		if (sim_time_diff < 0.f || abs(sim_time_diff - server_time_diff) > TICKS_TO_TIME(4))
+		if (sim_time_diff < 0.f || std::abs(sim_time_diff - server_time_diff) > TICKS_TO_TIME(4))
 			time_diff = server_time_diff;
 		else
 			time_diff = sim_time_diff;
 
-		if (time_diff <= GlobalVars->interval_per_tick)
+		if (time_diff < GlobalVars->interval_per_tick)
 			time_diff = GlobalVars->interval_per_tick;
 
-		record->m_nChokedTicks = std::clamp(TIME_TO_TICKS(time_diff) - 1, 0, 14);
+		// Choke estimation: time-diff is the primary source of truth.
+		// Alive-loop cycle delta is used only to cap obvious overestimates (e.g. from
+		// server-time jitter) — never to raise the count beyond what time says.
+		{
+			int time_ticks = TIME_TO_TICKS(time_diff);
+
+			const float prev_cycle    = record->prev_record->animlayers[ANIMATION_LAYER_ALIVELOOP].m_flCycle;
+			const float cur_cycle     = record->animlayers[ANIMATION_LAYER_ALIVELOOP].m_flCycle;
+			const float playback_rate = record->animlayers[ANIMATION_LAYER_ALIVELOOP].m_flPlaybackRate;
+
+			int cycle_ticks = time_ticks;
+			if (playback_rate > 0.0001f) {
+				float cycle_delta = cur_cycle - prev_cycle;
+				if (cycle_delta < 0.f)
+					cycle_delta += 1.f;
+				// Only trust cycle if delta is small (< half a revolution) — large deltas
+				// are wrap artefacts and would inflate the count wildly.
+				if (cycle_delta < 0.5f) {
+					float est = cycle_delta / (playback_rate * GlobalVars->interval_per_tick);
+					cycle_ticks = (std::clamp)(static_cast<int>(std::roundf(est)), 1, 14);
+				}
+			}
+
+			// Use the minimum of both estimates to avoid overestimating (negative BT).
+			record->m_nChokedTicks = (std::clamp)((std::min)(time_ticks, cycle_ticks) - 1, 0, 14);
+		}
+
+		// Weapon action and idle layer context (reserved for future use)
+		bool weapon_action_active = record->animlayers[ANIMATION_LAYER_WEAPON_ACTION].m_flWeight > 0.01f;
 
 		Vector origin_diff = player->m_vecOrigin() - record->prev_record->m_vecOrigin;
-
 		player->m_vecVelocity() = origin_diff / time_diff;
 
 		if (player->m_fFlags() & FL_ONGROUND) {
 			player->m_vecVelocity().z = 0.f;
 
 			float max_speed = 260.f;
-
-			auto weapon = player->GetActiveWeapon();
-			CCSWeaponData* weapon_info = nullptr;
-
-			if (weapon)
-				weapon_info = weapon->GetWeaponInfo();
-
-			if (weapon_info)
-				max_speed = player->m_bIsScoped() ? weapon_info->flMaxSpeedAlt : weapon_info->flMaxSpeed;
+			auto  weapon      = player->GetActiveWeapon();
+			if (weapon) {
+				CCSWeaponData* winfo = weapon->GetWeaponInfo();
+				if (winfo)
+					max_speed = player->m_bIsScoped() ? winfo->flMaxSpeedAlt : winfo->flMaxSpeed;
+			}
 
 			float vel_length = player->m_vecVelocity().Length();
 			if (vel_length > max_speed)
 				player->m_vecVelocity() *= max_speed / vel_length;
 
+			// Strafe-change velocity correction.
+			// Layer 11 (STRAFECHANGE) weight encodes how far through the acceleration ramp
+			// the player is. The 0.35f/0.55f constants are the correct CS:GO acceleration
+			// curve parameters. Only apply when playback rate is stable (no new strafe input).
 			float anim_speed = 0.f;
 
 			if (record->prev_record->m_fFlags & FL_ONGROUND
-				&& record->animlayers[11].m_flWeight > 0.f
-				&& record->animlayers[11].m_flWeight < 1.f
-				&& record->animlayers[11].m_flPlaybackRate == record->prev_record->animlayers[11].m_flPlaybackRate) {
-				auto anim_modifier = 0.35f * (1.f - record->animlayers[11].m_flWeight);
+				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight > 0.f
+				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight < 1.f
+				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flPlaybackRate
+				   == record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flPlaybackRate) {
+				float anim_modifier = 0.35f * (1.f - record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight);
 				if (anim_modifier > 0.f && anim_modifier < 1.f) {
 					float vel_mod = anim_modifier + 0.55f;
 					if (vel_mod < 0.9f || vel_length < vel_mod * max_speed)
@@ -271,6 +297,7 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			if (anim_speed > 0.f && player->m_vecVelocity().Length() > 0.001f)
 				player->m_vecVelocity() *= anim_speed / player->m_vecVelocity().Length();
 
+			// Zero velocity when movement layer says not moving and no origin delta
 			if (record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight <= 0.f
 				&& origin_diff.Length2DSqr() < 1.f)
 				player->m_vecVelocity() = Vector(0, 0, 0);
@@ -279,6 +306,7 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			float last_vel = record->prev_record->m_vecVelocity.LengthSqr();
 			float cur_vel  = player->m_vecVelocity().LengthSqr();
 
+			// Reject landing impulse spikes
 			if (last_vel > (100.f * 100.f) && last_vel * 16.f < cur_vel)
 				player->m_vecVelocity() *= 0.22f;
 

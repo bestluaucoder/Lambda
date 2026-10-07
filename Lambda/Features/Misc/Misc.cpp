@@ -60,26 +60,16 @@ static const char* trashtalk_kill_phrases[] = {
 	"discord.gg/lmbda stop using your shitty cheat dog",
 	"Maybe if you used lambda you wouldnt stress",
 	"lmao you just died to a open sourced cheat <3",
-	"open source > your paid paste, discord.gg/lmbda",
-	"get lambda or get free, pick one",
 	"that was a free cheat by the way",
-	"imagine paying monthly for that resolver",
 	"your config is the only thing holding you back",
 	"another one for the open source team <3",
-	"lambda beta and you still cant handle it"
 };
 
 static const char* trashtalk_death_phrases[] = {
 	"your lucky lambda is still in beta, otherwise i wouldve shit on you",
-	"sigh, you got lucky this time...",
 	"lambda isnt performing very well, maybe its config issue?",
 	"hey lambda user, fix your config you bot",
 	"one tick off, ill take it next round",
-	"thats a config issue not a cheat issue",
-	"beta build, beta results, still free though",
-	"resolver said no. discord.gg/lmbda",
-	"i had 1 hp dont act like you outplayed me",
-	"note to self, stop using the default config"
 };
 
 static std::vector<std::string> trashtalk_pending;
