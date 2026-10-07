@@ -21,9 +21,6 @@
 #include "../Features/RageBot/Ragebot.h"
 #include "../Features/Visuals/Elements.h"
 
-
-
-
 CMenu* Menu = new CMenu;
 
 namespace font {
@@ -50,7 +47,7 @@ void CMenu::Setup() {
 
     ImGui::StyleColorsDark();
 
-    // Enforce strict 2020 style rules (no curves) and palette adjustments
+    
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
     style.ChildRounding = 0.0f;
@@ -58,20 +55,20 @@ void CMenu::Setup() {
     style.PopupRounding = 0.0f;
     style.GrabRounding = 0.0f;
 
-    // Slim, razor-thin sliders
+    
     style.FramePadding.y = 3.0f;
     style.GrabMinSize = 6.0f;
 
-    // Borders (thin)
+    
     style.WindowBorderSize = 1.0f;
     style.ChildBorderSize = 1.0f;
     style.FrameBorderSize = 1.0f;
     style.PopupBorderSize = 1.0f;
 
-    // Tight horizontal spacing for top tabs
+    
     style.ItemSpacing.x = 2.0f;
 
-    // Apply palette from imgui_settings (deep charcoal backgrounds, muted accent, etc.)
+    
     style.Colors[ImGuiCol_WindowBg] = c::background::bg;
     style.Colors[ImGuiCol_ChildBg] = c::child::bg;
     style.Colors[ImGuiCol_Border] = c::child::border;
@@ -145,13 +142,13 @@ void CMenu::Draw() {
             auto p = ImVec2(ImGui::GetWindowPos().x + ImGui::GetStyle().WindowPadding.x, ImGui::GetWindowPos().y + ImGui::GetStyle().WindowPadding.y); 
             auto draw = ImGui::GetWindowDrawList();
             
-            draw->AddRectFilled(p, ImVec2(p.x + s.x, p.y + s.y), ImColor(33, 33, 33)); //tabs bg
-            draw->AddRectFilled(ImVec2(p.x, p.y + 20), ImVec2(p.x + s.x, p.y + s.y - 20), ImColor(25, 25, 25)); // content bg
+            draw->AddRectFilled(p, ImVec2(p.x + s.x, p.y + s.y), ImColor(33, 33, 33)); 
+            draw->AddRectFilled(ImVec2(p.x, p.y + 20), ImVec2(p.x + s.x, p.y + s.y - 20), ImColor(25, 25, 25)); 
 
-            draw->AddLine(ImVec2(p.x, p.y + 20), ImVec2(p.x + s.x, p.y + 20), ImColor(89, 113, 162)); // tab seperator
-            draw->AddLine(ImVec2(p.x, p.y + s.y - 20), ImVec2(p.x + s.x, p.y + s.y - 20), ImColor(89, 113, 162)); // bottom seperator
+            draw->AddLine(ImVec2(p.x, p.y + 20), ImVec2(p.x + s.x, p.y + 20), ImColor(89, 113, 162)); 
+            draw->AddLine(ImVec2(p.x, p.y + s.y - 20), ImVec2(p.x + s.x, p.y + s.y - 20), ImColor(89, 113, 162)); 
             
-            draw->AddRect(p, ImVec2(p.x + s.x, p.y + s.y), ImColor(0, 0, 0)); // black outline
+            draw->AddRect(p, ImVec2(p.x + s.x, p.y + s.y), ImColor(0, 0, 0)); 
             
             const char* title = "KoolAidz";
             ImVec2 title_size = ImGui::CalcTextSize(title);
@@ -169,7 +166,7 @@ void CMenu::Draw() {
             ImGui::EndGroup();
             ImGui::PopFont();
             
-            ImGui::SetCursorPosY(20); // offset for content below tab separator
+            ImGui::SetCursorPosY(20); 
 
             for (auto group : m_Tabs[tabs]->groupboxes)
                 group->Render();
@@ -208,12 +205,12 @@ bool CMenu::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 void CMenu::RecalculateGroupboxes() {
     const float sp  = 16.f;
-    const float tab_h   = 20.f; // height of top tab bar
-    const float bot_h   = 20.f; // height of bottom status bar
-    const float padding = 4.f;  // extra bottom breathing room
+    const float tab_h   = 20.f; 
+    const float bot_h   = 20.f; 
+    const float padding = 4.f;  
 
     const float content_w = m_WindowSize.x - sp * 2.f;
-    const float content_h = m_WindowSize.y - tab_h - bot_h - sp - padding; // available vertical space
+    const float content_h = m_WindowSize.y - tab_h - bot_h - sp - padding; 
     const float groupbox_width = (content_w - sp) / 2.f;
     const ImVec2 base_position(sp, tab_h + sp * 0.5f);
 
@@ -304,6 +301,7 @@ void CMenuGroupbox::Render() {
         el->Render();
     }
 
+    ImGui::PopClipRect(); 
     ImGui::EndChild();
     ImGui::EndGroup();
 }

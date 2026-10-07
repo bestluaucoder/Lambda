@@ -84,7 +84,7 @@ void CMenu::SetupUI() {
 	config.ragebot.aimbot.roll_angle = aimbot->AddSliderInt("Roll Angle", -90, 90, 0);
 
 	config.ragebot.aimbot.extrapolation->SetVisible(false);
-	//config.ragebot.aimbot.show_aimpoints->SetVisible(false);
+	
 
 	config.ragebot.selected_weapon = aim_settings->AddComboBox("Current Weapon", { "Global", "AWP", "Autosniper", "Scout", "Deagle", "Revolver", "Pistol" });
 
