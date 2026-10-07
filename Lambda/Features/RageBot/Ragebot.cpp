@@ -269,7 +269,6 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 			continue;
 		}
 
-		// skip records from the future — negative backtrack causes prediction errors
 		if (GlobalVars->tickcount - record->update_tick < 0)
 			continue;
 
@@ -299,6 +298,28 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 		auto last_record = &records.back();
 		if (!last_record->shifting_tickbase && !last_record->invalid && GlobalVars->tickcount - last_record->update_tick >= 0)
 			target_records.push(last_record);
+	}
+
+	if (settings.prediction && settings.prediction->get() && !target_records.empty()) {
+		INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
+		if (nci) {
+			float in_latency = nci->GetLatency(FLOW_INCOMING);
+			int in_ticks = TIME_TO_TICKS(in_latency);
+
+			LagRecord* newest = target_records.front();
+
+			int choke_ticks = (newest->m_nChokedTicks > 0) ? newest->m_nChokedTicks : 1;
+			int pred_ticks = in_ticks + choke_ticks;
+
+			if (pred_ticks > 0 && pred_ticks <= 17) {
+				LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest, pred_ticks);
+				if (extrapolated) {
+					while (!target_records.empty())
+						target_records.pop();
+					target_records.push(extrapolated);
+				}
+			}
+		}
 	}
 }
 

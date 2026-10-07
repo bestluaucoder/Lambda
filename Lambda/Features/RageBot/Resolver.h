@@ -46,7 +46,7 @@ struct ResolverData_t {
 	R_AntiAimType antiaim_type  = R_AntiAimType::UNKNOWN;
 	ResolverType  resolver_type = ResolverType::NONE;
 
-	ResolverLayer_t layers[8];
+	ResolverLayer_t layers[10];
 
 	float max_desync_delta     = 0.f;
 	int   side                 = 0;

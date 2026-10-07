@@ -101,6 +101,7 @@ void CMenu::SetupUI() {
 		settings.delay_shot = aim_settings->AddSliderInt(std::format("[{}] {}", settings.weapon_name, "Delay shot"), 0, 32, 0);
 		settings.strict_hitchance = aim_settings->AddCheckBox(std::format("[{}] {}", settings.weapon_name, "Strict hitchance"));
 		settings.aim_head_if_safe = aim_settings->AddCheckBox(std::format("[{}] {}", settings.weapon_name, "Aim head if safe"));
+		settings.prediction = aim_settings->AddCheckBox(std::format("[{}] {}", settings.weapon_name, "Prediction"));
 	};
 
 	setup_weapon_config(config.ragebot.weapons.global);
@@ -125,7 +126,7 @@ void CMenu::SetupUI() {
 	config.antiaim.angles.legacy_desync = aa_angles->AddCheckBox("Legacy Desync");
 
 	config.antiaim.fakelag.enabled = fake_lag->AddCheckBox("Enabled");
-	config.antiaim.fakelag.limit = fake_lag->AddSliderInt("Limit", 1, 15, 13);
+	config.antiaim.fakelag.limit = fake_lag->AddSliderInt("Limit", 1, 17, 13);
 	config.antiaim.fakelag.variability = fake_lag->AddSliderInt("Variabaility", 0, 14, 1);
 
 	config.antiaim.misc.fake_duck = aa_other->AddKeyBind("Fake duck");

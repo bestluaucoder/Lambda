@@ -46,7 +46,6 @@ void CMenu::Setup() {
     if (!font::general) font::general = im_io->Fonts->AddFontFromMemoryTTF(mulish, sizeof(mulish), 14.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
     if (!font::tab) font::tab = im_io->Fonts->AddFontFromMemoryTTF(mulish, sizeof(mulish), 12.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
 
-    im_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     im_io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
     ImGui::StyleColorsDark();
