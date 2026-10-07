@@ -208,16 +208,19 @@ float CRagebot::CalcHitchance(QAngle angles, LagRecord* target, int hitbox) {
 bool CRagebot::CompareRecords(LagRecord* a, LagRecord* b) {
 	const Vector vec_diff = a->m_vecOrigin - b->m_vecOrigin;
 
-	if (vec_diff.LengthSqr() > 1.f)
+	// Looser position threshold - 2 units instead of 1
+	if (vec_diff.LengthSqr() > 4.f)
 		return false;
 
 	QAngle angle_diff = a->m_angEyeAngles - b->m_angEyeAngles;
 	angle_diff.Normalize();
 
-	if (angle_diff.yaw > 90.f)
+	// More lenient yaw diff - allow wider angles
+	if (std::abs(angle_diff.yaw) > 120.f)
 		return false;
 
-	if (angle_diff.pitch > 10.f)
+	// More lenient pitch diff
+	if (std::abs(angle_diff.pitch) > 15.f)
 		return false;
 
 	if (a->breaking_lag_comp != b->breaking_lag_comp)

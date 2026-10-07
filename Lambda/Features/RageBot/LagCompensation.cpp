@@ -147,7 +147,8 @@ void CLagCompensation::OnNetUpdate() {
         }
 
 		if (prev_valid)
-			new_record->breaking_lag_comp = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr() > 4096.f;
+			// Increased threshold from 4096 (64 units²) to 9216 (96 units²) to reduce false positives
+			new_record->breaking_lag_comp = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr() > 9216.f;
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
 			if (config.visuals.esp.share_with_enemies->get() || !pl->IsTeammate()) {
@@ -266,7 +267,8 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 	// Widen tolerance for choked records — each choked tick adds one interval of valid
 	// sim-time offset that the server will still accept.
 	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
-	float tolerance = 0.2f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
+	// Increased base tolerance to reduce false rejections
+	float tolerance = 0.25f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
 
 	if (std::abs(deltaTime) >= tolerance)
 		return false;
