@@ -111,6 +111,30 @@ void __fastcall hkHudUpdate(IBaseClientDLL* thisptr, void* edx, bool bActive) {
 	WorldESP->Draw();
 	WorldESP->OtherESP();
 	WorldESP->RenderMarkers();
+	
+	// Watermark
+	{
+		#ifdef _DEBUG
+			const char* build_type = "Debug";
+		#else
+			const char* build_type = "Release";
+		#endif
+		
+		char watermark_text[128];
+		sprintf_s(watermark_text, "Lambda [%s] | .gg/lmbda", build_type);
+		
+		int screen_w, screen_h;
+		EngineClient->GetScreenSize(screen_w, screen_h);
+		
+		Vector2 text_size = Render->CalcTextSize(watermark_text, Verdana);
+		Vector2 pos = Vector2(screen_w - text_size.x - 10.f, 10.f);
+		
+		Render->BoxFilled(pos - Vector2(5, 3), pos + text_size + Vector2(5, 3), Color(33, 33, 33, 240));
+		Render->Box(pos - Vector2(5, 3), pos + text_size + Vector2(5, 3), Color(0, 0, 0, 255), 0, 1);
+		Render->Line(pos - Vector2(5, 3), Vector2(pos.x + text_size.x + 5, pos.y - 3), Color(89, 113, 162, 255));
+		Render->Line(pos - Vector2(5, 2), Vector2(pos.x + text_size.x + 5, pos.y - 2), Color(89, 113, 162, 255));
+		Render->Text(watermark_text, pos, Color(200, 200, 200, 255), Verdana, TEXT_DROPSHADOW);
+	}
 
 	NadePrediction.Start();
 	NadePrediction.Draw();

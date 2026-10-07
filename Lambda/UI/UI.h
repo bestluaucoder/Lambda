@@ -36,7 +36,7 @@ enum class WidgetType {
 	MultiCombo,
 	Button,
 	Input,
-	Any // used for menu.find only
+	Any 
 };
 
 class IBaseWidget {
@@ -75,7 +75,7 @@ public:
 	bool hidden = false;
 
 	bool get();
-	void set(bool n) { toggled = n; }; // for toggle mode only
+	void set(bool n) { toggled = n; }; 
 
 	virtual WidgetType GetType() { return WidgetType::KeyBind; };
 	virtual void Render();

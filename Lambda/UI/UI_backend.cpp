@@ -37,12 +37,44 @@ void CMenu::Setup() {
 
     ImFontConfig cfg;
 
-    font::general = im_io->Fonts->AddFontFromMemoryTTF(mulish, sizeof(mulish), 19.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
-    font::tab = im_io->Fonts->AddFontFromMemoryTTF(mulish, sizeof(mulish), 15.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
+    font::general = im_io->Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\verdana.ttf", 14.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
+    font::tab = im_io->Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\verdana.ttf", 12.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
+    
+    if (!font::general) font::general = im_io->Fonts->AddFontFromMemoryTTF(mulish, sizeof(mulish), 14.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
+    if (!font::tab) font::tab = im_io->Fonts->AddFontFromMemoryTTF(mulish, sizeof(mulish), 12.f, &cfg, im_io->Fonts->GetGlyphRangesCyrillic());
 
     im_io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
     ImGui::StyleColorsDark();
+
+    
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f;
+    style.ChildRounding = 0.0f;
+    style.FrameRounding = 0.0f;
+    style.PopupRounding = 0.0f;
+    style.GrabRounding = 0.0f;
+
+    
+    style.FramePadding.y = 3.0f;
+    style.GrabMinSize = 6.0f;
+
+    
+    style.WindowBorderSize = 1.0f;
+    style.ChildBorderSize = 1.0f;
+    style.FrameBorderSize = 1.0f;
+    style.PopupBorderSize = 1.0f;
+
+    
+    style.ItemSpacing.x = 2.0f;
+
+    
+    style.Colors[ImGuiCol_WindowBg] = c::background::bg;
+    style.Colors[ImGuiCol_ChildBg] = c::child::bg;
+    style.Colors[ImGuiCol_Border] = c::child::border;
+    style.Colors[ImGuiCol_CheckMark] = c::checkbox::checkmark_active;
+    style.Colors[ImGuiCol_SliderGrab] = c::accent;
+    style.Colors[ImGuiCol_SliderGrabActive] = c::accent;
 
     D3DDEVICE_CREATION_PARAMETERS creationParameters = { };
     if (FAILED(DirectXDevice->GetCreationParameters(&creationParameters)))
@@ -65,7 +97,7 @@ void CMenu::Setup() {
     pic::tab::configs = Render->LoadImageFromMemory(configs, sizeof(configs), Vector2(20.f, 20.f));
     pic::tab::scripts = Render->LoadImageFromMemory(scripts, sizeof(scripts), Vector2(20.f, 20.f));
 
-    m_WindowSize  = ImVec2(950, 700);
+    m_WindowSize  = c::background::size;
     m_ItemSpacing = ImVec2(8, 8);
 
     SetupUI();
@@ -83,6 +115,8 @@ void CMenu::Draw() {
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    
+
     static bool insert_pressed = false;
     const bool is_active = ctx.active_app || (GetForegroundWindow() == FindWindowA("Valve001", nullptr));
 
@@ -101,62 +135,41 @@ void CMenu::Draw() {
     }
 
     if (m_bMenuOpened) {
-        ImGui::GetStyle().ItemSpacing   = ImVec2(8, 8);
-        ImGui::GetStyle().WindowPadding = ImVec2(0, 0);
-        ImGui::GetStyle().ScrollbarSize = 5.f;
-
         ImGui::SetNextWindowSize(m_WindowSize);
-
-        ImGui::Begin("##lambda_menu", nullptr,
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoBackground |
-            ImGuiWindowFlags_NoBringToFrontOnFocus |
-            ImGuiWindowFlags_NoScrollbar |
-            ImGuiWindowFlags_NoResize);
+        ImGui::Begin("##lambda_menu", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
         {
-            const ImVec2 wp  = ImGui::GetWindowPos();
-            const ImVec2 ws  = ImGui::GetContentRegionMax();
-            const float  sw  = 52.f;
-            const float  sp  = 1.f;
+            auto s = ImVec2(ImGui::GetWindowSize().x - ImGui::GetStyle().WindowPadding.x * 2, ImGui::GetWindowSize().y - ImGui::GetStyle().WindowPadding.y * 2); 
+            auto p = ImVec2(ImGui::GetWindowPos().x + ImGui::GetStyle().WindowPadding.x, ImGui::GetWindowPos().y + ImGui::GetStyle().WindowPadding.y); 
+            auto draw = ImGui::GetWindowDrawList();
+            
+            draw->AddRectFilled(p, ImVec2(p.x + s.x, p.y + s.y), ImColor(33, 33, 33)); 
+            draw->AddRectFilled(ImVec2(p.x, p.y + 20), ImVec2(p.x + s.x, p.y + s.y - 20), ImColor(25, 25, 25)); 
 
-            m_WindowSize  = ws;
-            m_ItemSpacing = ImGui::GetStyle().ItemSpacing;
-
-            auto* bg_dl = ImGui::GetBackgroundDrawList();
-            auto* dl    = ImGui::GetWindowDrawList();
-
-            bg_dl->AddRectFilled(wp, wp + ImVec2(ws), ImGui::GetColorU32(c::background::bg), c::background::rounding);
-
-            dl->AddRectFilled(wp, wp + ImVec2(sw, ws.y), ImGui::GetColorU32(c::child::bg), 0.f);
-            dl->AddRectFilled(wp + ImVec2(sw, 0), wp + ImVec2(sw + sp, ws.y), ImGui::GetColorU32(ImVec4(0.12f, 0.12f, 0.12f, 1.f)), 0.f);
-
-            const float logo_cx = wp.x + sw * 0.5f;
-            const float logo_cy = wp.y + 22.f;
-            dl->AddImage(pic::logo.texture, ImVec2(logo_cx - 14.f, logo_cy - 14.f), ImVec2(logo_cx + 14.f, logo_cy + 14.f));
-
+            draw->AddLine(ImVec2(p.x, p.y + 20), ImVec2(p.x + s.x, p.y + 20), ImColor(89, 113, 162)); 
+            draw->AddLine(ImVec2(p.x, p.y + s.y - 20), ImVec2(p.x + s.x, p.y + s.y - 20), ImColor(89, 113, 162)); 
+            
+            draw->AddRect(p, ImVec2(p.x + s.x, p.y + s.y), ImColor(0, 0, 0)); 
+            
+            const char* title = "KoolAidz";
+            ImVec2 title_size = ImGui::CalcTextSize(title);
+            draw->AddText(ImVec2(p.x + s.x - title_size.x - 10, p.y + (20.f - title_size.y) * 0.5f), ImColor(200, 200, 200), title);
+            
             static int tabs = 0;
-
-            ImGui::SetCursorPos(ImVec2(4.f, 48.f));
+            ImGui::PushFont(font::general);
+            ImGui::SetCursorPosX(20);
+            ImGui::SetCursorPosY(6);
             ImGui::BeginGroup();
             for (int i = 0; i < (int)m_Tabs.size(); i++) {
-                CMenuTab* tab = m_Tabs[i];
-                if (ImGui::Tab(i == tabs, tab->icon, tab->name.c_str(), ImVec2(sw - 8.f, 40.f), tab->icon_size))
-                    tabs = i;
+                if (ImGui::tab(m_Tabs[i]->name.c_str(), i == tabs)) tabs = i; 
+                ImGui::SameLine();
             }
             ImGui::EndGroup();
+            ImGui::PopFont();
+            
+            ImGui::SetCursorPosY(20); 
 
-            static float tab_alpha = 0.f;
-            static float tab_add   = 0.f;
-            static int   active_tab = 0;
-
-            tab_alpha = ImClamp(tab_alpha + (4.f * ImGui::GetIO().DeltaTime * (tabs == active_tab ? 1.f : -1.f)), 0.f, 1.f);
-            if (tab_alpha == 0.f && tab_add == 0.f)
-                active_tab = tabs;
-
-            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, tab_alpha * ImGui::GetStyle().Alpha);
-            for (auto group : m_Tabs[active_tab]->groupboxes)
+            for (auto group : m_Tabs[tabs]->groupboxes)
                 group->Render();
-            ImGui::PopStyleVar();
         }
         ImGui::End();
     }
@@ -191,13 +204,15 @@ bool CMenu::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 void CMenu::RecalculateGroupboxes() {
-    const float sw  = 53.f;
-    const float sp  = 8.f;
+    const float sp  = 16.f;
+    const float tab_h   = 20.f; 
+    const float bot_h   = 20.f; 
+    const float padding = 4.f;  
 
-    const float content_w = m_WindowSize.x - sw - sp;
-    const float content_h = m_WindowSize.y - sp * 2.f;
+    const float content_w = m_WindowSize.x - sp * 2.f;
+    const float content_h = m_WindowSize.y - tab_h - bot_h - sp - padding; 
     const float groupbox_width = (content_w - sp) / 2.f;
-    const ImVec2 base_position(sw, sp);
+    const ImVec2 base_position(sp, tab_h + sp * 0.5f);
 
     for (auto tab : m_Tabs) {
         std::vector<CMenuGroupbox*>& groupboxes = tab->groupboxes;
@@ -218,7 +233,7 @@ void CMenu::RecalculateGroupboxes() {
 
         for (auto gb : groupboxes) {
             gb->position.y = base_position.y + current_position[gb->column];
-            gb->position.x = base_position.x + (gb_width + sp) * gb->column;
+            gb->position.x = base_position.x + (gb_width + sp) * gb->column + (gb->column == 1 ? 8.f : 0.f);
             gb->size.x     = gb_width;
             gb->size.y     = available_space[gb->column] * (gb->relative_size / total_relative[gb->column]);
 
@@ -273,18 +288,10 @@ CMenuGroupbox* CMenu::AddGroupBox(const std::string& tab, const std::string& gro
 void CMenuGroupbox::Render() {
     ImGui::SetCursorPos(position);
 
-    auto* dl       = ImGui::GetWindowDrawList();
-    ImVec2 wp      = ImGui::GetWindowPos();
-    ImVec2 abs_min = wp + position;
-    ImVec2 abs_max = abs_min + size;
-
-    dl->AddRectFilled(abs_min, abs_max, ImGui::GetColorU32(c::child::bg), c::child::rounding);
-    dl->AddRectFilled(abs_min, ImVec2(abs_max.x, abs_min.y + 2.f), ImGui::GetColorU32(c::accent), c::child::rounding);
-
     ImGui::BeginGroup();
-    ImGui::BeginChild(name.c_str(), size);
+    ImGui::MenuChild(name.c_str(), size, false);
 
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6.f);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2.f);
 
     for (int i = 0; i < widgets.size(); i++) {
         auto el = widgets[i];
@@ -294,6 +301,7 @@ void CMenuGroupbox::Render() {
         el->Render();
     }
 
+    ImGui::PopClipRect(); 
     ImGui::EndChild();
     ImGui::EndGroup();
 }
@@ -343,6 +351,8 @@ void CCheckBox::Render() {
 }
 
 void CSliderInt::Render() {
+    ImGui::SetNextItemWidth(-1);
+
     if (ImGui::SliderInt(name.c_str(), &value, min, max, format.c_str(), flags)) {
         for (auto& cb : callbacks)
             cb();
@@ -357,6 +367,8 @@ void CSliderInt::Render() {
 }
 
 void CSliderFloat::Render() {
+    ImGui::SetNextItemWidth(-1);
+
     if (ImGui::SliderFloat(name.c_str(), &value, min, max, format.c_str(), flags)) {
         for (auto& cb : callbacks)
             cb();
@@ -411,6 +423,8 @@ void CColorPicker::Render() {
 }
 
 void CComboBox::Render() {
+    ImGui::SetNextItemWidth(-1);
+
     if (ImGui::Combo(name.c_str(), &value, elements.data(), static_cast<int>(elements.size()), 5, ImGui::GetContentRegionMax().x - ImGui::GetStyle().WindowPadding.x)) {
         for (auto& cb : callbacks)
             cb();
@@ -425,6 +439,8 @@ void CComboBox::Render() {
 }
 
 void CMultiCombo::Render() {
+    ImGui::SetNextItemWidth(-1);
+
     if (ImGui::MultiCombo(name.c_str(), value, elements.data(), elements.size(), ImGui::GetContentRegionMax().x - ImGui::GetStyle().WindowPadding.x)) {
         for (auto& cb : callbacks)
             cb();
