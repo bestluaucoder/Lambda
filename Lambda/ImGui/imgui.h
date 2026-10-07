@@ -340,7 +340,9 @@ namespace ImGui
     //    returned true. Begin and BeginChild are the only odd ones out. Will be fixed in a future update.]
     IMGUI_API bool          BeginChild(const char* str_id, const ImVec2& size = ImVec2(0, 0), bool border = false, ImGuiWindowFlags flags = 0);
     IMGUI_API bool          BeginChild(ImGuiID id, const ImVec2& size = ImVec2(0, 0), bool border = false, ImGuiWindowFlags flags = 0);
+    IMGUI_API bool          MenuChild(const char* str_id, const ImVec2& size_arg = ImVec2(0, 0), bool sub_tab = false, ImGuiWindowFlags extra_flags = 0);
     IMGUI_API void          EndChild();
+    IMGUI_API bool          tab(const char* label, bool selected);
 
     // Windows Utilities
     // - 'current window' = the window we are appending into while inside a Begin()/End() block. 'next window' = next window we will Begin() into.

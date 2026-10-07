@@ -2,19 +2,24 @@
 
 namespace c {
 
-    inline ImVec4 accent = ImColor(255, 75, 75, 255);
+    // Blue accent
+    inline ImVec4 accent = ImColor(89, 113, 162, 255);
 
     namespace background {
-        inline ImVec4 bg     = ImColor(15, 15, 15, 255);
-        inline ImVec2 size   = ImVec2(950, 700);
-        inline float rounding = 8.f;
+        // Window background
+        inline ImVec4 bg     = ImColor(33, 33, 33, 255);
+        inline ImVec2 size   = ImVec2(800, 460);
+        // Strict 0 rounding for crisp corners
+        inline float rounding = 0.f;
     }
 
     namespace child {
-        inline ImVec4 bg          = ImColor(22, 22, 22, 255);
-        inline ImVec4 border      = ImColor(255, 75, 75, 60);
+        // Slightly darker than window background
+        inline ImVec4 bg          = ImColor(25, 25, 25, 255);
+        // Low-contrast thin border
+        inline ImVec4 border      = ImColor(89, 113, 162, 255);
         inline ImVec4 border_text = ImColor(200, 200, 200, 255);
-        inline float rounding     = 6.f;
+        inline float rounding     = 0.f;
     }
 
     namespace tabs {
@@ -27,18 +32,20 @@ namespace c {
     }
 
     namespace checkbox {
-        inline ImVec4 checkmark_active   = ImColor(15, 15, 15, 255);
+        // Active checkmark uses the muted lavender-pink accent
+        inline ImVec4 checkmark_active   = ImColor(213, 166, 189, 255);
         inline ImVec4 checkmark_inactive = ImColor(0, 0, 0, 0);
         inline ImVec4 i_bg_hov = ImColor(45, 45, 45, 255);
         inline ImVec4 i_bg     = ImColor(32, 32, 32, 255);
-        inline float rounding  = 3.f;
+        inline float rounding  = 0.f;
     }
 
     namespace slider {
+        // slider fill/grab will use the accent from style; keep circle neutral
         inline ImVec4 circle   = ImColor(255, 255, 255, 255);
         inline ImVec4 i_bg_hov = ImColor(45, 45, 45, 255);
         inline ImVec4 i_bg     = ImColor(32, 32, 32, 255);
-        inline float rounding  = 30.f;
+        inline float rounding  = 0.f;
     }
 
     namespace input_text {
@@ -57,14 +64,14 @@ namespace c {
     namespace combo {
         inline ImVec4 i_bg_selected = ImColor(18, 18, 18, 255);
         inline ImVec4 i_bg_hov      = ImColor(45, 45, 45, 255);
-        inline ImVec4 i_bg          = ImColor(32, 32, 32, 255);
-        inline float rounding       = 4.f;
+        inline ImVec4 i_bg          = ImColor(28, 28, 28, 255);
+        inline float rounding       = 0.f;
     }
 
     namespace selectable {
         inline ImVec4 i_bg_hov = ImColor(45, 45, 45, 255);
         inline ImVec4 i_bg     = ImColor(32, 32, 32, 255);
-        inline float rounding  = 4.f;
+        inline float rounding  = 0.f;
     }
 
     namespace scroll {
@@ -75,7 +82,7 @@ namespace c {
 
     namespace picker {
         inline ImVec4 i_bg = ImColor(15, 15, 15, 255);
-        inline float rounding = 4.f;
+        inline float rounding = 0.f;
     }
 
     namespace button {
@@ -85,9 +92,9 @@ namespace c {
     }
 
     namespace text {
-        inline ImVec4 text_active = ImColor(230, 230, 230, 255);
-        inline ImVec4 text_hov    = ImColor(180, 180, 180, 255);
-        inline ImVec4 text        = ImColor(110, 110, 110, 255);
+        inline ImVec4 text_active = ImColor(240, 240, 240, 255);
+        inline ImVec4 text_hov    = ImColor(200, 200, 200, 255);
+        inline ImVec4 text        = ImColor(160, 160, 160, 255);
     }
 
 }

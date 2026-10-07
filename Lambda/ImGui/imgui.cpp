@@ -5248,17 +5248,8 @@ bool ImGui::BeginChildEx(const char* name, ImGuiID id, const ImVec2& size_arg, b
         size.x = ImMax(content_avail.x + size.x, 4.0f); // Arbitrary minimum child size (0.0f causing too many issues)
     if (size.y <= 0.0f)
         size.y = ImMax(content_avail.y + size.y, 4.0f);
-    SetNextWindowPos(ImVec2(parent_window->DC.CursorPos + ImVec2(0, g.Style.ItemSpacing.y + 37) ));
-    SetNextWindowSize(size - ImVec2(0, g.Style.ItemSpacing.y + 37 ));
-
-    ImGui::GetWindowDrawList()->AddRectFilled(parent_window->DC.CursorPos + ImVec2(0, 0), parent_window->DC.CursorPos + ImVec2(size_arg), GetColorU32(c::child::bg), c::child::rounding);
-
-    ImGui::GetWindowDrawList()->AddRectFilled(parent_window->DC.CursorPos + ImVec2(g.Style.ItemSpacing), parent_window->DC.CursorPos + ImVec2(size_arg.x - (g.Style.ItemSpacing.x), 37 + (g.Style.ItemSpacing.y)), GetColorU32(c::child::border), c::child::rounding / 2);
-
-    ImGui::GetWindowDrawList()->AddText(parent_window->DC.CursorPos + ImVec2((size_arg.x / 2) - (ImGui::CalcTextSize(name).x / 2.f), ( (g.Style.ItemSpacing.y + 37 / 2) ) - (ImGui::CalcTextSize(name).y / 2) - 2 ), ImGui::GetColorU32(c::child::border_text), name);
-
-    ImGui::GetWindowDrawList()->AddLine(parent_window->DC.CursorPos + ImVec2( (size_arg.x / 2) - 20, (g.Style.ItemSpacing.y + 37 / 2) + (ImGui::CalcTextSize(name).y / 2) + 2), parent_window->DC.CursorPos + ImVec2((size_arg.x / 2) + 20, (g.Style.ItemSpacing.y + 37 / 2) + (ImGui::CalcTextSize(name).y / 2) + 2), GetColorU32(c::accent), 1.f);
-
+    SetNextWindowSize(size);
+    // Removed Lambda's hardcoded headers so MenuChild() can draw them properly.
 
     const char* temp_window_name;
     if (name)
@@ -5305,6 +5296,44 @@ bool ImGui::BeginChild(ImGuiID id, const ImVec2& size_arg, bool border, ImGuiWin
 {
     IM_ASSERT(id != 0);
     return BeginChildEx(NULL, id, size_arg, border, extra_flags);
+}
+
+bool ImGui::MenuChild(const char* str_id, const ImVec2& size_arg, bool sub_tab, ImGuiWindowFlags extra_flags)
+{
+    ImGuiWindow* parent_window = GetCurrentWindow();
+    ImGuiID id = parent_window->GetID(str_id);
+
+    ImGuiWindowFlags flags = extra_flags | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground
+        | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
+        | ImGuiWindowFlags_AlwaysUseWindowPadding;
+
+    PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 8));
+    PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(8, 6));
+
+    bool ret = BeginChildEx(str_id, id, size_arg, false, flags);
+
+    // Draw decorations on the PARENT's draw list at the child window's position
+    ImVec2 child_pos = GetWindowPos(); // current window is now the child
+    
+    // Background #1F1F1F
+    parent_window->DrawList->AddRectFilled(child_pos + ImVec2(0, sub_tab ? 20 : 5), child_pos + size_arg, ImColor(31, 31, 31));
+    parent_window->DrawList->AddRectFilled(child_pos + ImVec2(0, sub_tab ? 20 : 5), child_pos + ImVec2(size_arg.x, 25), ImColor(31, 31, 31));
+    
+    // Line under header (optional, keeping it as is or remove?)
+    // Let's keep it but they didn't ask to remove it, maybe it looks fine.
+    parent_window->DrawList->AddLine(child_pos + ImVec2(0, 25), child_pos + ImVec2(size_arg.x - 0.5f, 25), ImColor(89, 113, 162));
+    
+    // Black small outline
+    parent_window->DrawList->AddRect(child_pos + ImVec2(0, sub_tab ? 20 : 5), child_pos + size_arg, ImColor(0, 0, 0), 0.f);
+    
+    // Text - 4px from top of the header area, 12px from left to match WindowPadding
+    parent_window->DrawList->AddText(child_pos + ImVec2(12, sub_tab ? 24.f : 7.f), ImColor(200, 200, 200), str_id);
+
+    // Reserve spacing for the header inside the child window
+    InvisibleButton("##menu_child_spacing", ImVec2(size_arg.x, 18));
+
+    return ret;
 }
 
 void ImGui::EndChild()
@@ -6553,37 +6582,9 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->ScrollMax.x = ImMax(0.0f, window->ContentSize.x + window->WindowPadding.x * 2.0f - window->InnerRect.GetWidth());
         window->ScrollMax.y = ImMax(0.0f, window->ContentSize.y + window->WindowPadding.y * 2.0f - window->InnerRect.GetHeight());
 
-        float needed_scroll = CalcNextScrollFromScrollTargetAndClamp(window).y;
-        window->ScrollTarget = ImVec2(window->ScrollTarget.x, window->ScrollTarget.y + g.NextWindowData.ScrollVal.y);
-
-        const ImGuiID id = window->GetID(name);
-
-        static std::map<ImGuiID, float> anim;
-        auto it_anim = anim.find(id);
-
-        if (it_anim == anim.end())
-        {
-            anim.insert({ id, 0.f });
-            it_anim = anim.find(id);
-        }
-
-        if (it_anim->second < needed_scroll)
-            it_anim->second += abs(needed_scroll - it_anim->second) / 8.f * (1.f - g.IO.DeltaTime);
-        else if (it_anim->second > needed_scroll)
-            it_anim->second -= abs(needed_scroll - it_anim->second) / 8.f * (1.f - g.IO.DeltaTime);
-
-        if (!ImGui::IsMouseDown(0))
-        {
-            if (window->Scroll.y != needed_scroll)
-            {
-                window->Scroll.y = it_anim->second;
-            }
-        }
-        else
-        {
-            window->Scroll = CalcNextScrollFromScrollTargetAndClamp(window);
-            window->ScrollTarget = ImVec2(FLT_MAX, FLT_MAX);
-        }
+        // Apply scrolling
+        window->Scroll = CalcNextScrollFromScrollTargetAndClamp(window);
+        window->ScrollTarget = ImVec2(FLT_MAX, FLT_MAX);
         window->DecoInnerSizeX1 = window->DecoInnerSizeY1 = 0.0f;
 
         // DRAWING
