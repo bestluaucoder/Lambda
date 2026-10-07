@@ -348,6 +348,8 @@ void CResolver::SetupLayer(LagRecord* record, int idx, float delta)
 void CResolver::SetupResolverLayers(CBasePlayer* player, LagRecord* record)
 {
 	float d = record->resolver_data.max_desync_delta;
+	
+	// More granular angle testing for better resolution
 	SetupLayer(record, 0,  0.f);
 	SetupLayer(record, 1,  d);
 	SetupLayer(record, 2, -d);
@@ -355,9 +357,9 @@ void CResolver::SetupResolverLayers(CBasePlayer* player, LagRecord* record)
 	SetupLayer(record, 4, -d * 0.5f);
 	SetupLayer(record, 5,  d * 0.75f);
 	SetupLayer(record, 6, -d * 0.75f);
-	SetupLayer(record, 7,  d * 0.25f);
-	SetupLayer(record, 8,  d * 0.125f);
-	SetupLayer(record, 9, -d * 0.125f);
+	SetupLayer(record, 7,  d * 0.33f);
+	SetupLayer(record, 8,  d * 0.66f);
+	SetupLayer(record, 9, -d * 0.66f);
 }
 
 int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
@@ -373,9 +375,9 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 		if (layer.delta > mx) mx = layer.delta;
 	}
 
-	// All probes gave the same score — animstate isn't sensitive to desync right now.
-	// Returning 0 lets a higher-quality resolver (LBY, safetick) take over cleanly.
-	if ((mx - mn) < 1.0f)
+	// All probes gave similar scores — animstate isn't sensitive to desync right now.
+	// Tightened threshold for better discrimination
+	if ((mx - mn) < 0.5f)
 		return 0;
 
 	const float latency = GetLatency();
@@ -386,12 +388,13 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 
 	float spread_thresh;
 	switch (record->resolver_data.player_state) {
-	case R_PlayerState::MOVING:   spread_thresh = 12.f; break;
-	case R_PlayerState::AIR:      spread_thresh = 20.f; break;
-	default:                      spread_thresh =  8.f; break;
+	case R_PlayerState::MOVING:   spread_thresh = 10.f; break;
+	case R_PlayerState::AIR:      spread_thresh = 18.f; break;
+	default:                      spread_thresh =  6.f; break;
 	}
 
-	float abs_thresh = (8.f + TIME_TO_TICKS(latency) * 0.25f) * ts;
+	// Tighter absolute threshold for cleaner resolution
+	float abs_thresh = (6.f + TIME_TO_TICKS(latency) * 0.2f) * ts;
 
 	if (mn > abs_thresh || (mx - mn) < spread_thresh)
 		return 0;
@@ -441,10 +444,13 @@ int CResolver::ResolveSafeTick(CBasePlayer* player, LagRecord* record, ResolverD
 	const int   prev_choked = record->prev_record->m_nChokedTicks;
 	const int   cur_choked  = record->m_nChokedTicks;
 
-	bool is_safe_tick = (prev_choked >= 2 && cur_choked <= 1);
+	// Expanded safe tick detection - also check for choke patterns
+	bool is_safe_tick = (prev_choked >= 2 && cur_choked <= 1) || 
+	                     (prev_choked >= 1 && cur_choked == 0);
 
 	if (!is_safe_tick) {
-		float staleness = TICKS_TO_TIME(16) + latency;
+		// Reduced staleness window for more responsive resolver
+		float staleness = TICKS_TO_TIME(8) + latency * 0.5f;
 		if (p->safe_tick_side != 0 && record->m_flSimulationTime - p->safe_tick_simtime < staleness)
 			return p->safe_tick_side;
 		return 0;
@@ -526,11 +532,15 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 
 	float lby_body_yaw = 0.f;
 	int lby_side = ResolveLBY(player, record, p, lby_body_yaw);
-	commit(lby_side, ResolverType::LBY, lby_body_yaw);
+	// Only commit LBY if it's a strong signal
+	if (lby_side) commit(lby_side, ResolverType::LBY, lby_body_yaw);
 
 	{
 		int st_side = ResolveSafeTick(player, record, p);
-		commit(st_side, ResolverType::SAFETICK);
+		// Don't let SafeTick override strong LBY signal
+		if (st_side && resolved_type != ResolverType::LBY) {
+			commit(st_side, ResolverType::SAFETICK);
+		}
 	}
 
 	if (record->resolver_data.is_shifting_tickbase) {
@@ -573,7 +583,8 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	}
 
 	if (!resolved_side && p->last_side) {
-		float memWindow = TICKS_TO_TIME(32) + latency * 2.f;
+		// Reduced memory window - stale data causes more harm than good
+		float memWindow = TICKS_TO_TIME(12) + latency;
 		if (curtime - p->last_resolved < memWindow) {
 			resolved_side = p->last_side;
 			resolved_type = ResolverType::MEMORY;
