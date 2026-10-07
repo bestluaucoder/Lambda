@@ -614,12 +614,16 @@ void CMenu::SetupUI() {
 		"Pirate C",
 	});
 
+	config.config.config_subtab = configs->AddComboBox("Subtab", { "Config", "Menu" });
+
 	Config->config_list = configs->AddComboBox("cfglist", {});
 	Config->config_name = configs->AddInput("Config");
 	Config->load_button    = configs->AddButton("Load");
 	Config->save_button    = configs->AddButton("Save");
 	Config->refresh_button = configs->AddButton("Refresh");
 	Config->open_dir_button = configs->AddButton("Open Directory");
+
+	config.menu_misc.experimental_lagcomp = configs->AddCheckBox("Experimental LagComp");
 
 	Config->lua_list = scripts->AddComboBox("lualist", {});
 	Config->lua_button = scripts->AddButton("Load");
@@ -628,6 +632,33 @@ void CMenu::SetupUI() {
 	Config->lua_save = scripts->AddButton("Save");
 
 	Config->Init();
+	
+	config.config.config_subtab->SetCallback([]() {
+		const int subtab = config.config.config_subtab->get();
+		
+		// Config subtab (0)
+		Config->config_list->SetVisible(subtab == 0);
+		Config->config_name->SetVisible(subtab == 0);
+		Config->load_button->SetVisible(subtab == 0);
+		Config->save_button->SetVisible(subtab == 0);
+		Config->refresh_button->SetVisible(subtab == 0);
+		Config->open_dir_button->SetVisible(subtab == 0);
+		
+		// Menu subtab (1)
+		config.menu_misc.experimental_lagcomp->SetVisible(subtab == 1);
+	});
+	
+	// Trigger initial visibility by calling the callback
+	{
+		const int subtab = config.config.config_subtab->get();
+		Config->config_list->SetVisible(subtab == 0);
+		Config->config_name->SetVisible(subtab == 0);
+		Config->load_button->SetVisible(subtab == 0);
+		Config->save_button->SetVisible(subtab == 0);
+		Config->refresh_button->SetVisible(subtab == 0);
+		Config->open_dir_button->SetVisible(subtab == 0);
+		config.menu_misc.experimental_lagcomp->SetVisible(subtab == 1);
+	}
 	
 	config.ragebot.selected_weapon->SetCallback([]() {
 		const int selected_weapon = config.ragebot.selected_weapon->get();

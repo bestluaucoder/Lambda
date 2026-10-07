@@ -1088,18 +1088,12 @@ bool ImGui::Keybind(const char* label, int* key, int* mode, bool show_label)
     }
 
     
-    if (hovered && g.IO.MouseClicked[1] || it_anim->second.active && (g.IO.MouseClicked[0] || g.IO.MouseClicked[1]) && !it_anim->second.hovered) {
-
+    if (hovered && g.IO.MouseClicked[1]) {
         it_anim->second.active = !it_anim->second.active;
-
-        if (!it_anim->second.active) {
-
-            g.IO.MouseClicked[0] = false;
-
-            g.IO.MouseClicked[1] = false;
-
-        }
-
+    }
+    else if (it_anim->second.active && (g.IO.MouseClicked[0] || g.IO.MouseClicked[1]) && !it_anim->second.hovered) {
+        it_anim->second.active = false;
+        // Don't consume the click - let it pass through to underlying elements
     }
 
     it_anim->second.alpha = ImClamp(it_anim->second.alpha + (8.f * g.IO.DeltaTime * (it_anim->second.active ? 1.f : -1.f)), 0.f, 1.f);
@@ -2349,7 +2343,7 @@ bool ImGui::Checkbox(const char* label, bool* v)
 
     if (!ItemAdd(total_bb, id)) return false;
 
-    bool hovered, held, pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+    bool hovered, held, pressed = ButtonBehavior(total_bb, id, &hovered, &held, ImGuiButtonFlags_PressedOnClick);
 
     if (IsItemClicked()) { *v = !(*v); MarkItemEdited(id); }
 
@@ -3318,7 +3312,7 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, float val, 
 
     if (!ItemAdd(total_bb, id, &bb)) return false;
 
-    bool hovered, held, pressed = ButtonBehavior(bb, id, &hovered, &held);
+    bool hovered, held, pressed = ButtonBehavior(bb, id, &hovered, &held, ImGuiButtonFlags_PressedOnClick);
 
     auto it_anim = g_combo_anim.find(id);
 
@@ -3413,7 +3407,7 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, float val, 
 
     ImGui::SetNextWindowSize(ImVec2(bb.GetWidth(), it_anim->second.combo_size));
 
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoFocusOnAppearing;
 
     PushStyleColor(ImGuiCol_WindowBg, c::combo::i_bg_selected);
 

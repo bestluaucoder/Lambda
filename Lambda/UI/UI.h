@@ -67,8 +67,8 @@ public:
 };
 
 class CKeyBind : public IBaseWidget {
-	bool pressed_once = false;
 public:
+	bool pressed_once = false;
 	int key = 0;
 	int mode = 2;
 	bool toggled = false;

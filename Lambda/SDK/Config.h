@@ -323,6 +323,14 @@ struct config_t {
         CComboBox* agent_model_ct;
         CComboBox* agent_model_t;
     } skins;
+
+    struct config_subtab_t {
+        CComboBox* config_subtab;
+    } config;
+
+    struct menu_misc_t {
+        CCheckBox* experimental_lagcomp;
+    } menu_misc;
 };
 
 extern config_t config;

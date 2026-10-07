@@ -371,6 +371,9 @@ void CConfig::Init() {
     add(config.skins.mask_changer);
     add(config.skins.mask_changer_models); 
 
+    add(config.config.config_subtab);
+    add(config.menu_misc.experimental_lagcomp);
+
     load_button->SetCallback(on_load);
     save_button->SetCallback(on_save);
     config_list->SetCallback(on_config_list_changed);
@@ -382,6 +385,14 @@ void CConfig::Init() {
 
 void CConfig::parse(nlohmann::json& cfg) {
     sound_preview_blocked = true;
+
+    // First pass: reset all keybind toggled states
+    for (auto& item : items) {
+        if (item.item->GetType() == WidgetType::KeyBind) {
+            ((CKeyBind*)item.item)->toggled = false;
+            ((CKeyBind*)item.item)->pressed_once = false;
+        }
+    }
 
     for (auto& item : items) {
         try {
