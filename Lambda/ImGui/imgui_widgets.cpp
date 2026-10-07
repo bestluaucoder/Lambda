@@ -1087,18 +1087,10 @@ bool ImGui::Keybind(const char* label, int* key, int* mode, bool show_label)
 
     }
 
-    
-    // Track if menu is open
-    bool menu_was_open = it_anim->second.active;
-    
-    if (hovered && g.IO.MouseClicked[1]) {
-        it_anim->second.active = !it_anim->second.active;
-    }
-    else if (it_anim->second.active && (g.IO.MouseClicked[0] || g.IO.MouseClicked[1]) && !it_anim->second.hovered) {
-        it_anim->second.active = false;
-    }
-
     it_anim->second.alpha = ImClamp(it_anim->second.alpha + (8.f * g.IO.DeltaTime * (it_anim->second.active ? 1.f : -1.f)), 0.f, 1.f);
+
+    // Reset hovered state before checking
+    bool menu_hovered = false;
 
     if (it_anim->second.alpha >= 0.01f)
 
@@ -1129,7 +1121,7 @@ bool ImGui::Keybind(const char* label, int* key, int* mode, bool show_label)
 
         {
 
-            it_anim->second.hovered = IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_ChildWindows);
+            menu_hovered = IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_ChildWindows);
 
             if (Selectable("Hold", *mode == 0))
 
@@ -1174,21 +1166,18 @@ bool ImGui::Keybind(const char* label, int* key, int* mode, bool show_label)
         PopStyleColor(2);
 
         PopStyleVar(5);
-        
-        // If menu is visible, block input to elements behind it
-        if (it_anim->second.alpha > 0.01f) {
-            // Get menu window rect
-            ImVec2 menu_min(clickable.Max.x - item_w, clickable.Max.y + 3);
-            ImVec2 menu_max(clickable.Max.x, clickable.Max.y + 3 + CalcTextSize("Hold").y * 3 + 10);
-            ImRect menu_rect(menu_min, menu_max);
-            
-            // If mouse is over the menu area and there was a click, consume it to prevent click-through
-            if (menu_rect.Contains(g.IO.MousePos) && (g.IO.MouseClicked[0] || g.IO.MouseClicked[1])) {
-                // The click is on the menu - it's already been handled by the Selectables
-                // We don't need to do anything here
-            }
-        }
 
+    }
+    
+    // Store the menu hovered state
+    it_anim->second.hovered = menu_hovered;
+    
+    // Handle menu opening/closing AFTER rendering so hovered state is current
+    if (hovered && g.IO.MouseClicked[1]) {
+        it_anim->second.active = !it_anim->second.active;
+    }
+    else if (it_anim->second.active && (g.IO.MouseClicked[0] || g.IO.MouseClicked[1]) && !it_anim->second.hovered) {
+        it_anim->second.active = false;
     }
 
     return value_changed;
