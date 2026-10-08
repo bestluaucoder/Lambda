@@ -582,15 +582,6 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 		}
 	}
 
-	if (!resolved_side && p->last_side) {
-		
-		float memWindow = TICKS_TO_TIME(12) + latency;
-		if (curtime - p->last_resolved < memWindow) {
-			resolved_side = p->last_side;
-			resolved_type = ResolverType::MEMORY;
-		}
-	}
-
 	if (!resolved_side) {
 		resolved_side = -1;
 		resolved_type = ResolverType::DEFAULT;
@@ -600,54 +591,18 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	record->resolver_data.resolver_type    = resolved_type;
 	record->resolver_data.resolved_body_yaw = resolved_body_yaw;
 
-	if (resolved_type != ResolverType::MEMORY && resolved_type != ResolverType::DEFAULT) {
-		p->last_resolved = curtime;
-		p->last_side     = resolved_side;
-		p->res_type_last = resolved_type;
-	}
-
 	Apply(record);
 }
 
 void CResolver::OnMiss(CBasePlayer* player, LagRecord* record)
 {
-	auto* p = &resolver_data[player->EntIndex()];
-
-	if (record->resolver_data.is_shifting_tickbase) {
-		p->shift_side_votes     = 0;
-		p->shift_vote_count     = 0;
-		p->tickbase_side        = -record->resolver_data.side;
-		p->shift_ticks_observed = 0;
-	}
-
-	if (record->resolver_data.resolver_type == ResolverType::SAFETICK) {
-		p->safe_tick_side    = 0;
-		p->safe_tick_simtime = 0.f;
-	}
-
-	if (record->resolver_data.resolver_type == ResolverType::LBY) {
-		p->lby_delta = -p->lby_delta;
-	}
-
-	if (record->resolver_data.resolver_type == ResolverType::MOVEANGLE
-	    || record->resolver_data.resolver_type == ResolverType::VELOCITY) {
-		p->move_yaw_delta_sum = 0.f;
-		p->move_yaw_samples   = 0;
-		p->move_yaw_side      = -p->move_yaw_side;
-		p->accel_side         = -p->accel_side;
-	}
-
-	if (record->resolver_data.resolver_type == ResolverType::DEFAULT
-	    || record->resolver_data.resolver_type == ResolverType::MEMORY) {
-		p->last_side = -record->resolver_data.side;
-	}
-
-	++p->missed_shots;
+	
 }
 
 void CResolver::OnHit(CBasePlayer* player, LagRecord* record)
 {
-	auto* p      = &resolver_data[player->EntIndex()];
+	
+}
 	p->missed_shots = 0;
 	p->accel_side   = record->resolver_data.side;
 }
