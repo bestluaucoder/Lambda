@@ -20,7 +20,6 @@
 
 #include "../Features/RageBot/Ragebot.h"
 #include "../Features/Visuals/Elements.h"
-#include "../Features/Visuals/ESPPreview.h"
 
 CMenu* Menu = new CMenu;
 
@@ -294,17 +293,12 @@ void CMenuGroupbox::Render() {
 
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2.f);
 
-    if (name == "Preview") {
-        ESPPreview::Render(size);
-    }
-    else {
-        for (int i = 0; i < widgets.size(); i++) {
-            auto el = widgets[i];
-            if (!el || !el->visible || el->GetType() == WidgetType::ColorPicker || el->GetType() == WidgetType::KeyBind)
-                continue;
+    for (int i = 0; i < widgets.size(); i++) {
+        auto el = widgets[i];
+        if (!el || !el->visible || el->GetType() == WidgetType::ColorPicker || el->GetType() == WidgetType::KeyBind)
+            continue;
 
-            el->Render();
-        }
+        el->Render();
     }
 
     ImGui::PopClipRect(); 

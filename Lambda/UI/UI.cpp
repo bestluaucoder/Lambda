@@ -3,7 +3,6 @@
 
 #include "../Features/Visuals/SkinChanger.h"
 #include "../Features/Visuals/World.h"
-#include "../Features/Visuals/ESPPreview.h"
 #include "../Resources/sound_player.hpp"
 
 static void UpdateSoundVisibility() {

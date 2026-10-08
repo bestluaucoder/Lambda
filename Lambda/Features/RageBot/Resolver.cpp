@@ -603,6 +603,3 @@ void CResolver::OnHit(CBasePlayer* player, LagRecord* record)
 {
 	
 }
-	p->missed_shots = 0;
-	p->accel_side   = record->resolver_data.side;
-}
