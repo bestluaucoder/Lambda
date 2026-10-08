@@ -146,9 +146,16 @@ void CLagCompensation::OnNetUpdate() {
             break;
         }
 
-		if (prev_valid)
+		if (prev_valid) {
+			float dist_sq = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr();
+			float time_delta = new_record->m_flSimulationTime - prev_valid->m_flSimulationTime;
 			
-			new_record->breaking_lag_comp = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr() > 9216.f;
+			float max_move_sq = 8192.f;
+			if (time_delta > GlobalVars->interval_per_tick * 2.f)
+				max_move_sq = 12288.f;
+			
+			new_record->breaking_lag_comp = dist_sq > max_move_sq;
+		}
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
 			if (config.visuals.esp.share_with_enemies->get() || !pl->IsTeammate()) {
@@ -201,24 +208,26 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	const float gravity = cvars.sv_gravity->GetFloat();
 	const float ival    = GlobalVars->interval_per_tick;
 
+	Vector velocity = new_record->m_vecVelocity;
+
 	for (int i = 0; i < ticks; i++) {
 		if (!(new_record->m_fFlags & FL_ONGROUND))
-			new_record->m_vecVelocity.z -= gravity * ival;
+			velocity.z -= gravity * ival;
+		else
+			velocity.z = 0.f;
 
-		Vector next_origin = new_record->m_vecOrigin + new_record->m_vecVelocity * ival;
+		Vector next_origin = new_record->m_vecOrigin + velocity * ival;
 
-		
-		
 		if (!(new_record->m_fFlags & FL_ONGROUND)) {
 			CGameTrace tr;
 			CTraceFilterWorldOnly filter;
 			Ray_t ray;
-			ray.Init(next_origin, next_origin - Vector(0, 0, 4.f));
+			ray.Init(next_origin, next_origin - Vector(0, 0, 2.f));
 			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
 
-			if (tr.fraction < 1.f && new_record->m_vecVelocity.z <= 0.f) {
+			if (tr.fraction < 1.f && velocity.z <= 0.f) {
 				next_origin.z  = tr.endpos.z;
-				new_record->m_vecVelocity.z = 0.f;
+				velocity.z = 0.f;
 				new_record->m_fFlags |= FL_ONGROUND;
 			}
 		}
@@ -226,10 +235,12 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 		new_record->m_vecOrigin = next_origin;
 	}
 
+	new_record->m_vecVelocity = velocity;
 	new_record->m_vecAbsOrigin = new_record->m_vecOrigin;
 
 	Utils::MatrixMove(new_record->aim_matrix,     128, record->m_vecOrigin, new_record->m_vecOrigin);
 	Utils::MatrixMove(new_record->opposite_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
+	Utils::MatrixMove(new_record->bone_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
 
 	return new_record;
 }
@@ -264,18 +275,16 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 
 	float deltaTime = correct - (TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime);
 
-	
-	
 	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
 	
-	float tolerance = 0.25f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
+	float tolerance = 0.2f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick * 0.5f : 0.f);
 
 	if (std::abs(deltaTime) >= tolerance)
 		return false;
 
-	
-	if (GlobalVars->tickcount - record->update_tick < -1)
+	if (GlobalVars->tickcount - record->update_tick > 32)
 		return false;
+
 	return true;
 }
 

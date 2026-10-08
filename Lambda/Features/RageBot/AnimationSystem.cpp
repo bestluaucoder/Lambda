@@ -146,17 +146,18 @@ void CAnimationSystem::BuildMatrix(CBasePlayer* player, matrix3x4_t* boneToWorld
 	bool backupMaintainSequenceTransitions = player->m_bMaintainSequenceTransitions();
 	int backupEffects = player->m_fEffects();
 	int clientFlags = player->m_EntClientFlags();
+	int backupEFlags = player->m_iEFlags();
 
 	player->m_EntClientFlags() |= 2;
-	player->m_fEffects() |= EF_NOINTERP; 
-	
+	player->m_fEffects() |= EF_NOINTERP;
+	player->m_iEFlags() &= ~0x1000;
 
 	hook_info.setup_bones = true;
 	player->SetupBones(boneToWorld, maxBones, mask, GlobalVars->curtime);
 	hook_info.setup_bones = false;
 
 	player->m_fEffects() = backupEffects;
-	
+	player->m_iEFlags() = backupEFlags;
 	player->m_EntClientFlags() = clientFlags;
 }
 
@@ -227,9 +228,6 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 		if (time_diff < GlobalVars->interval_per_tick)
 			time_diff = GlobalVars->interval_per_tick;
 
-		
-		
-		
 		{
 			int time_ticks = TIME_TO_TICKS(time_diff);
 
@@ -243,19 +241,15 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 				if (cycle_delta < 0.f)
 					cycle_delta += 1.f;
 				
-				
 				if (cycle_delta < 0.5f) {
 					float est = cycle_delta / (playback_rate * GlobalVars->interval_per_tick);
 					cycle_ticks = (std::clamp)(static_cast<int>(std::roundf(est)), 1, 14);
 				}
 			}
 
-			
-			record->m_nChokedTicks = (std::clamp)((std::min)(time_ticks, cycle_ticks) - 1, 0, 14);
+			int final_ticks = (std::min)(time_ticks, cycle_ticks);
+			record->m_nChokedTicks = (std::clamp)(final_ticks - 1, 0, 14);
 		}
-
-		
-		bool weapon_action_active = record->animlayers[ANIMATION_LAYER_WEAPON_ACTION].m_flWeight > 0.01f;
 
 		Vector origin_diff = player->m_vecOrigin() - record->prev_record->m_vecOrigin;
 		player->m_vecVelocity() = origin_diff / time_diff;
@@ -272,13 +266,9 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			}
 
 			float vel_length = player->m_vecVelocity().Length();
-			if (vel_length > max_speed)
-				player->m_vecVelocity() *= max_speed / vel_length;
+			if (vel_length > max_speed * 1.1f)
+				player->m_vecVelocity() *= (max_speed * 1.1f) / vel_length;
 
-			
-			
-			
-			
 			float anim_speed = 0.f;
 
 			if (record->prev_record->m_fFlags & FL_ONGROUND
@@ -297,7 +287,6 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			if (anim_speed > 0.f && player->m_vecVelocity().Length() > 0.001f)
 				player->m_vecVelocity() *= anim_speed / player->m_vecVelocity().Length();
 
-			
 			if (record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight <= 0.f
 				&& origin_diff.Length2DSqr() < 1.f)
 				player->m_vecVelocity() = Vector(0, 0, 0);
@@ -306,7 +295,6 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			float last_vel = record->prev_record->m_vecVelocity.LengthSqr();
 			float cur_vel  = player->m_vecVelocity().LengthSqr();
 
-			
 			if (last_vel > (100.f * 100.f) && last_vel * 16.f < cur_vel)
 				player->m_vecVelocity() *= 0.22f;
 
@@ -325,7 +313,6 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 		animstate->nLastUpdateFrame = GlobalVars->framecount - 1;
 
 	unupdated_animstate[idx] = *animstate;
-	animstate->flDurationInAir = 0.f;
 
 	auto pose_params = player->m_flPoseParameter();
 
@@ -337,6 +324,7 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 
 	player->m_nOcclusionFrame() = 0;
 	player->m_nOcclusionFlags() = 0;
+	player->m_iEFlags() &= ~0x1000;
 
 	if (player->IsEnemy()) {
 		Resolver->Run(player, record, records);
