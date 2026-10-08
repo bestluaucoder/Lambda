@@ -17,7 +17,7 @@ class CAnimationSystem {
 	};
 
 	interpolate_data_t interpolate_data[64];
-	CCSGOPlayerAnimationState unupdated_animstate[64]; // keep unupdated unimstates here, not in records
+	CCSGOPlayerAnimationState unupdated_animstate[64]; 
 
 	matrix3x4_t local_matrix[128];
 	matrix3x4_t prediction_matrix[128];

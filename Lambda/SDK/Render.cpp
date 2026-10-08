@@ -58,26 +58,26 @@ void CRender::Init(IDirect3DDevice9* dev) {
 	device->GetRenderState(D3DRS_SRCBLEND, &state_backup.srcblend);
 	device->GetRenderState(D3DRS_DESTBLEND, &state_backup.destblend);
 
-	//ID3DXBuffer* buf = nullptr;
-	//ID3DXBuffer* errors = nullptr;
+	
+	
 
-	//std::ifstream shader_f("blur_shader.hlsl");
-	//std::stringstream sbuf;
-	//sbuf << shader_f.rdbuf();
-	//shader_f.close();
+	
+	
+	
+	
 
-	//std::string shader_src = sbuf.str();
+	
 
-	//D3DXCompileShader(shader_src.c_str(), shader_src.size(), NULL, NULL, "main", "ps_3_0", 0, &buf, &errors, &constantTable);
+	
 
-	//if (!buf) {
-	//	char* error = new char[errors->GetBufferSize()];
-	//	memcpy(error, errors->GetBufferPointer(), errors->GetBufferSize());
+	
+	
+	
 
-	//	return;
-	//}
+	
+	
 
-	//device->CreatePixelShader(reinterpret_cast<DWORD*>(buf->GetBufferPointer()), &blurShader);
+	
 
 	renderInitialized = true;
 }
@@ -207,7 +207,7 @@ void CRender::RenderDrawData() {
 				device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
 				device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
 
-				DWORD outlineColor = (object.color & 0xFF000000) | 0x000000; // Black outline color with the same alpha as the text color
+				DWORD outlineColor = (object.color & 0xFF000000) | 0x000000; 
 				char dummy[4];
 				*(DWORD*)dummy = outlineColor;
 				dummy[0] *= 0.3f;
@@ -249,7 +249,7 @@ void CRender::RenderDrawData() {
 				device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
 				device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
 
-				DWORD outlineColor = (object.color & 0xFF000000) | 0x000000; // Black outline color with the same alpha as the text color
+				DWORD outlineColor = (object.color & 0xFF000000) | 0x000000; 
 				char dummy[4];
 				*(DWORD*)dummy = outlineColor;
 				dummy[0] *= 0.5f;

@@ -1,9 +1,6 @@
-/*
-** MIPS instruction emitter.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
 
-/* -- Emit basic instructions --------------------------------------------- */
+
+
 
 static void emit_dst(ASMState *as, MIPSIns mi, Reg rd, Reg rs, Reg rt)
 {
@@ -44,12 +41,12 @@ static void emit_rotr(ASMState *as, Reg dest, Reg src, Reg tmp, uint32_t shift)
   }
 }
 
-/* -- Emit loads/stores --------------------------------------------------- */
 
-/* Prefer rematerialization of BASE/L from global_State over spills. */
+
+
 #define emit_canremat(ref)	((ref) <= REF_BASE)
 
-/* Try to find a one step delta relative to another constant. */
+
 static int emit_kdelta1(ASMState *as, Reg t, int32_t i)
 {
   RegSet work = ~as->freeset & RSET_GPR;
@@ -66,10 +63,10 @@ static int emit_kdelta1(ASMState *as, Reg t, int32_t i)
     }
     rset_clear(work, r);
   }
-  return 0;  /* Failed. */
+  return 0;  
 }
 
-/* Load a 32 bit constant into a GPR. */
+
 static void emit_loadi(ASMState *as, Reg r, int32_t i)
 {
   if (checki16(i)) {
@@ -97,7 +94,7 @@ static void emit_loadi(ASMState *as, Reg r, int32_t i)
 static Reg ra_allock(ASMState *as, int32_t k, RegSet allow);
 static void ra_allockreg(ASMState *as, int32_t k, Reg r);
 
-/* Get/set from constant pointer. */
+
 static void emit_lsptr(ASMState *as, MIPSIns mi, Reg r, void *p, RegSet allow)
 {
   int32_t jgl = i32ptr(J2G(as->J));
@@ -115,7 +112,7 @@ static void emit_lsptr(ASMState *as, MIPSIns mi, Reg r, void *p, RegSet allow)
 #define emit_loadn(as, r, tv) \
   emit_lsptr(as, MIPSI_LDC1, ((r) & 31), (void *)(tv), RSET_GPR)
 
-/* Get/set global_State fields. */
+
 static void emit_lsglptr(ASMState *as, MIPSIns mi, Reg r, int32_t ofs)
 {
   emit_tsi(as, mi, r, RID_JGL, ofs-32768);
@@ -126,15 +123,15 @@ static void emit_lsglptr(ASMState *as, MIPSIns mi, Reg r, int32_t ofs)
 #define emit_setgl(as, r, field) \
   emit_lsglptr(as, MIPSI_SW, (r), (int32_t)offsetof(global_State, field))
 
-/* Trace number is determined from per-trace exit stubs. */
+
 #define emit_setvmstate(as, i)		UNUSED(i)
 
-/* -- Emit control-flow instructions -------------------------------------- */
 
-/* Label for internal jumps. */
+
+
 typedef MCode *MCLabel;
 
-/* Return label pointing to current PC. */
+
 #define emit_label(as)		((as)->mcp)
 
 static void emit_branch(ASMState *as, MIPSIns mi, Reg rs, Reg rt, MCode *target)
@@ -158,18 +155,18 @@ static void emit_call(ASMState *as, void *target)
   *--p = MIPSI_NOP;
   if ((((uintptr_t)target ^ (uintptr_t)p) >> 28) == 0)
     *--p = MIPSI_JAL | (((uintptr_t)target >>2) & 0x03ffffffu);
-  else  /* Target out of range: need indirect call. */
+  else  
     *--p = MIPSI_JALR | MIPSF_S(RID_CFUNCADDR);
   as->mcp = p;
   ra_allockreg(as, i32ptr(target), RID_CFUNCADDR);
 }
 
-/* -- Emit generic operations --------------------------------------------- */
+
 
 #define emit_move(as, dst, src) \
   emit_ds(as, MIPSI_MOVE, (dst), (src))
 
-/* Generic move between two regs. */
+
 static void emit_movrr(ASMState *as, IRIns *ir, Reg dst, Reg src)
 {
   if (dst < RID_MAX_GPR)
@@ -178,7 +175,7 @@ static void emit_movrr(ASMState *as, IRIns *ir, Reg dst, Reg src)
     emit_fg(as, irt_isnum(ir->t) ? MIPSI_MOV_D : MIPSI_MOV_S, dst, src);
 }
 
-/* Generic load of register from stack slot. */
+
 static void emit_spload(ASMState *as, IRIns *ir, Reg r, int32_t ofs)
 {
   if (r < RID_MAX_GPR)
@@ -188,7 +185,7 @@ static void emit_spload(ASMState *as, IRIns *ir, Reg r, int32_t ofs)
 	     (r & 31), RID_SP, ofs);
 }
 
-/* Generic store of register to stack slot. */
+
 static void emit_spstore(ASMState *as, IRIns *ir, Reg r, int32_t ofs)
 {
   if (r < RID_MAX_GPR)
@@ -198,7 +195,7 @@ static void emit_spstore(ASMState *as, IRIns *ir, Reg r, int32_t ofs)
 	     (r&31), RID_SP, ofs);
 }
 
-/* Add offset to pointer. */
+
 static void emit_addptr(ASMState *as, Reg r, int32_t ofs)
 {
   if (ofs) {

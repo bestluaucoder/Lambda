@@ -8,29 +8,29 @@ class INetMessage;
 class CGlobalVarsBase
 {
 public:
-    float     realtime;                     // 0x0000
-    int       framecount;                   // 0x0004
-    float     absoluteframetime;            // 0x0008
-    float     absoluteframestarttimestddev; // 0x000C
-    float     curtime;                      // 0x0010
-    float     frametime;                    // 0x0014
-    int       max_clients;                   // 0x0018
-    int       tickcount;                    // 0x001C
-    float     interval_per_tick;            // 0x0020
-    float     interpolation_amount;         // 0x0024
-    int       simTicksThisFrame;            // 0x0028
-    int       network_protocol;             // 0x002C
-    void* pSaveData;                    // 0x0030
-    bool      m_bClient;                    // 0x0031
-    bool      m_bRemoteClient;              // 0x0032
+    float     realtime;                     
+    int       framecount;                   
+    float     absoluteframetime;            
+    float     absoluteframestarttimestddev; 
+    float     curtime;                      
+    float     frametime;                    
+    int       max_clients;                   
+    int       tickcount;                    
+    float     interval_per_tick;            
+    float     interpolation_amount;         
+    int       simTicksThisFrame;            
+    int       network_protocol;             
+    void* pSaveData;                    
+    bool      m_bClient;                    
+    bool      m_bRemoteClient;              
 
     inline void store();
     inline void restore();
 private:
-    // 100 (i.e., tickcount is rounded down to this base and then the "delta" from this base is networked
+    
     int       nTimestampNetworkingBase;
-    // 32 (entindex() % nTimestampRandomizeWindow ) is subtracted from gpGlobals->tickcount to Set the networking basis, prevents
-    //  all of the entities from forcing a new PackedEntity on the same tick (i.e., prevents them from getting lockstepped on this)
+    
+    
     int       nTimestampRandomizeWindow;
 
 };
@@ -48,27 +48,27 @@ inline void CGlobalVarsBase::restore() {
 class CClockDriftMgr
 {
 public:
-    float m_ClockOffsets[16];   //0x0000
-    uint32_t m_iCurClockOffset; //0x0044
-    uint32_t m_nServerTick;     //0x0048
-    uint32_t m_nClientTick;     //0x004C
+    float m_ClockOffsets[16];   
+    uint32_t m_iCurClockOffset; 
+    uint32_t m_nServerTick;     
+    uint32_t m_nClientTick;     
 };
 
 class INetChannel
 {
 public:
-    byte	pad0[0x14];				//0x0000
-    bool		m_bProcessingMessages;	//0x0014
-    bool		m_bShouldDelete;			//0x0015
-    bool		m_bStopProcessing;		//0x0016
-    byte	pad1[0x1];				//0x0017
-    int			m_nOutSequenceNr;			//0x0018 last send outgoing sequence number
-    int			m_nInSequenceNr;			//0x001C last received incoming sequence number
-    int			m_nOutSequenceNrAck;		//0x0020 last received acknowledge outgoing sequence number
-    int			m_iOutReliableState;		//0x0024 state of outgoing reliable data (0/1) flip flop used for loss detection
-    int			m_iInReliableState;		//0x0028 state of incoming reliable data
-    int			m_nChokedPackets;			//0x002C number of choked packets
-    byte	pad2[0x414];			//0x0030
+    byte	pad0[0x14];				
+    bool		m_bProcessingMessages;	
+    bool		m_bShouldDelete;			
+    bool		m_bStopProcessing;		
+    byte	pad1[0x1];				
+    int			m_nOutSequenceNr;			
+    int			m_nInSequenceNr;			
+    int			m_nOutSequenceNrAck;		
+    int			m_iOutReliableState;		
+    int			m_iInReliableState;		
+    int			m_nChokedPackets;			
+    byte	pad2[0x414];			
 
     int SendDatagram();
     bool SendNetMsg(void* msg, bool bForceReliable, bool bVoice);

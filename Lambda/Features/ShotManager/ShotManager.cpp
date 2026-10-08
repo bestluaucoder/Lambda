@@ -127,7 +127,7 @@ void CShotManager::DetectUnregisteredShots() {
 
 	int next_cmd_nr = ClientState->m_nLastOutgoingCommand + ClientState->m_nChokedCommands + 1;
 	for (int i = ClientState->m_nCommandAck; i < next_cmd_nr; i++)
-		EnginePrediction->GetLocalData(i).m_fLastShotTime = fLastShotTime; // fix pred error
+		EnginePrediction->GetLocalData(i).m_fLastShotTime = fLastShotTime; 
 
 	auto weapon_info = weapon->GetWeaponInfo();
 
@@ -171,7 +171,7 @@ bool CShotManager::OnEvent(IGameEvent* event) {
 		}
 
 		if (!shot)
-			return false; // manual fire or miss
+			return false; 
 
 		shot->damage = event->GetInt("dmg_health");
 		shot->damagegroup = HitgroupToDamagegroup(event->GetInt("hitgroup"));
@@ -196,7 +196,7 @@ bool CShotManager::OnEvent(IGameEvent* event) {
 		}
 
 		if (!shot || shot->impacts.size() > 4)
-			return false; // manual fire
+			return false; 
 
 		Vector point(event->GetFloat("x"), event->GetFloat("y"), event->GetFloat("z"));
 
@@ -262,7 +262,7 @@ void CShotManager::OnNetUpdate() {
 		if (it->acked)
 			break;
 
-		if (!it->recieved_events || it->impacts.empty()) { // haven't received events yet or unregistered
+		if (!it->recieved_events || it->impacts.empty()) { 
 			if (it->player_death) {
 				it->acked = true;
 				it->miss_reason = "player death";
@@ -289,11 +289,11 @@ void CShotManager::OnNetUpdate() {
 		Vector direction;
 		
 		const int total_impacts = shot->impacts.size();
-		if (total_impacts > 1) { // we can correct get correct shoot pos & angle
-			direction = shot->impacts[total_impacts - 1] - shot->impacts[total_impacts - 2]; // impacts should be sorted by distance
+		if (total_impacts > 1) { 
+			direction = shot->impacts[total_impacts - 1] - shot->impacts[total_impacts - 2]; 
 
 			shot->angle = Math::VectorAngles(direction);
-			shot->shoot_pos = EngineTrace->ClosestPoint(shot->impacts[total_impacts - 1], shot->impacts[total_impacts - 2], shot->client_shoot_pos); // correct shoot pos by trace
+			shot->shoot_pos = EngineTrace->ClosestPoint(shot->impacts[total_impacts - 1], shot->impacts[total_impacts - 2], shot->client_shoot_pos); 
 		}
 		else {
 			shot->angle = Math::VectorAngles(shot->impacts.back() - shot->client_shoot_pos);
@@ -303,7 +303,7 @@ void CShotManager::OnNetUpdate() {
 		}
 
 		CBasePlayer* player = shot->record->player;
-		LagRecord* backup_record = &LagCompensation->records(player->EntIndex()).back(); // just updated player, so latest record is correct
+		LagRecord* backup_record = &LagCompensation->records(player->EntIndex()).back(); 
 
 		LagCompensation->BacktrackEntity(shot->record);
 

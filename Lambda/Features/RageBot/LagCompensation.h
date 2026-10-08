@@ -11,12 +11,12 @@ class CBasePlayer;
 struct LagRecord {
 	CBasePlayer* player = nullptr;
 
-	// stored matricies
+	
 	matrix3x4_t bone_matrix[MAXSTUDIOBONES];
-	matrix3x4_t aim_matrix[MAXSTUDIOBONES]; // not clamped
-	matrix3x4_t opposite_matrix[MAXSTUDIOBONES]; // not clamped
+	matrix3x4_t aim_matrix[MAXSTUDIOBONES]; 
+	matrix3x4_t opposite_matrix[MAXSTUDIOBONES]; 
 
-	// calculated matricies
+	
 	matrix3x4_t clamped_matrix[MAXSTUDIOBONES];
 	matrix3x4_t safe_matrix[MAXSTUDIOBONES];
 
@@ -76,7 +76,7 @@ public:
 	void Reset(int index = -1);
 	LagRecord* ExtrapolateRecord(LagRecord* record, int ticks = 1);
 
-	// Record helpers
+	
 	float GetLerpTime();
 	bool ValidRecord(LagRecord* record);
 	void Invalidate(int index);

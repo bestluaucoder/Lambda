@@ -349,7 +349,7 @@ void CResolver::SetupResolverLayers(CBasePlayer* player, LagRecord* record)
 {
 	float d = record->resolver_data.max_desync_delta;
 	
-	// More granular angle testing for better resolution
+	
 	SetupLayer(record, 0,  0.f);
 	SetupLayer(record, 1,  d);
 	SetupLayer(record, 2, -d);
@@ -375,8 +375,8 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 		if (layer.delta > mx) mx = layer.delta;
 	}
 
-	// All probes gave similar scores — animstate isn't sensitive to desync right now.
-	// Tightened threshold for better discrimination
+	
+	
 	if ((mx - mn) < 0.5f)
 		return 0;
 
@@ -393,7 +393,7 @@ int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataS
 	default:                      spread_thresh =  6.f; break;
 	}
 
-	// Tighter absolute threshold for cleaner resolution
+	
 	float abs_thresh = (6.f + TIME_TO_TICKS(latency) * 0.2f) * ts;
 
 	if (mn > abs_thresh || (mx - mn) < spread_thresh)
@@ -444,12 +444,12 @@ int CResolver::ResolveSafeTick(CBasePlayer* player, LagRecord* record, ResolverD
 	const int   prev_choked = record->prev_record->m_nChokedTicks;
 	const int   cur_choked  = record->m_nChokedTicks;
 
-	// Expanded safe tick detection - also check for choke patterns
+	
 	bool is_safe_tick = (prev_choked >= 2 && cur_choked <= 1) || 
 	                     (prev_choked >= 1 && cur_choked == 0);
 
 	if (!is_safe_tick) {
-		// Reduced staleness window for more responsive resolver
+		
 		float staleness = TICKS_TO_TIME(8) + latency * 0.5f;
 		if (p->safe_tick_side != 0 && record->m_flSimulationTime - p->safe_tick_simtime < staleness)
 			return p->safe_tick_side;
@@ -532,12 +532,12 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 
 	float lby_body_yaw = 0.f;
 	int lby_side = ResolveLBY(player, record, p, lby_body_yaw);
-	// Only commit LBY if it's a strong signal
+	
 	if (lby_side) commit(lby_side, ResolverType::LBY, lby_body_yaw);
 
 	{
 		int st_side = ResolveSafeTick(player, record, p);
-		// Don't let SafeTick override strong LBY signal
+		
 		if (st_side && resolved_type != ResolverType::LBY) {
 			commit(st_side, ResolverType::SAFETICK);
 		}
@@ -583,7 +583,7 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	}
 
 	if (!resolved_side && p->last_side) {
-		// Reduced memory window - stale data causes more harm than good
+		
 		float memWindow = TICKS_TO_TIME(12) + latency;
 		if (curtime - p->last_resolved < memWindow) {
 			resolved_side = p->last_side;

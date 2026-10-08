@@ -112,7 +112,7 @@ void __fastcall hkHudUpdate(IBaseClientDLL* thisptr, void* edx, bool bActive) {
 	WorldESP->OtherESP();
 	WorldESP->RenderMarkers();
 	
-	// Watermark
+	
 	{
 		#ifdef _DEBUG
 			const char* build_type = "Debug";
@@ -201,7 +201,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 	ctx.cmd = cmd;
 	ctx.send_packet = true;
 
-	Exploits->PrePrediction(); // update tickbase info
+	Exploits->PrePrediction(); 
 
 	CUserCmd_lua lua_cmd;
 	lua_cmd.command_number = cmd->command_number;
@@ -241,7 +241,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 	if (ctx.active_weapon && ctx.active_weapon->ShootingWeapon() && Exploits->IsShifting())
 		cmd->buttons &= ~(IN_ATTACK | IN_ATTACK2);
 
-	// pre_prediction
+	
 
 	EnginePrediction->Start(cmd);
 	QAngle eyeYaw = cmd->viewangles;
@@ -261,7 +261,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 		AntiAim->LegMovement();
 
 		Exploits->UpdateTickbase();
-		Exploits->Shift(); // we actually will not shift here, only update tickbase info
+		Exploits->Shift(); 
 
 		ctx.sent_commands.emplace_back(cmd->command_number);
 
@@ -288,7 +288,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 
 	Movement->CompensateThrowable();
 
-	// prediction
+	
 
 	if (config.misc.movement.edge_jump->get() && !(Cheat.LocalPlayer->m_fFlags() & FL_ONGROUND) && EnginePrediction->pre_prediction.m_fFlags & FL_ONGROUND)
 		cmd->buttons |= IN_JUMP;
@@ -340,7 +340,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 		ctx.last_shot_time = GlobalVars->realtime;
 		ctx.shot_angles = cmd->viewangles;
 
-		if (!ctx.send_packet) // fix incorrect thirdperson angle when shooting in fakelag
+		if (!ctx.send_packet) 
 			ctx.force_shot_angle = true;
 	}
 
@@ -349,7 +349,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 
 	EnginePrediction->End();
 
-	// createmove
+	
 
 	Exploits->UpdateTickbase();
 	Exploits->Shift();
@@ -388,7 +388,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 			EngineClient->ExecuteClientCmd(buy_command.c_str());
 	}
 
-	//Console->Log(std::format("{} {} {}", cmd->command_number, bSendPacket, Exploits->GetTickbaseInfo(ctx.cmd->command_number)->extra_commands));
+	
 
 	verified->cmd = *cmd;
 	verified->crc = cmd->GetChecksum();
@@ -414,14 +414,14 @@ void* __fastcall hkAllocKeyValuesMemory(IKeyValuesSystem* thisptr, void* edx, in
 {
 	static auto oAllocKeyValuesMemory = (void*(__fastcall*)(IKeyValuesSystem*, void*, int))Hooks::KeyValuesVMT->GetOriginal(2);
 
-	// return addresses of check function
-	// @credits: danielkrupinski
+	
+	
 	static const void* uAllocKeyValuesEngine = Utils::PatternScan("engine.dll", "55 8B EC 56 57 8B F9 8B F2 83 FF 11 0F 87 ? ? ? ? 85 F6 0F 84 ? ? ? ?", 0x4A);
 	static const void* uAllocKeyValuesClient = Utils::PatternScan("client.dll", "55 8B EC 56 57 8B F9 8B F2 83 FF 11 0F 87 ? ? ? ? 85 F6 0F 84 ? ? ? ?", 0x3E);
 
-	// doesn't call it yet, but have checking function
-	//static const std::uintptr_t uAllocKeyValuesMaterialSystem = MEM::FindPattern(MATERIALSYSTEM_DLL, XorStr("FF 52 04 85 C0 74 0C 56")) + 0x3;
-	//static const std::uintptr_t uAllocKeyValuesStudioRender = MEM::FindPattern(STUDIORENDER_DLL, XorStr("FF 52 04 85 C0 74 0C 56")) + 0x3;
+	
+	
+	
 
 	if (const void* uReturnAddress = _ReturnAddress(); uReturnAddress == uAllocKeyValuesEngine || uReturnAddress == uAllocKeyValuesClient)
 		return nullptr;
@@ -432,7 +432,7 @@ void* __fastcall hkAllocKeyValuesMemory(IKeyValuesSystem* thisptr, void* edx, in
 bool __fastcall hkSetSignonState(void* thisptr, void* edx, int state, int count, const void* msg) {
 	bool result = oSetSignonState(thisptr, edx, state, count, msg);
 
-	if (state == 6) { // SIGNONSTATE_FULL
+	if (state == 6) { 
 		Cheat.InGame = true;
 
 		ctx.update_nightmode = true;
@@ -652,7 +652,7 @@ void __fastcall hkUpdateClientSideAnimation(CBasePlayer* thisptr, void* edx) {
 	CCSGOPlayerAnimationState* animstate = thisptr->GetAnimstate();
 
 	if (thisptr == Cheat.LocalPlayer && animstate) {
-		animstate->pEntity = nullptr; // do not update animstate
+		animstate->pEntity = nullptr; 
 		oUpdateClientSideAnimation(thisptr, edx);
 		animstate->pEntity = thisptr;
 	}
@@ -799,7 +799,7 @@ void __fastcall hkPacketStart(CClientState* thisptr, void* edx, int incoming_seq
 
 	ctx.sent_commands.erase(std::ranges::remove_if(ctx.sent_commands, [&](const uint32_t& cmd) { return abs(static_cast<int32_t>(outgoing_acknowledged - cmd)) >= 150; }).begin(), ctx.sent_commands.end());
 
-	// rollback the ack count to what we aimed for.
+	
 	auto target_acknowledged = outgoing_acknowledged;
 	for (const auto cmd : ctx.sent_commands)
 		if (outgoing_acknowledged >= cmd)
@@ -873,10 +873,10 @@ void __cdecl hkCL_Move(float accamulatedExtraSamples, bool bFinalTick) {
 }
 
 bool __fastcall hkSendNetMsg(INetChannel* thisptr, void* edx, INetMessage& msg, bool bForceReliable, bool bVoice) {
-	if (msg.GetType() == 14) // Return and don't send messsage if its FileCRCCheck
+	if (msg.GetType() == 14) 
 		return true;
 
-	if (msg.GetGroup() == 9) // Fix lag when transmitting voice and fakelagging
+	if (msg.GetGroup() == 9) 
 		bVoice = true;
 
 	return oSendNetMsg(thisptr, edx, msg, bForceReliable, bVoice);
@@ -975,22 +975,22 @@ int __fastcall hkListLeavesInBox(void* ecx, void* edx, const Vector& mins, const
 	if (_ReturnAddress() != insert_into_tree)
 		return oListLeavesInBox(ecx, edx, mins, maxs, list, size);
 
-	// get current renderable info from stack ( https://github.com/pmrowla/hl2sdk-csgo/blob/master/game/client/clientleafsystem.cpp#L1470 )
+	
 	auto info = *(RenderableInfo_t**)((uintptr_t)_AddressOfReturnAddress() + 0x14);
 	if (!info || !info->m_pRenderable)
 		return oListLeavesInBox(ecx, edx, mins, maxs, list, size);
 
-	// check if disabling occulusion for players ( https://github.com/pmrowla/hl2sdk-csgo/blob/master/game/client/clientleafsystem.cpp#L1491 )
+	
 	auto base_entity = info->m_pRenderable->GetIClientUnknown()->GetBaseEntity();
 	if (!base_entity || !base_entity->IsPlayer())
 		return oListLeavesInBox(ecx, edx, mins, maxs, list, size);
 
-	// fix render order, force translucent group ( https://www.unknowncheats.me/forum/2429206-post15.html )
-	// AddRenderablesToRenderLists: https://i.imgur.com/hcg0NB5.png ( https://github.com/pmrowla/hl2sdk-csgo/blob/master/game/client/clientleafsystem.cpp#L2473 )
+	
+	
 	info->m_Flags &= ~0x100;
 	info->m_bRenderInFastReflection |= 0xC0;
 
-	// extend world space bounds to maximum ( https://github.com/pmrowla/hl2sdk-csgo/blob/master/game/client/clientleafsystem.cpp#L707 )
+	
 	static const Vector map_min = Vector(-16384.0f, -16384.0f, -16384.0f);
 	static const Vector map_max = Vector(16384.0f, 16384.0f, 16384.0f);
 	
@@ -1130,7 +1130,7 @@ void __fastcall hkClientCmd_Unrestricted(IVEngineClient* engineClient, void* edx
 	oClientCmd_Unrestricted(engineClient, edx, cmd, a2);
 }
 
-void hkUpdateBeam(Beam_t* beam, void* pcbeam) { // TODO: make asm proxy
+void hkUpdateBeam(Beam_t* beam, void* pcbeam) { 
 	float frametime;
 	__asm movss frametime, xmm2;
 	Vector attachments[10];
@@ -1193,9 +1193,9 @@ void Hooks::Initialize() {
 	ModelCacheVMT = new VMT(MDLCache);
 	KeyValuesVMT = new VMT(KeyValuesSystem);
 
-	// vmt hooking for directx doesnt work for some reason
+	
 	oPresent = HookFunction<tPresent>(Utils::PatternScan("gameoverlayrenderer.dll", "55 8B EC 83 EC 4C 53"), hkPresent);
-	//oReset = HookFunction<tReset>(Utils::PatternScan("d3d9.dll", "8B FF 55 8B EC 83 E4 F8 81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 53 8B 5D 08 8B CB"), hkReset);
+	
 
 	while (!Menu->IsInitialized())
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -1212,7 +1212,7 @@ void Hooks::Initialize() {
 	ClientVMT->Hook(37, hkFrameStageNotify);
 	ClientVMT->Hook(11, hkHudUpdate);
 	ClientVMT->Hook(22, hkCHLCCreateMove);
-	//ModelCacheVMT->Hook(10 ,hkFindMdl);
+	
 	ClientVMT->Hook(7, hkLevelShutdown);
 	PredictionVMT->Hook(19, hkRunCommand);
 	KeyValuesVMT->Hook(2, hkAllocKeyValuesMemory);
@@ -1232,7 +1232,7 @@ void Hooks::Initialize() {
 	oShouldInterpolate = HookFunction<tShouldInterpolate>(Utils::PatternScan("client.dll", "56 8B F1 E8 ? ? ? ? 3B F0"), hkShouldInterpolate);
 	oPacketStart = HookFunction<tPacketStart>(Utils::PatternScan("engine.dll", "55 8B EC 8B 45 08 89 81 ? ? ? ? 8B 45 0C 89 81 ? ? ? ? 5D C2 08 00 CC CC CC CC CC CC CC 56"), hkPacketStart);
 	oPacketEnd = HookFunction<tPacketEnd>(Utils::PatternScan("engine.dll", "56 8B F1 E8 ? ? ? ? 8B 8E ? ? ? ? 3B 8E ? ? ? ? 75 34"), hkPacketEnd);
-	//oFX_FireBullets = HookFunction<tFX_FireBullets>(Utils::PatternScan("client.dll", "55 8B EC 83 E4 C0 F3 0F 10 45"), hkFX_FireBullets);
+	
 	oProcessMovement = HookFunction<tProcessMovement>(Utils::PatternScan("client.dll", "55 8B EC 83 E4 C0 83 EC 38 A1 ? ? ? ?"), hkProcessMovement);
 	oLogDirect = HookFunction<tLogDirect>(Utils::PatternScan("tier0.dll", "55 8B EC 83 E4 F8 8B 45 08 83 EC 14 53 56 8B F1 57 85 C0 0F 88 ? ? ? ?"), hkLogDirect);
 	oSetSignonState = HookFunction<tSetSignonState>(Utils::PatternScan("engine.dll", "55 8B EC 83 E4 F8 81 EC ? ? ? ? 53 56 57 FF 75 10"), hkSetSignonState);
@@ -1248,7 +1248,7 @@ void Hooks::Initialize() {
 	oResetLatched = HookFunction<tResetLatched>(Utils::PatternScan("client.dll", "56 8B F1 57 8B BE ? ? ? ? 85 FF 74 ? 8B CF E8 ? ? ? ? 68"), hkResetLatched);
 	oGetExposureRange = HookFunction<tGetExposureRange>(Utils::PatternScan("client.dll", "55 8B EC 51 80 3D ? ? ? ? ? 0F 57"), hkGetExposureRange);
 	oEstimateAbsVelocity = HookFunction<tEstimateAbsVelocity>(Utils::PatternScan("client.dll", "55 8B EC 83 E4 ? 83 EC ? 56 8B F1 85 F6 74 ? 8B 06 8B 80 ? ? ? ? FF D0 84 C0 74 ? 8A 86"), hkEstimateAbsVelocity);
-	//oInterpolatePlayer = HookFunction<tInterpolatePlayer>(Utils::PatternScan("client.dll", "55 8B EC 83 EC ? 56 8B F1 83 BE ? ? ? ? ? 0F 85"), hkInterpolatePlayer);
+	
 	oGetFOV = HookFunction<tGetFOV>(Utils::PatternScan("client.dll", "55 8B EC 83 EC ? 56 8B F1 57 8B 06 FF 90 ? ? ? ? 83 F8"), hkGetFOV);
 	oIsConnected = HookFunction<tIsConnected>(Utils::PatternScan("engine.dll", "A1 ? ? ? ? 83 B8 ? ? ? ? ? 0F 9D C0 C3 55"), hkIsConnected);
 	oReadPackets = HookFunction<tReadPackets>(Utils::PatternScan("engine.dll", "53 8A D9 8B 0D ? ? ? ? 56 57 8B B9"), hkReadPackets);
@@ -1260,12 +1260,12 @@ void Hooks::Initialize() {
 
 	EventListner->Register();
 
-	Memory->BytePatch(Utils::PatternScan("client.dll", "75 30 38 87"), { 0xEB }); // CameraThink sv_cheats check skip
-	Memory->BytePatch(Utils::PatternScan("engine.dll", "B8 ? ? ? ? 3B F0 0F 4F F0 89 5D"), { 0xB8, 0x3E }); // Bypass 15 tick limit
+	Memory->BytePatch(Utils::PatternScan("client.dll", "75 30 38 87"), { 0xEB }); 
+	Memory->BytePatch(Utils::PatternScan("engine.dll", "B8 ? ? ? ? 3B F0 0F 4F F0 89 5D"), { 0xB8, 0x3E }); 
 
-	// TODO: check this
-	//Memory->BytePatch(Utils::PatternScan("engine.dll", "C7 45 ? ? ? ? ? 89 55 ? 3B F3"), { 0xC7, 0x45, 0xB4, 0x00 }); // cmdbackup = 0
-	//Memory->BytePatch(Utils::PatternScan("engine.dll", "4E C7 45 ? ? ? ? ? 89 55"), { 0x46 }); // fix for cmdbackup
+	
+	
+	
 
 	const char* fart[]{ "client.dll", "engine.dll", "server.dll", "studiorender.dll", "materialsystem.dll", "shaderapidx9.dll", "vstdlib.dll", "vguimatsurface.dll" };
 	long long amongus = 0x69690004C201B0;
@@ -1295,13 +1295,13 @@ void Hooks::End() {
 	ClientVMT->UnHook(22);
 	ClientVMT->UnHook(7);
 	PredictionVMT->UnHook(19);
-	//ClientVMT->UnHook(40);
+	
 	KeyValuesVMT->UnHook(2);
 	ModelCacheVMT->UnHook(10);
 	ClientVMT->UnHook(4);
 
 	RemoveHook(oPresent, hkPresent);
-	//RemoveHook(oReset, hkReset);
+	
 	RemoveHook(oUpdateClientSideAnimation, hkUpdateClientSideAnimation);
 	RemoveHook(oDoExtraBoneProcessing, hkDoExtraBoneProcessing);
 	RemoveHook(oShouldSkipAnimationFrame, hkShouldSkipAnimationFrame);
@@ -1316,7 +1316,7 @@ void Hooks::End() {
 	RemoveHook(oShouldInterpolate, hkShouldInterpolate);
 	RemoveHook(oPacketStart, hkPacketStart);
 	RemoveHook(oPacketEnd, hkPacketEnd);
-	//RemoveHook(oFX_FireBullets, hkFX_FireBullets);
+	
 	RemoveHook(oProcessMovement, hkProcessMovement);
 	RemoveHook(oLogDirect, hkLogDirect);
 	RemoveHook(oSetSignonState, hkSetSignonState);
@@ -1332,7 +1332,7 @@ void Hooks::End() {
 	RemoveHook(oResetLatched, hkResetLatched);
 	RemoveHook(oGetExposureRange, hkGetExposureRange);
 	RemoveHook(oEstimateAbsVelocity, hkEstimateAbsVelocity);
-	//RemoveHook(oInterpolatePlayer, hkInterpolatePlayer);
+	
 	RemoveHook(oGetFOV, hkGetFOV);
 	RemoveHook(oIsConnected, hkIsConnected);
 	RemoveHook(oReadPackets, hkReadPackets);

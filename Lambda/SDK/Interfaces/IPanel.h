@@ -45,10 +45,10 @@ public:
 	virtual const char* GetName(unsigned int vguiPanel) = 0;
 	virtual const char* GetClassName(VPANEL vguiPanel) = 0;
 
-	// delivers a message to the panel
+	
 	virtual void SendMessage(VPANEL vguiPanel, void* params, VPANEL ifromPanel) = 0;
 
-	// these pass through to the IClientPanel
+	
 	virtual void Think(VPANEL vguiPanel) = 0;
 	virtual void PerformApplySchemeSettings(VPANEL vguiPanel) = 0;
 	virtual void PaintTraverse(VPANEL vguiPanel, bool forceRepaint, bool allowForce = true) = 0;
@@ -65,23 +65,23 @@ public:
 	virtual VPANEL GetCurrentKeyFocus(VPANEL vguiPanel) = 0;
 	virtual int GetTabPosition(VPANEL vguiPanel) = 0;
 
-	// used by ISurface to store platform-specific data
+	
 	virtual void* Plat(VPANEL vguiPanel) = 0;
 	virtual void SetPlat(VPANEL vguiPanel, void* Plat) = 0;
 
-	// returns a pointer to the vgui controls baseclass Panel *
-	// destinationModule needs to be passed in to verify that the returned Panel * is from the same module
-	// it must be from the same module since Panel * vtbl may be different in each module
+	
+	
+	
 	virtual IPanel* GetPanel(VPANEL vguiPanel, const char* destinationModule) = 0;
 
 	virtual bool IsEnabled(VPANEL vguiPanel) = 0;
 	virtual void SetEnabled(VPANEL vguiPanel, bool state) = 0;
 
-	// Used by the drag/drop manager to always draw on top
+	
 	virtual bool IsTopmostPopup(VPANEL vguiPanel) = 0;
 	virtual void SetTopmostPopup(VPANEL vguiPanel, bool state) = 0;
 
-	// sibling pins
+	
 	virtual void SetSiblingPin(VPANEL vguiPanel, VPANEL newSibling, char iMyCornerToPin = 0, char iSiblingCornerToPinTo = 0) = 0;
 
 };

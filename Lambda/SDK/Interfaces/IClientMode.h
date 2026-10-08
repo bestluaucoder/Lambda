@@ -28,22 +28,22 @@ enum class MotionBlurMode_t
 class CViewSetup
 {
 public:
-    int   x;                      //0x0000 
-    int   x_old;                  //0x0004 
-    int   y;                      //0x0008 
-    int   y_old;                  //0x000C 
-    int   width;                  //0x0010 
-    int   width_old;              //0x0014 
-    int   height;                 //0x0018 
-    int   height_old;             //0x001C 
-    char      pad_0x0020[0x90];   //0x0020
-    float     fov;                //0x00B0 
-    float     viewmodel_fov;      //0x00B4 
-    Vector    origin;             //0x00B8 
-    QAngle    angles;             //0x00C4 
-    char      pad_0x00D0[0x7C];   //0x00D0
+    int   x;                      
+    int   x_old;                  
+    int   y;                      
+    int   y_old;                  
+    int   width;                  
+    int   width_old;              
+    int   height;                 
+    int   height_old;             
+    char      pad_0x0020[0x90];   
+    float     fov;                
+    float     viewmodel_fov;      
+    Vector    origin;             
+    QAngle    angles;             
+    char      pad_0x00D0[0x7C];   
 
-};//Size=0x014C
+};
 
 class IClientMode
 {

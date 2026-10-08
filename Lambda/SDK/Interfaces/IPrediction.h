@@ -12,25 +12,25 @@ public:
 	bool			bFirstRunOfFunctions : 1;
 	bool			bGameCodeMovedPlayer : 1;
 	bool			bNoAirControl : 1;
-	unsigned long	hPlayerHandle;		// edict index on server, client entity handle on client=
-	int				nImpulseCommand;	// impulse command issued.
-	QAngle			angViewAngles;		// command view angles (local space)
-	QAngle			angAbsViewAngles;	// command view angles (world space)
-	int				nButtons;			// attack buttons.
-	int				nOldButtons;		// from host_client->oldbuttons;
+	unsigned long	hPlayerHandle;		
+	int				nImpulseCommand;	
+	QAngle			angViewAngles;		
+	QAngle			angAbsViewAngles;	
+	int				nButtons;			
+	int				nOldButtons;		
 	float			flForwardMove;
 	float			flSideMove;
 	float			flUpMove;
 	float			flMaxSpeed;
 	float			flClientMaxSpeed;
-	Vector			vecVelocity;		// edict::velocity	// current movement direction.
+	Vector			vecVelocity;		
 	Vector			vecTrailingVelocity;
 	float			flTrailingVelocityTime;
-	Vector			vecAngles;			// edict::angles
+	Vector			vecAngles;			
 	Vector			vecOldAngles;
-	float			flOutStepHeight;	// how much you climbed this move
-	Vector			vecOutWishVel;		// this is where you tried 
-	Vector			vecOutJumpVel;		// this is your jump velocity
+	float			flOutStepHeight;	
+	Vector			vecOutWishVel;		
+	Vector			vecOutJumpVel;		
 	Vector			vecConstraintCenter;
 	float			flConstraintRadius;
 	float			flConstraintWidth;
@@ -81,32 +81,32 @@ public:
 class IPrediction
 {
 public:
-	char		    pad0[0x4];						// 0x0000
-	unsigned long	hLastGround;					// 0x0004
-	bool			bInPrediction;					// 0x0008
-	bool			bIsFirstTimePredicted;			// 0x0009
-	bool			bEnginePaused;					// 0x000A
-	bool			bOldCLPredictValue;				// 0x000B
-	int				iPreviousStartFrame;			// 0x000C
-	int				nIncomingPacketNumber;			// 0x0010
-	float			flLastServerWorldTimeStamp;		// 0x0014
+	char		    pad0[0x4];						
+	unsigned long	hLastGround;					
+	bool			bInPrediction;					
+	bool			bIsFirstTimePredicted;			
+	bool			bEnginePaused;					
+	bool			bOldCLPredictValue;				
+	int				iPreviousStartFrame;			
+	int				nIncomingPacketNumber;			
+	float			flLastServerWorldTimeStamp;		
 
 	struct Split_t
 	{
-		bool		bIsFirstTimePredicted;			// 0x0018
-		char    	pad0[0x3];						// 0x0019
-		int			nCommandsPredicted;				// 0x001C
-		int			nServerCommandsAcknowledged;	// 0x0020
-		int			iPreviousAckHadErrors;			// 0x0024
-		float		flIdealPitch;					// 0x0028
-		int			iLastCommandAcknowledged;		// 0x002C
-		bool		bPreviousAckErrorTriggersFullLatchReset; // 0x0030
-		void* vecEntitiesWithPredictionErrorsInLastAck; // 0x0031
-		bool		bPerformedTickShift;			// 0x0045
+		bool		bIsFirstTimePredicted;			
+		char    	pad0[0x3];						
+		int			nCommandsPredicted;				
+		int			nServerCommandsAcknowledged;	
+		int			iPreviousAckHadErrors;			
+		float		flIdealPitch;					
+		int			iLastCommandAcknowledged;		
+		bool		bPreviousAckErrorTriggersFullLatchReset; 
+		void* vecEntitiesWithPredictionErrorsInLastAck; 
+		bool		bPerformedTickShift;			
 	};
 
-	Split_t			Split[1];						// 0x0018
-	// SavedGlobals 0x4C
+	Split_t			Split[1];						
+	
 
 public:
 	void Update(int iStartFrame, bool bValidFrame, int nIncomingAcknowledged, int nOutgoingCommand)

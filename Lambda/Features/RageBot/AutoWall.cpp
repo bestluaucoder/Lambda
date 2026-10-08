@@ -1,4 +1,4 @@
-﻿#include "AutoWall.h"
+#include "AutoWall.h"
 #include "../../SDK/Interfaces.h"
 #include "../../SDK/Misc/CBasePlayer.h"
 #include "../../Utils/Utils.h"
@@ -24,20 +24,7 @@ inline void TraceLine(const Vector& absStart, const Vector& absEnd, unsigned int
 }
 
 void CAutoWall::ClipTraceToPlayers(const Vector& start, const Vector& end, const unsigned int mask, ITraceFilter* filter, CGameTrace* trace, CBasePlayer* target = nullptr) {
-	/*static void* UTIL_ClipTraceToPlayers = Utils::PatternScan("client.dll", "53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? 0F 57 C9");
-
-	_asm
-	{
-		MOV		EAX, filter
-		LEA		ECX, trace
-		PUSH	ECX
-		PUSH	EAX
-		PUSH	mask
-		LEA		EDX, start
-		LEA		ECX, end
-		CALL	UTIL_ClipTraceToPlayers
-		ADD		ESP, 0xC
-	}*/
+	
 
 	CGameTrace playerTrace;
 	Ray_t ray(start, end);
@@ -89,7 +76,7 @@ bool CAutoWall::TraceToExit(CGameTrace& enterTrace, CGameTrace& exitTrace, const
 	float maxDistance = 80.f;
 	float rayExtension = 4.f;
 
-	// heavy optimization
+	
 	switch (enterMaterial) {
 	case CHAR_TEX_PLASTER:
 		maxDistance = 50.f;

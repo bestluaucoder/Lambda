@@ -53,7 +53,7 @@ void LuaSaveConfig(LuaScript_t* script) {
 			result[name] = std::string(((CInputBox*)e)->buf);
 			break;
 		default:
-			// handle any unexpected values of WidgetType here
+			
 			break;
 		}
 	}
@@ -87,7 +87,7 @@ void LuaLoadConfig(LuaScript_t* script) {
 		file_path = std::filesystem::current_path().string() + "/lambda/scripts/cfg/" + script->name + ".cfg";
 	}
 	if (!std::filesystem::exists(file_path, ec)) {
-		// not saved config for lua yet
+		
 		return;
 	}
 
@@ -1022,7 +1022,7 @@ namespace api {
 		void element_set_callback(sol::this_state state, IBaseWidget* element, sol::protected_function func) {
 			UILuaCallback_t cb(element, Lua->GetScriptID(GetCurrentScript(state)), func);
 			element->lua_callbacks.push_back(cb);
-			g_ui_lua_callbacks.push_back(cb); // track callback to easily remove them
+			g_ui_lua_callbacks.push_back(cb); 
 		}
 		 
 		void element_set_visible(IBaseWidget* element, bool visible) {
@@ -1409,7 +1409,7 @@ namespace api {
 	namespace network {
 		std::string get(std::string url, sol::optional<sol::table> headers, sol::optional<sol::protected_function> callback) {
 			if (callback.has_value()) {
-				// will implement async request later
+				
 			}
 			else {
 				std::vector<HttpHeader> _headers;
@@ -1548,7 +1548,7 @@ void CLua::Setup() {
 	lua["print_raw"] = api::print_raw;
 	lua["safe_call"] = api::safe_call;
 
-	// usertypes
+	
 	lua.new_usertype<IBaseWidget>("ui_element_t", sol::no_constructor,
 		"set_callback", api::ui::element_set_callback,
 		"visible", api::ui::element_set_visible,
@@ -1927,14 +1927,14 @@ void CLua::Setup() {
 		"get_packet_time", &INetChannelInfo::GetPacketTime
 	);
 
-	// client
+	
 	lua.create_named_table("client",
 		"add_callback", api::client::add_callback,
 		"unload_script", api::client::unload_script,
 		"reload_script", api::client::reload_script
 	);
 
-	// entity
+	
 	lua.create_named_table("entity",
 		"get", api::entity::get,
 		"get_local_player", api::entity::get_local_player,
@@ -1942,7 +1942,7 @@ void CLua::Setup() {
 		"from_handle", api::entity::from_handle
 	);
 
-	// ui
+	
 	lua.create_named_table("ui",
 		"tab", api::ui::tab,
 		"groupbox", api::ui::groupbox,
@@ -1951,7 +1951,7 @@ void CLua::Setup() {
 		"get_binds", api::ui::get_binds
 	);
 
-	// global vars
+	
 	lua.new_usertype<CGlobalVarsBase>("global_vars_t", sol::no_constructor,
 		"curtime", sol::readonly(&CGlobalVarsBase::curtime),
 		"realtime", sol::readonly(&CGlobalVarsBase::realtime),
@@ -1973,7 +1973,7 @@ void CLua::Setup() {
 	);
 	lua["globals"] = GlobalVars;
 
-	// render
+	
 	lua.create_named_table("render",
 		"screen_size", api::render::screen_size,
 		"camera_angles", api::render::camera_angles,
@@ -2028,7 +2028,7 @@ void CLua::Setup() {
 	);
 	lua["cvar"] = CVar;
 
-	// utils
+	
 	lua.create_named_table("utils",
 		"random_seed", api::utils::random_seed,
 		"random_int", api::utils::random_int,
@@ -2048,12 +2048,12 @@ void CLua::Setup() {
 		"send_voice_message", api::utils::send_voice_message
 	);
 
-	// network
+	
 	lua.create_named_table("network",
 		"get", api::network::get
 	);
 
-	// rage
+	
 	lua.create_named_table("rage",
 		"get_antiaim_target", api::rage::get_antiaim_target,
 		"get_exploit_charge", api::rage::get_exploit_charge,

@@ -1,12 +1,9 @@
-/*
-** Definitions for MIPS CPUs.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
+
 
 #ifndef _LJ_TARGET_MIPS_H
 #define _LJ_TARGET_MIPS_H
 
-/* -- Registers IDs ------------------------------------------------------- */
+
 
 #define GPRDEF(_) \
   _(R0) _(R1) _(R2) _(R3) _(R4) _(R5) _(R6) _(R7) \
@@ -23,14 +20,14 @@
 #define RIDENUM(name)	RID_##name,
 
 enum {
-  GPRDEF(RIDENUM)		/* General-purpose registers (GPRs). */
-  FPRDEF(RIDENUM)		/* Floating-point registers (FPRs). */
+  GPRDEF(RIDENUM)		
+  FPRDEF(RIDENUM)		
   RID_MAX,
   RID_ZERO = RID_R0,
   RID_TMP = RID_RA,
   RID_GP = RID_R28,
 
-  /* Calling conventions. */
+  
   RID_RET = RID_R2,
 #if LJ_LE
   RID_RETHI = RID_R3,
@@ -42,28 +39,28 @@ enum {
   RID_FPRET = RID_F0,
   RID_CFUNCADDR = RID_R25,
 
-  /* These definitions must match with the *.dasc file(s): */
-  RID_BASE = RID_R16,		/* Interpreter BASE. */
-  RID_LPC = RID_R18,		/* Interpreter PC. */
-  RID_DISPATCH = RID_R19,	/* Interpreter DISPATCH table. */
-  RID_LREG = RID_R20,		/* Interpreter L. */
-  RID_JGL = RID_R30,		/* On-trace: global_State + 32768. */
+  
+  RID_BASE = RID_R16,		
+  RID_LPC = RID_R18,		
+  RID_DISPATCH = RID_R19,	
+  RID_LREG = RID_R20,		
+  RID_JGL = RID_R30,		
 
-  /* Register ranges [min, max) and number of registers. */
+  
   RID_MIN_GPR = RID_R0,
   RID_MAX_GPR = RID_RA+1,
   RID_MIN_FPR = RID_F0,
   RID_MAX_FPR = RID_F31+1,
   RID_NUM_GPR = RID_MAX_GPR - RID_MIN_GPR,
-  RID_NUM_FPR = RID_MAX_FPR - RID_MIN_FPR	/* Only even regs are used. */
+  RID_NUM_FPR = RID_MAX_FPR - RID_MIN_FPR	
 };
 
 #define RID_NUM_KREF		RID_NUM_GPR
 #define RID_MIN_KREF		RID_R0
 
-/* -- Register sets ------------------------------------------------------- */
 
-/* Make use of all registers, except ZERO, TMP, SP, SYS1, SYS2, JGL and GP. */
+
+
 #define RSET_FIXED \
   (RID2RSET(RID_ZERO)|RID2RSET(RID_TMP)|RID2RSET(RID_SP)|\
    RID2RSET(RID_SYS1)|RID2RSET(RID_SYS2)|RID2RSET(RID_JGL)|RID2RSET(RID_GP))
@@ -91,15 +88,9 @@ enum {
 #define REGARG_LASTFPR		RID_F14
 #define REGARG_NUMFPR		2
 
-/* -- Spill slots --------------------------------------------------------- */
 
-/* Spill slots are 32 bit wide. An even/odd pair is used for FPRs.
-**
-** SPS_FIXED: Available fixed spill slots in interpreter frame.
-** This definition must match with the *.dasc file(s).
-**
-** SPS_FIRST: First spill slot for general use.
-*/
+
+
 #define SPS_FIXED	5
 #define SPS_FIRST	4
 
@@ -108,31 +99,31 @@ enum {
 #define sps_scale(slot)		(4 * (int32_t)(slot))
 #define sps_align(slot)		(((slot) - SPS_FIXED + 1) & ~1)
 
-/* -- Exit state ---------------------------------------------------------- */
 
-/* This definition must match with the *.dasc file(s). */
+
+
 typedef struct {
-  lua_Number fpr[RID_NUM_FPR];	/* Floating-point registers. */
-  int32_t gpr[RID_NUM_GPR];	/* General-purpose registers. */
-  int32_t spill[256];		/* Spill slots. */
+  lua_Number fpr[RID_NUM_FPR];	
+  int32_t gpr[RID_NUM_GPR];	
+  int32_t spill[256];		
 } ExitState;
 
-/* Highest exit + 1 indicates stack check. */
+
 #define EXITSTATE_CHECKEXIT	1
 
-/* Return the address of a per-trace exit stub. */
+
 static LJ_AINLINE uint32_t *exitstub_trace_addr_(uint32_t *p)
 {
-  while (*p == 0x00000000) p++;  /* Skip MIPSI_NOP. */
+  while (*p == 0x00000000) p++;  
   return p;
 }
-/* Avoid dependence on lj_jit.h if only including lj_target.h. */
+
 #define exitstub_trace_addr(T, exitno) \
   exitstub_trace_addr_((MCode *)((char *)(T)->mcode + (T)->szmcode))
 
-/* -- Instructions -------------------------------------------------------- */
 
-/* Instruction fields. */
+
+
 #define MIPSF_S(r)	((r) << 21)
 #define MIPSF_T(r)	((r) << 16)
 #define MIPSF_D(r)	((r) << 11)
@@ -144,7 +135,7 @@ static LJ_AINLINE uint32_t *exitstub_trace_addr_(uint32_t *p)
 #define MIPSF_M(n)	((n) << 11)
 
 typedef enum MIPSIns {
-  /* Integer instructions. */
+  
   MIPSI_MOVE = 0x00000021,
   MIPSI_NOP = 0x00000000,
 
@@ -174,15 +165,15 @@ typedef enum MIPSIns {
   MIPSI_SLL = 0x00000000,
   MIPSI_SRL = 0x00000002,
   MIPSI_SRA = 0x00000003,
-  MIPSI_ROTR = 0x00200002,	/* MIPS32R2 */
+  MIPSI_ROTR = 0x00200002,	
   MIPSI_SLLV = 0x00000004,
   MIPSI_SRLV = 0x00000006,
   MIPSI_SRAV = 0x00000007,
-  MIPSI_ROTRV = 0x00000046,	/* MIPS32R2 */
+  MIPSI_ROTRV = 0x00000046,	
 
-  MIPSI_SEB = 0x7c000420,	/* MIPS32R2 */
-  MIPSI_SEH = 0x7c000620,	/* MIPS32R2 */
-  MIPSI_WSBH = 0x7c0000a0,	/* MIPS32R2 */
+  MIPSI_SEB = 0x7c000420,	
+  MIPSI_SEH = 0x7c000620,	
+  MIPSI_WSBH = 0x7c0000a0,	
 
   MIPSI_B = 0x10000000,
   MIPSI_J = 0x08000000,
@@ -197,7 +188,7 @@ typedef enum MIPSIns {
   MIPSI_BLTZ = 0x04000000,
   MIPSI_BGEZ = 0x04010000,
 
-  /* Load/store instructions. */
+  
   MIPSI_LW = 0x8c000000,
   MIPSI_SW = 0xac000000,
   MIPSI_LB = 0x80000000,
@@ -211,7 +202,7 @@ typedef enum MIPSIns {
   MIPSI_LDC1 = 0xd4000000,
   MIPSI_SDC1 = 0xf4000000,
 
-  /* FP instructions. */
+  
   MIPSI_MOV_S = 0x46000006,
   MIPSI_MOV_D = 0x46200006,
   MIPSI_MOVT_D = 0x46210011,

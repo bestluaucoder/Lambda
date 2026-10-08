@@ -39,7 +39,7 @@ void* Utils::PatternScan(const char* szModule, const char* szPattern, int iOffse
                 pattern += 3;
 
             else
-                pattern += 2;    //one ?
+                pattern += 2;    
         }
         else
         {
@@ -233,9 +233,9 @@ void Utils::MatrixMove(const matrix3x4_t* matrix, matrix3x4_t* result, int size,
 
 void* Utils::GetModuleBaseHandle(const std::string_view szModuleName)
 {
-    const _PEB32* pPEB = reinterpret_cast<_PEB32*>(__readfsdword(0x30)); // mov eax, fs:[0x30]
-    //const _TEB32* pTEB = reinterpret_cast<_TEB32*>(__readfsdword(0x18)); // mov eax, fs:[0x18]
-    //const _PEB32* pPEB = pTEB->ProcessEnvironmentBlock;
+    const _PEB32* pPEB = reinterpret_cast<_PEB32*>(__readfsdword(0x30)); 
+    
+    
 
     if (szModuleName.empty())
         return pPEB->ImageBaseAddress;
@@ -271,7 +271,7 @@ void* Utils::GetExportAddress(const void* pModuleBase, const std::string_view sz
     const std::uintptr_t* pFunctionsRVA = reinterpret_cast<const std::uintptr_t*>(pAddress + pExportDirectory->AddressOfFunctions);
     const std::uint16_t* pNameOrdinals = reinterpret_cast<const std::uint16_t*>(pAddress + pExportDirectory->AddressOfNameOrdinals);
 
-    // perform binary search
+    
     std::uintptr_t uRight = pExportDirectory->NumberOfNames;
     std::uintptr_t uLeft = 0;
 

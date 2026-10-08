@@ -1,28 +1,25 @@
-/*
-** VM error messages.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
 
-/* This file may be included multiple times with different ERRDEF macros. */
 
-/* Basic error handling. */
+
+
+
 ERRDEF(ERRMEM,	"not enough memory")
 ERRDEF(ERRERR,	"error in error handling")
 ERRDEF(ERRCPP,	"C++ exception")
 
-/* Allocations. */
+
 ERRDEF(STROV,	"string length overflow")
 ERRDEF(UDATAOV,	"userdata length overflow")
 ERRDEF(STKOV,	"stack overflow")
 ERRDEF(STKOVM,	"stack overflow (%s)")
 ERRDEF(TABOV,	"table overflow")
 
-/* Table indexing. */
+
 ERRDEF(NANIDX,	"table index is NaN")
 ERRDEF(NILIDX,	"table index is nil")
 ERRDEF(NEXTIDX,	"invalid key to " LUA_QL("next"))
 
-/* Metamethod resolving. */
+
 ERRDEF(BADCALL,	"attempt to call a %s value")
 ERRDEF(BADOPRT,	"attempt to %s %s " LUA_QS " (a %s value)")
 ERRDEF(BADOPRV,	"attempt to %s a %s value")
@@ -36,7 +33,7 @@ ERRDEF(OPARITH,	"perform arithmetic on")
 ERRDEF(OPCAT,	"concatenate")
 ERRDEF(OPLEN,	"get length of")
 
-/* Type checks. */
+
 ERRDEF(BADSELF,	"calling " LUA_QS " on bad self (%s)")
 ERRDEF(BADARG,	"bad argument #%d to " LUA_QS " (%s)")
 ERRDEF(BADTYPE,	"%s expected, got %s")
@@ -52,7 +49,7 @@ ERRDEF(FORINIT,	LUA_QL("for") " initial value must be a number")
 ERRDEF(FORLIM,	LUA_QL("for") " limit must be a number")
 ERRDEF(FORSTEP,	LUA_QL("for") " step must be a number")
 
-/* C API checks. */
+
 ERRDEF(NOENV,	"no calling environment")
 ERRDEF(CYIELD,	"attempt to yield across C-call boundary")
 ERRDEF(BADLU,	"bad light userdata pointer")
@@ -61,7 +58,7 @@ ERRDEF(NOGCMM,	"bad action while in __gc metamethod")
 ERRDEF(BADFPU,	"bad FPU precision (use D3DCREATE_FPU_PRESERVE with DirectX)")
 #endif
 
-/* Standard library function errors. */
+
 ERRDEF(ASSERT,	"assertion failed!")
 ERRDEF(PROTMT,	"cannot change a protected metatable")
 ERRDEF(UNPACK,	"too many results to unpack")
@@ -115,7 +112,7 @@ ERRDEF(NOJIT,	"JIT compiler permanently disabled by build option")
 #endif
 ERRDEF(JITOPT,	"unknown or malformed optimization flag " LUA_QS)
 
-/* Lexer/parser errors. */
+
 ERRDEF(XMODE,	"attempt to load chunk with wrong mode")
 ERRDEF(XNEAR,	"%s near " LUA_QS)
 ERRDEF(XELEM,	"lexical element too long")
@@ -149,12 +146,12 @@ ERRDEF(XLUNDEF,	"undefined label " LUA_QS)
 ERRDEF(XLDUP,	"duplicate label " LUA_QS)
 ERRDEF(XGSCOPE,	"<goto %s> jumps into the scope of local " LUA_QS)
 
-/* Bytecode reader errors. */
+
 ERRDEF(BCFMT,	"cannot load incompatible bytecode")
 ERRDEF(BCBAD,	"cannot load malformed bytecode")
 
 #if LJ_HASFFI
-/* FFI errors. */
+
 ERRDEF(FFI_INVTYPE,	"invalid C type")
 ERRDEF(FFI_INVSIZE,	"size of C type is unknown or too large")
 ERRDEF(FFI_BADSCL,	"bad storage class")
@@ -188,6 +185,4 @@ ERRDEF(FFI_NYICALL,	"NYI: cannot call this C function (yet)")
 
 #undef ERRDEF
 
-/* Detecting unused error messages:
-   awk -F, '/^ERRDEF/ { gsub(/ERRDEF./, ""); printf "grep -q LJ_ERR_%s *.[ch] || echo %s\n", $1, $1}' lj_errmsg.h | sh
-*/
+

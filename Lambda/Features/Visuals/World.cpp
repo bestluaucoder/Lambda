@@ -47,30 +47,30 @@ void CWorld::Modulation() {
 				material->AlphaModulate(1);
 			}
 		}
-		//else if (strstr(material->GetTextureGroupName(), "StaticProp")) {
-		//	if (config.visuals.effects.props_color_enable->get()) {
-		//		float r, g, b;
-		//		material->GetColorModulation(&r, &g, &b);
+		
+		
+		
+		
 
-		//		auto it = original_colors.find(material->GetName());
-		//		if (it == original_colors.end()) {
-		//			original_colors.insert({ material->GetName(), Color().as_fraction(r, g, b) });
-		//			it = original_colors.find(material->GetName());
-		//		}
+		
+		
+		
+		
+		
 
-		//		const Color clr = config.visuals.effects.props_color->get();
-		//		material->ColorModulate(it->second * clr);
-		//		material->AlphaModulate(clr.a / 255.f);
-		//		material->SetMaterialVarFlag(MATERIAL_VAR_TRANSLUCENT, false);
-		//		cvars.r_DrawSpecificStaticProp->SetInt(0);
-		//	}
-		//	else {
-		//		auto it = original_colors.find(material->GetName());
-		//		if (it != original_colors.end())
-		//			material->ColorModulate(it->second);
-		//		material->AlphaModulate(1);
-		//	}
-		//}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 	}
 
 	for (int i = 0; i < StaticPropMgr->m_StaticProps.Count(); i++) {
@@ -175,7 +175,7 @@ void CWorld::ProcessCamera(CViewSetup* setup) {
 		QAngle backAngle = QAngle(angles.yaw - 180, -angles.pitch, 0);
 		backAngle.Normalize();
 		Vector cameraDirection = Math::AngleVectors(angles);
-		if (cameraDirection.z == 0.f) // fuck valve shitcode
+		if (cameraDirection.z == 0.f) 
 			cameraDirection.z = 0.01f;
 
 		CGameTrace trace;
@@ -201,7 +201,7 @@ void CWorld::ProcessCamera(CViewSetup* setup) {
 
 	}
 
-	if (Cheat.LocalPlayer && (!Cheat.LocalPlayer->IsAlive() || Cheat.LocalPlayer->m_iTeamNum() == 1) && Cheat.LocalPlayer->m_iObserverMode() == OBS_MODE_CHASE) { // disable spectators interpolation
+	if (Cheat.LocalPlayer && (!Cheat.LocalPlayer->IsAlive() || Cheat.LocalPlayer->m_iTeamNum() == 1) && Cheat.LocalPlayer->m_iObserverMode() == OBS_MODE_CHASE) { 
 		CBasePlayer* observer = (CBasePlayer*)EntityList->GetClientEntityFromHandle(Cheat.LocalPlayer->m_hObserverTarget());
 
 		if (observer) {

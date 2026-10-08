@@ -35,6 +35,6 @@ void Glow::Run() {
 		glowObject.m_vGlowColor.z = col.b / 255.f;
 		glowObject.m_nRenderStyle = 0;
 		glowObject.m_bRenderWhenOccluded = true;
-		//glowObject.m_bRenderWhenUnoccluded = false;
+		
 	}
 }

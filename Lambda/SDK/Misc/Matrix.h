@@ -21,10 +21,10 @@ public:
         m_flMatVal[1][0] = m10; m_flMatVal[1][1] = m11; m_flMatVal[1][2] = m12; m_flMatVal[1][3] = m13;
         m_flMatVal[2][0] = m20; m_flMatVal[2][1] = m21; m_flMatVal[2][2] = m22; m_flMatVal[2][3] = m23;
     }
-    //-----------------------------------------------------------------------------
-    // Creates a matrix where the X axis = forward
-    // the Y axis = left, and the Z axis = up
-    //-----------------------------------------------------------------------------
+    
+    
+    
+    
     void Init(const Vector& xAxis, const Vector& yAxis, const Vector& zAxis, const Vector& vecOrigin)
     {
         m_flMatVal[0][0] = xAxis.x; m_flMatVal[0][1] = yAxis.x; m_flMatVal[0][2] = zAxis.x; m_flMatVal[0][3] = vecOrigin.x;
@@ -32,10 +32,10 @@ public:
         m_flMatVal[2][0] = xAxis.z; m_flMatVal[2][1] = yAxis.z; m_flMatVal[2][2] = zAxis.z; m_flMatVal[2][3] = vecOrigin.z;
     }
 
-    //-----------------------------------------------------------------------------
-    // Creates a matrix where the X axis = forward
-    // the Y axis = left, and the Z axis = up
-    //-----------------------------------------------------------------------------
+    
+    
+    
+    
     matrix3x4_t(const Vector& xAxis, const Vector& yAxis, const Vector& zAxis, const Vector& vecOrigin)
     {
         Init(xAxis, yAxis, zAxis, vecOrigin);

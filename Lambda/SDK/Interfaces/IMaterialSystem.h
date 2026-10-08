@@ -26,7 +26,7 @@ enum MaterialVarFlags_t
     MATERIAL_VAR_SELFILLUM = (1 << 6),
     MATERIAL_VAR_ADDITIVE = (1 << 7),
     MATERIAL_VAR_ALPHATEST = (1 << 8),
-    //MATERIAL_VAR_UNUSED = (1 << 9),
+    
     MATERIAL_VAR_ZNEARER = (1 << 10),
     MATERIAL_VAR_MODEL = (1 << 11),
     MATERIAL_VAR_FLAT = (1 << 12),
@@ -34,15 +34,15 @@ enum MaterialVarFlags_t
     MATERIAL_VAR_NOFOG = (1 << 14),
     MATERIAL_VAR_IGNOREZ = (1 << 15),
     MATERIAL_VAR_DECAL = (1 << 16),
-    MATERIAL_VAR_ENVMAPSPHERE = (1 << 17), // OBSOLETE
-    MATERIAL_VAR_UNUSED = (1 << 18), // UNUSED
-    MATERIAL_VAR_ENVMAPCAMERASPACE = (1 << 19), // OBSOLETE
+    MATERIAL_VAR_ENVMAPSPHERE = (1 << 17), 
+    MATERIAL_VAR_UNUSED = (1 << 18), 
+    MATERIAL_VAR_ENVMAPCAMERASPACE = (1 << 19), 
     MATERIAL_VAR_BASEALPHAENVMAPMASK = (1 << 20),
     MATERIAL_VAR_TRANSLUCENT = (1 << 21),
     MATERIAL_VAR_NORMALMAPALPHAENVMAPMASK = (1 << 22),
-    MATERIAL_VAR_NEEDS_SOFTWARE_SKINNING = (1 << 23), // OBSOLETE
+    MATERIAL_VAR_NEEDS_SOFTWARE_SKINNING = (1 << 23), 
     MATERIAL_VAR_OPAQUETEXTURE = (1 << 24),
-    MATERIAL_VAR_ENVMAPMODE = (1 << 25), // OBSOLETE
+    MATERIAL_VAR_ENVMAPMODE = (1 << 25), 
     MATERIAL_VAR_SUPPRESS_DECALS = (1 << 26),
     MATERIAL_VAR_HALFLAMBERT = (1 << 27),
     MATERIAL_VAR_WIREFRAME = (1 << 28),
@@ -117,23 +117,23 @@ struct RenderableInfo_t
 {
     IClientRenderable* m_pRenderable;
     void* m_pAlphaProperty;
-    int					m_EnumCount;				// Have I been added to a particular shadow yet?
+    int					m_EnumCount;				
     int					m_nRenderFrame;
-    unsigned short		m_FirstShadow;				// The first shadow caster that cast on it
-    unsigned short		m_LeafList;					// What leafs is it in?
-    short				m_Area;						// -1 if the renderable spans multiple areas.
-    uint16_t				m_Flags;					// rendering flags
-    uint16_t				m_bRenderInFastReflection : 1;	// Should we render in the "fast" reflection?
-    uint16_t				m_bDisableShadowDepthRendering : 1;	// Should we not render into the shadow depth map?
-    uint16_t				m_bDisableCSMRendering : 1;			// Should we not render into the CSM?
-    uint16_t				m_bDisableShadowDepthCaching : 1;	// Should we not be cached in the shadow depth map?
-    uint16_t				m_nSplitscreenEnabled : 2;	// splitscreen rendering flags
-    uint16_t				m_nTranslucencyType : 2;	// RenderableTranslucencyType_t
-    uint16_t				m_nModelType : 8;			// RenderableModelType_t
-    Vector				m_vecBloatedAbsMins;		// Use this for tree insertion
+    unsigned short		m_FirstShadow;				
+    unsigned short		m_LeafList;					
+    short				m_Area;						
+    uint16_t				m_Flags;					
+    uint16_t				m_bRenderInFastReflection : 1;	
+    uint16_t				m_bDisableShadowDepthRendering : 1;	
+    uint16_t				m_bDisableCSMRendering : 1;			
+    uint16_t				m_bDisableShadowDepthCaching : 1;	
+    uint16_t				m_nSplitscreenEnabled : 2;	
+    uint16_t				m_nTranslucencyType : 2;	
+    uint16_t				m_nModelType : 8;			
+    Vector				m_vecBloatedAbsMins;		
     Vector				m_vecBloatedAbsMaxs;
-    Vector				m_vecAbsMins;			// NOTE: These members are not threadsafe!!
-    Vector				m_vecAbsMaxs;			// They can be updated from any viewpoint (based on RENDER_FLAGS_BOUNDS_VALID)
+    Vector				m_vecAbsMins;			
+    Vector				m_vecAbsMaxs;			
 };
 
 struct DrawModelState_t
@@ -303,7 +303,7 @@ enum class OverrideType {
     Normal = 0,
     BuildShadows,
     DepthWrite,
-    CustomMaterial, // weapon skins
+    CustomMaterial, 
     SsaoDepthWrite
 };
 
@@ -315,7 +315,7 @@ class IStudioRender {
 public:
     bool IsForcedMaterialOverride() {
         if (!materialOverride)
-            return overrideType == 2 || overrideType == 3; // see CStudioRenderContext::IsForcedMaterialOverride
+            return overrideType == 2 || overrideType == 3; 
         return strstr(materialOverride->GetName(), "dev/glow");
     }
 
@@ -577,9 +577,9 @@ enum
     MAX_MAT_SORT_GROUPS
 };
 
-//-----------------------------------------------------------------------------
-// Leaf index
-//-----------------------------------------------------------------------------
+
+
+
 typedef unsigned short LeafIndex_t;
 enum
 {
@@ -588,10 +588,10 @@ enum
 
 struct WorldListLeafData_t
 {
-    LeafIndex_t     leafIndex;    // 16 bits
+    LeafIndex_t     leafIndex;    
     int16_t         waterData;
-    uint16_t        firstTranslucentSurface;    // engine-internal list index
-    uint16_t        translucentSurfaceCount;    // count of translucent surfaces+disps
+    uint16_t        firstTranslucentSurface;    
+    uint16_t        translucentSurfaceCount;    
 };
 
 struct WorldListInfo_t
@@ -602,13 +602,13 @@ struct WorldListInfo_t
     WorldListLeafData_t* m_pLeafDataList;
 };
 
-class IWorldRenderList /*: public IRefCounted*/
+class IWorldRenderList 
 {
 };
 
-//-----------------------------------------------------------------------------
-// Describes the fog volume for a particular point
-//-----------------------------------------------------------------------------
+
+
+
 struct VisibleFogVolumeInfo_t
 {
     int            m_nVisibleFogVolume;
@@ -626,10 +626,10 @@ struct VPlane
 };
 #define FRUSTUM_NUMPLANES    6
 typedef VPlane Frustum[FRUSTUM_NUMPLANES];
-//-----------------------------------------------------------------------------
-// Vertex format for brush models
-//-----------------------------------------------------------------------------
-struct BrushVertex_t //-V690
+
+
+
+struct BrushVertex_t 
 {
     Vector        m_Pos;
     Vector        m_Normal;
@@ -642,44 +642,44 @@ private:
     BrushVertex_t(const BrushVertex_t& src);
 };
 
-//-----------------------------------------------------------------------------
-// Visibility data for area portal culling
-//-----------------------------------------------------------------------------
+
+
+
 struct VisOverrideData_t
 {
-    Vector        m_vecVisOrigin;                    // The point to to use as the viewpoint for area portal backface cull checks.
-    float        m_fDistToAreaPortalTolerance;    // The distance from an area portal before using the full screen as the viewable portion.
+    Vector        m_vecVisOrigin;                    
+    float        m_fDistToAreaPortalTolerance;    
 };
 
 
-//-----------------------------------------------------------------------------
-// interface for asking about the Brush surfaces from the client DLL
-//-----------------------------------------------------------------------------
+
+
+
 
 class IBrushSurface
 {
 public:
-    // Computes texture coordinates + lightmap coordinates given a world position
+    
     virtual void ComputeTextureCoordinate(Vector const& worldPos, Vector2& texCoord) = 0;
     virtual void ComputeLightmapCoordinate(Vector const& worldPos, Vector2& lightmapCoord) = 0;
 
-    // Gets the vertex data for this surface
+    
     virtual int  GetVertexCount() const = 0;
     virtual void GetVertexData(BrushVertex_t* pVerts) = 0;
 
-    // Gets at the material properties for this surface
+    
     virtual IMaterial* GetMaterial() = 0;
 };
 
 
-//-----------------------------------------------------------------------------
-// interface for installing a new renderer for brush surfaces
-//-----------------------------------------------------------------------------
+
+
+
 
 class IBrushRenderer
 {
 public:
-    // Draws the surface; returns true if decals should be rendered on this surface
+    
     virtual bool RenderBrushModelSurface(void* pBaseEntity, IBrushSurface* pBrushSurface) = 0;
 };
 

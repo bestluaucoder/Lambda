@@ -1,7 +1,7 @@
 #include "SkinChanger.h"
 
 void CSkinChanger::LoadKnifeModels() {
-	for (int i = 0; i < 1000; i++) { // last knife index is ~500 but this func is called once
+	for (int i = 0; i < 1000; i++) { 
 		CCSWeaponData* wdata = WeaponSystem->GetWeaponData(i);
 
 		if (!wdata || wdata->nWeaponType != WEAPONTYPE_KNIFE || strstr(wdata->szViewModel, "taser"))
@@ -46,28 +46,28 @@ bool CSkinChanger::ApplyKnifeModel(CAttributableItem* weapon, const char* model)
 }
 
 void CSkinChanger::SetViewModelSequence(const CRecvProxyData* pDataConst, void* pStruct, void* pOut) {
-	// Make the incoming data editable.
+	
 	CRecvProxyData* pData = const_cast<CRecvProxyData*>(pDataConst);
 
-	// Confirm that we are replacing our view model and not someone elses.
+	
 	CBaseViewModel* pViewModel = (CBaseViewModel*)pStruct;
 
 	if (pViewModel) {
 		auto pOwner = reinterpret_cast<CBaseEntity*>(EntityList->GetClientEntityFromHandle(uintptr_t(pViewModel->m_hOwner())));
 
-		// Compare the owner entity of this view model to the local player entity.
+		
 		if (pOwner && pOwner->EntIndex() == EngineClient->GetLocalPlayer()) {
-			// Get the filename of the current view model.
+			
 			const void* pModel = ModelInfoClient->GetModel(pViewModel->m_nModelIndex());
 
 			const char* szModel = ModelInfoClient->GetModelName((model_t*)pModel);
 
-			// Store the current sequence.
+			
 			int m_nSequence = pData->m_Value.m_Int;
 
 
 			if (!strcmp(szModel, "models/weapons/v_knife_butterfly.mdl")) {
-				// Fix animations for the Butterfly Knife.
+				
 				switch (m_nSequence) {
 				case SEQUENCE_DEFAULT_DRAW:
 					m_nSequence = RandomIntDef(SEQUENCE_BUTTERFLY_DRAW, SEQUENCE_BUTTERFLY_DRAW2); break;
@@ -78,7 +78,7 @@ void CSkinChanger::SetViewModelSequence(const CRecvProxyData* pDataConst, void* 
 				}
 			}
 			else if (!strcmp(szModel, "models/weapons/v_knife_falchion_advanced.mdl")) {
-				// Fix animations for the Falchion Knife.
+				
 				switch (m_nSequence) {
 				case SEQUENCE_DEFAULT_IDLE2:
 					m_nSequence = SEQUENCE_FALCHION_IDLE1; break;
@@ -94,7 +94,7 @@ void CSkinChanger::SetViewModelSequence(const CRecvProxyData* pDataConst, void* 
 				}
 			}
 			else if (!strcmp(szModel, "models/weapons/v_knife_push.mdl")) {
-				// Fix animations for the Shadow Daggers.
+				
 				switch (m_nSequence) {
 				case SEQUENCE_DEFAULT_IDLE2:
 					m_nSequence = SEQUENCE_DAGGERS_IDLE1; break;
@@ -115,7 +115,7 @@ void CSkinChanger::SetViewModelSequence(const CRecvProxyData* pDataConst, void* 
 				}
 			}
 			else if (!strcmp(szModel, "models/weapons/v_knife_survival_bowie.mdl")) {
-				// Fix animations for the Bowie Knife.
+				
 				switch (m_nSequence) {
 				case SEQUENCE_DEFAULT_DRAW:
 				case SEQUENCE_DEFAULT_IDLE1:
@@ -185,12 +185,12 @@ void CSkinChanger::SetViewModelSequence(const CRecvProxyData* pDataConst, void* 
 					m_nSequence++;
 				}
 			}
-			// Set the fixed sequence.
+			
 			pData->m_Value.m_Int = m_nSequence;
 		}
 	}
 
-	// Call original function with the modified data.
+	
 	SkinChanger->fnSequenceProxyFn(pData, pStruct, pOut);
 }
 
@@ -224,7 +224,7 @@ void CSkinChanger::FixViewModelSequence()
 		const char* pszName = pClass->m_pRecvTable->m_pNetTableName;
 
 		if (!strcmp(pszName, "DT_BaseViewModel")) {
-			// Search for the 'm_nModelIndex' property.
+			
 			RecvTable* pClassTable = pClass->m_pRecvTable;
 
 			for (int nIndex = 0; nIndex < pClass->m_pRecvTable->m_nProps; nIndex++) {
@@ -233,10 +233,10 @@ void CSkinChanger::FixViewModelSequence()
 				if (!pProp || strcmp(pProp->m_pVarName, "m_nSequence"))
 					continue;
 
-				// Store the original proxy function.
+				
 				fnSequenceProxyFn = (RecvVarProxy_t)pProp->m_ProxyFn;
 
-				// Replace the proxy function with our sequence changer.
+				
 				pProp->m_ProxyFn = (RecvVarProxy_t)SetViewModelSequence;
 			}
 		}
@@ -248,7 +248,7 @@ void CSkinChanger::FixViewModelSequence()
 				RecvProp* pProp = &(pClass->m_pRecvTable->m_pProps[i]);
 				const char* name = pProp->m_pVarName;
 
-				// Knives
+				
 				if (!strcmp(name, "m_nModelIndex"))
 				{
 					oRecvnModelIndex = (RecvVarProxy_t)pProp->m_ProxyFn;
@@ -264,7 +264,7 @@ void CSkinChanger::AnimationUnHook()
 {
 	for (ClientClass* pClass = Client->GetAllClasses(); pClass; pClass = pClass->m_pNext) {
 		if (!strcmp(pClass->m_pNetworkName, "CBaseViewModel")) {
-			// Search for the 'm_nModelIndex' property.
+			
 			RecvTable* pClassTable = pClass->m_pRecvTable;
 
 			for (int nIndex = 0; nIndex < pClassTable->m_nProps; nIndex++) {
@@ -273,7 +273,7 @@ void CSkinChanger::AnimationUnHook()
 				if (!pProp || strcmp(pProp->m_pVarName, "m_nSequence"))
 					continue;
 
-				// Replace the proxy function with our sequence changer.
+				
 				pProp->m_ProxyFn = fnSequenceProxyFn;
 
 				break;
@@ -285,7 +285,7 @@ void CSkinChanger::AnimationUnHook()
 
 	for (ClientClass* pClass = Client->GetAllClasses(); pClass; pClass = pClass->m_pNext) {
 		if (!strcmp(pClass->m_pNetworkName, "CBaseViewModel")) {
-			// Search for the 'm_nModelIndex' property.
+			
 			RecvTable* pClassTable = pClass->m_pRecvTable;
 
 			for (int nIndex = 0; nIndex < pClassTable->m_nProps; nIndex++) {
@@ -294,7 +294,7 @@ void CSkinChanger::AnimationUnHook()
 				if (!pProp || strcmp(pProp->m_pVarName, "m_nModelIndex"))
 					continue;
 
-				// Replace the proxy function with our sequence changer.
+				
 				pProp->m_ProxyFn = oRecvnModelIndex;
 
 				break;
@@ -377,7 +377,7 @@ void CSkinChanger::InitCustomModels()
 	LoadModel("models/player/custom_player/legacy/tm_pirate_variantb.mdl");
 	LoadModel("models/player/custom_player/legacy/tm_pirate_variantc.mdl");
 
-	//precahce mask models
+	
 	LoadModel("models/player/holiday/facemasks/facemask_dallas.mdl");
 	LoadModel("models/player/holiday/facemasks/facemask_battlemask.mdl");
 	LoadModel("models/player/holiday/facemasks/evil_clown.mdl");

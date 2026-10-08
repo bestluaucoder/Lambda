@@ -8100,8 +8100,8 @@ bool ImGui::MenuChild(const char* str_id, const ImVec2& size_arg, bool sub_tab, 
     
     InvisibleButton("##menu_child_spacing", ImVec2(size_arg.x, 18));
 
-    // Push clip rect to hide content 2px before the header when scrolling
-    ImVec2 clip_min = child_pos + ImVec2(0, 27);  // Start clipping 2px below the header line (25 + 2)
+    
+    ImVec2 clip_min = child_pos + ImVec2(0, 27);  
     ImVec2 clip_max = child_pos + size_arg;
     PushClipRect(clip_min, clip_max, true);
 

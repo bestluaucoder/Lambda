@@ -1,18 +1,15 @@
-/*
-** Target architecture selection.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
+
 
 #ifndef _LJ_ARCH_H
 #define _LJ_ARCH_H
 
 #include "lua.h"
 
-/* Target endianess. */
+
 #define LUAJIT_LE	0
 #define LUAJIT_BE	1
 
-/* Target architectures. */
+
 #define LUAJIT_ARCH_X86		1
 #define LUAJIT_ARCH_x86		1
 #define LUAJIT_ARCH_X64		2
@@ -26,7 +23,7 @@
 #define LUAJIT_ARCH_MIPS	6
 #define LUAJIT_ARCH_mips	6
 
-/* Target OS. */
+
 #define LUAJIT_OS_OTHER		0
 #define LUAJIT_OS_WINDOWS	1
 #define LUAJIT_OS_LINUX		2
@@ -34,7 +31,7 @@
 #define LUAJIT_OS_BSD		4
 #define LUAJIT_OS_POSIX		5
 
-/* Select native target if no target defined. */
+
 #ifndef LUAJIT_TARGET
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
@@ -57,7 +54,7 @@
 
 #endif
 
-/* Select native OS if no target OS defined. */
+
 #ifndef LUAJIT_OS
 
 #if defined(_WIN32) && !defined(_XBOX_VER)
@@ -81,7 +78,7 @@
 
 #endif
 
-/* Set target OS properties. */
+
 #if LUAJIT_OS == LUAJIT_OS_WINDOWS
 #define LJ_OS_NAME	"Windows"
 #elif LUAJIT_OS == LUAJIT_OS_LINUX
@@ -125,12 +122,12 @@
 #define LJ_TARGET_CONSOLE	1
 #endif
 
-#define LJ_NUMMODE_SINGLE	0	/* Single-number mode only. */
-#define LJ_NUMMODE_SINGLE_DUAL	1	/* Default to single-number mode. */
-#define LJ_NUMMODE_DUAL		2	/* Dual-number mode only. */
-#define LJ_NUMMODE_DUAL_SINGLE	3	/* Default to dual-number mode. */
+#define LJ_NUMMODE_SINGLE	0	
+#define LJ_NUMMODE_SINGLE_DUAL	1	
+#define LJ_NUMMODE_DUAL		2	
+#define LJ_NUMMODE_DUAL_SINGLE	3	
 
-/* Set target architecture properties. */
+
 #if LUAJIT_TARGET == LUAJIT_ARCH_X86
 
 #define LJ_ARCH_NAME		"x86"
@@ -162,7 +159,7 @@
 #define LJ_TARGET_X64		1
 #define LJ_TARGET_X86ORX64	1
 #define LJ_TARGET_EHRETREG	0
-#define LJ_TARGET_JUMPRANGE	31	/* +-2^31 = +-2GB */
+#define LJ_TARGET_JUMPRANGE	31	
 #define LJ_TARGET_MASKSHIFT	1
 #define LJ_TARGET_MASKROT	1
 #define LJ_TARGET_UNALIGNED	1
@@ -182,10 +179,10 @@
 #define LJ_ABI_EABI		1
 #define LJ_TARGET_ARM		1
 #define LJ_TARGET_EHRETREG	0
-#define LJ_TARGET_JUMPRANGE	25	/* +-2^25 = +-32MB */
+#define LJ_TARGET_JUMPRANGE	25	
 #define LJ_TARGET_MASKSHIFT	0
 #define LJ_TARGET_MASKROT	1
-#define LJ_TARGET_UNIFYROT	2	/* Want only IR_BROR. */
+#define LJ_TARGET_UNIFYROT	2	
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_DUAL
 
 #if __ARM_ARCH____ARM_ARCH_8__ || __ARM_ARCH_8A__
@@ -211,10 +208,10 @@
 #define LJ_ARCH_ENDIAN		LUAJIT_BE
 #define LJ_TARGET_PPC		1
 #define LJ_TARGET_EHRETREG	3
-#define LJ_TARGET_JUMPRANGE	25	/* +-2^25 = +-32MB */
+#define LJ_TARGET_JUMPRANGE	25	
 #define LJ_TARGET_MASKSHIFT	0
 #define LJ_TARGET_MASKROT	1
-#define LJ_TARGET_UNIFYROT	1	/* Want only IR_BROL. */
+#define LJ_TARGET_UNIFYROT	1	
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_DUAL_SINGLE
 
 #if _ARCH_PWR7
@@ -258,12 +255,12 @@
 #define LJ_ABI_EABI		1
 #define LJ_TARGET_PPCSPE	1
 #define LJ_TARGET_EHRETREG	3
-#define LJ_TARGET_JUMPRANGE	25	/* +-2^25 = +-32MB */
+#define LJ_TARGET_JUMPRANGE	25	
 #define LJ_TARGET_MASKSHIFT	0
 #define LJ_TARGET_MASKROT	1
-#define LJ_TARGET_UNIFYROT	1	/* Want only IR_BROL. */
+#define LJ_TARGET_UNIFYROT	1	
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_SINGLE
-#define LJ_ARCH_NOFFI		1	/* NYI: comparisons, calls. */
+#define LJ_ARCH_NOFFI		1	
 #define LJ_ARCH_NOJIT		1
 
 #elif LUAJIT_TARGET == LUAJIT_ARCH_MIPS
@@ -278,10 +275,10 @@
 #define LJ_ARCH_BITS		32
 #define LJ_TARGET_MIPS		1
 #define LJ_TARGET_EHRETREG	4
-#define LJ_TARGET_JUMPRANGE	27	/* 2*2^27 = 256MB-aligned region */
+#define LJ_TARGET_JUMPRANGE	27	
 #define LJ_TARGET_MASKSHIFT	1
 #define LJ_TARGET_MASKROT	1
-#define LJ_TARGET_UNIFYROT	2	/* Want only IR_BROR. */
+#define LJ_TARGET_UNIFYROT	2	
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_SINGLE
 
 #if _MIPS_ARCH_MIPS32R2
@@ -298,7 +295,7 @@
 #define LJ_PAGESIZE		4096
 #endif
 
-/* Check for minimum required compiler versions. */
+
 #if defined(__GNUC__)
 #if LJ_TARGET_X86
 #if (__GNUC__ < 3) || ((__GNUC__ == 3) && __GNUC_MINOR__ < 4)
@@ -319,7 +316,7 @@
 #endif
 #endif
 
-/* Check target-specific constraints. */
+
 #ifndef _BUILDVM_H
 #if LJ_TARGET_X64
 #if __USING_SJLJ_EXCEPTIONS__
@@ -355,7 +352,7 @@
 #endif
 #endif
 
-/* Enable or disable the dual-number mode for the VM. */
+
 #if (LJ_ARCH_NUMMODE == LJ_NUMMODE_SINGLE && LUAJIT_NUMMODE == 2) || \
     (LJ_ARCH_NUMMODE == LJ_NUMMODE_DUAL && LUAJIT_NUMMODE == 1)
 #error "No support for this number mode on this architecture"
@@ -369,21 +366,21 @@
 #endif
 
 #if LJ_TARGET_IOS || LJ_TARGET_CONSOLE
-/* Runtime code generation is restricted on iOS. Complain to Apple, not me. */
-/* Ditto for the consoles. Complain to Sony or MS, not me. */
+
+
 #ifndef LUAJIT_ENABLE_JIT
 #define LJ_OS_NOJIT		1
 #endif
 #endif
 
-/* Disable or enable the JIT compiler. */
+
 #if defined(LUAJIT_DISABLE_JIT) || defined(LJ_ARCH_NOJIT) || defined(LJ_OS_NOJIT)
 #define LJ_HASJIT		0
 #else
 #define LJ_HASJIT		1
 #endif
 
-/* Disable or enable the FFI extension. */
+
 #if defined(LUAJIT_DISABLE_FFI) || defined(LJ_ARCH_NOFFI)
 #define LJ_HASFFI		0
 #else
@@ -422,7 +419,7 @@
 #define LJ_TARGET_UNALIGNED	0
 #endif
 
-/* Various workarounds for embedded operating systems. */
+
 #if (defined(__ANDROID__) && !defined(LJ_TARGET_X86ORX64)) || defined(__symbian__) || LJ_TARGET_XBOX360
 #define LUAJIT_NO_LOG2
 #endif
@@ -434,7 +431,7 @@
 #endif
 
 #if !defined(LUAJIT_NO_UNWIND) && __GNU_COMPACT_EH__
-/* NYI: no support for compact unwind specification, yet. */
+
 #define LUAJIT_NO_UNWIND	1
 #endif
 
@@ -442,7 +439,7 @@
 #define LJ_NO_UNWIND		1
 #endif
 
-/* Compatibility with Lua 5.1 vs. 5.2. */
+
 #ifdef LUAJIT_ENABLE_LUA52COMPAT
 #define LJ_52			1
 #else

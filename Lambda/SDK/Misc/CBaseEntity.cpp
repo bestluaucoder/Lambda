@@ -65,19 +65,19 @@ const model_t* CBaseEntity::GetModel() {
 Vector CBaseEntity::GetAbsOrigin() {
     return *reinterpret_cast<Vector*>(reinterpret_cast<uintptr_t>(this) + 0xA0);
 
-	//if (!this)
-	//	return Vector();
+	
+	
 
-	//return *CallVFunction<Vector*(__thiscall*)(CBaseEntity*)>(this, 10)(this);
+	
 }
 
 QAngle CBaseEntity::GetAbsAngles() {
     return *reinterpret_cast<QAngle*>(reinterpret_cast<uintptr_t>(this) + 0xC4);
 
-	//if (!this)
-	//	return QAngle();
+	
+	
 
-	//return *CallVFunction<QAngle*(__thiscall*)(CBaseEntity*)>(this, 11)(this);
+	
 }
 
 Vector CBaseEntity::GetWorldPosition() {
@@ -96,10 +96,10 @@ bool CBaseEntity::IsBreakable() {
 		return false;
 
 	auto v3 = (int)v1->m_pNetworkName;
-	if (*(DWORD*)v3 == 0x65724243 && *(DWORD*)(v3 + 7) == 0x53656C62) // intact window
+	if (*(DWORD*)v3 == 0x65724243 && *(DWORD*)(v3 + 7) == 0x53656C62) 
 		return true;
 
-	if (*(DWORD*)v3 == 0x73614243 && *(DWORD*)(v3 + 7) == 0x79746974) // broken window
+	if (*(DWORD*)v3 == 0x73614243 && *(DWORD*)(v3 + 7) == 0x79746974) 
 		return true;
 
 	return _isBreakalbe(this);

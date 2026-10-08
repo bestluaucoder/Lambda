@@ -1,5 +1,4 @@
-/* C:\Users\Anton\Downloads\molotov.png (05.07.2023 23:41:52)
-   StartOffset(h): 00000000, EndOffset(h): 000001B6, Длина(h): 000001B7 */
+
 
 unsigned char molotov_icon[439] = {
 	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,

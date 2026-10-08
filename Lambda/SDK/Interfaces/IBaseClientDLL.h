@@ -15,7 +15,7 @@ enum EClientFrameStage
     FRAME_RENDER_END
 };
 
-// Used by RenderView
+
 enum RenderViewInfo_t
 {
     RENDERVIEW_UNSPECIFIED = 0,
@@ -63,10 +63,10 @@ class RecvProp;
 class CRecvProxyData
 {
 public:
-    const RecvProp* m_pRecvProp;        // The property it's receiving.
-    DVariant		    m_Value;            // The value given to you to store.
-    int				    m_iElement;         // Which array element you're getting.
-    int				    m_ObjectID;         // The object being referred to.
+    const RecvProp* m_pRecvProp;        
+    DVariant		    m_Value;            
+    int				    m_iElement;         
+    int				    m_ObjectID;         
 };
 
 typedef void(*RecvVarProxyFn)(const CRecvProxyData* pData, void* pStruct, void* pOut);

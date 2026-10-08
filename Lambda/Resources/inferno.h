@@ -1,5 +1,4 @@
-/* C:\Users\Anton\Downloads\inferno.png (05.07.2023 23:35:28)
-   StartOffset(h): 00000000, EndOffset(h): 0000025B, Длина(h): 0000025C */
+
 
 unsigned char inferno_icon[604] = {
 	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,

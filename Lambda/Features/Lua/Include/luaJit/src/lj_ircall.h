@@ -1,7 +1,4 @@
-/*
-** IR CALL* instruction definitions.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
+
 
 #ifndef _LJ_IRCALL_H
 #define _LJ_IRCALL_H
@@ -10,19 +7,19 @@
 #include "lj_ir.h"
 #include "lj_jit.h"
 
-/* C call info for CALL* instructions. */
+
 typedef struct CCallInfo {
-  ASMFunction func;		/* Function pointer. */
-  uint32_t flags;		/* Number of arguments and flags. */
+  ASMFunction func;		
+  uint32_t flags;		
 } CCallInfo;
 
-#define CCI_NARGS(ci)		((ci)->flags & 0xff)	/* Extract # of args. */
-#define CCI_NARGS_MAX		32			/* Max. # of args. */
+#define CCI_NARGS(ci)		((ci)->flags & 0xff)	
+#define CCI_NARGS_MAX		32			
 
 #define CCI_OTSHIFT		16
-#define CCI_OPTYPE(ci)		((ci)->flags >> CCI_OTSHIFT)  /* Get op/type. */
+#define CCI_OPTYPE(ci)		((ci)->flags >> CCI_OTSHIFT)  
 #define CCI_OPSHIFT		24
-#define CCI_OP(ci)		((ci)->flags >> CCI_OPSHIFT)  /* Get op. */
+#define CCI_OP(ci)		((ci)->flags >> CCI_OPSHIFT)  
 
 #define CCI_CALL_N		(IR_CALLN << CCI_OPSHIFT)
 #define CCI_CALL_L		(IR_CALLL << CCI_OPSHIFT)
@@ -31,21 +28,21 @@ typedef struct CCallInfo {
 #define CCI_CALL_FL		(CCI_CALL_L|CCI_CC_FASTCALL)
 #define CCI_CALL_FS		(CCI_CALL_S|CCI_CC_FASTCALL)
 
-/* C call info flags. */
-#define CCI_L			0x0100	/* Implicit L arg. */
-#define CCI_CASTU64		0x0200	/* Cast u64 result to number. */
-#define CCI_NOFPRCLOBBER	0x0400	/* Does not clobber any FPRs. */
-#define CCI_VARARG		0x0800	/* Vararg function. */
 
-#define CCI_CC_MASK		0x3000	/* Calling convention mask. */
+#define CCI_L			0x0100	
+#define CCI_CASTU64		0x0200	
+#define CCI_NOFPRCLOBBER	0x0400	
+#define CCI_VARARG		0x0800	
+
+#define CCI_CC_MASK		0x3000	
 #define CCI_CC_SHIFT		12
-/* ORDER CC */
-#define CCI_CC_CDECL		0x0000	/* Default cdecl calling convention. */
-#define CCI_CC_THISCALL		0x1000	/* Thiscall calling convention. */
-#define CCI_CC_FASTCALL		0x2000	/* Fastcall calling convention. */
-#define CCI_CC_STDCALL		0x3000	/* Stdcall calling convention. */
 
-/* Helpers for conditional function definitions. */
+#define CCI_CC_CDECL		0x0000	
+#define CCI_CC_THISCALL		0x1000	
+#define CCI_CC_FASTCALL		0x2000	
+#define CCI_CC_STDCALL		0x3000	
+
+
 #define IRCALLCOND_ANY(x)		x
 
 #if LJ_TARGET_X86ORX64
@@ -87,18 +84,18 @@ typedef struct CCallInfo {
 #endif
 
 #if LJ_SOFTFP
-#define ARG1_FP		2	/* Treat as 2 32 bit arguments. */
+#define ARG1_FP		2	
 #else
 #define ARG1_FP		1
 #endif
 
 #if LJ_32
-#define ARG2_64		4	/* Treat as 4 32 bit arguments. */
+#define ARG2_64		4	
 #else
 #define ARG2_64		2
 #endif
 
-/* Function definitions for CALL* instructions. */
+
 #define IRCALLDEF(_) \
   _(ANY,	lj_str_cmp,		2,  FN, INT, CCI_NOFPRCLOBBER) \
   _(ANY,	lj_str_new,		3,   S, STR, CCI_L) \
@@ -120,7 +117,7 @@ typedef struct CCallInfo {
   _(ANY,	fputc,			2,  S, INT, 0) \
   _(ANY,	fwrite,			4,  S, INT, 0) \
   _(ANY,	fflush,			1,  S, INT, 0) \
-  /* ORDER FPM */ \
+   \
   _(FPMATH,	lj_vm_floor,		ARG1_FP,   N, NUM, 0) \
   _(FPMATH,	lj_vm_ceil,		ARG1_FP,   N, NUM, 0) \
   _(FPMATH,	lj_vm_trunc,		ARG1_FP,   N, NUM, 0) \
@@ -174,7 +171,7 @@ typedef struct CCallInfo {
   _(FFI,	lj_vm_errno,		0,         S, INT, CCI_NOFPRCLOBBER) \
   _(FFI32,	lj_carith_mul64,	ARG2_64,   N, I64, CCI_NOFPRCLOBBER)
   \
-  /* End of list. */
+  
 
 typedef enum {
 #define IRCALLENUM(cond, name, nargs, kind, type, flags)	IRCALL_##name,
@@ -187,7 +184,7 @@ LJ_FUNC TRef lj_ir_call(jit_State *J, IRCallID id, ...);
 
 LJ_DATA const CCallInfo lj_ir_callinfo[IRCALL__MAX+1];
 
-/* Soft-float declarations. */
+
 #if LJ_SOFTFP
 #if LJ_TARGET_ARM
 #define softfp_add __aeabi_dadd

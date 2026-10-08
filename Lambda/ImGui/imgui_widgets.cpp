@@ -1089,7 +1089,7 @@ bool ImGui::Keybind(const char* label, int* key, int* mode, bool show_label)
 
     it_anim->second.alpha = ImClamp(it_anim->second.alpha + (8.f * g.IO.DeltaTime * (it_anim->second.active ? 1.f : -1.f)), 0.f, 1.f);
 
-    // Reset hovered state before checking
+    
     bool menu_hovered = false;
 
     if (it_anim->second.alpha >= 0.01f)
@@ -1169,10 +1169,10 @@ bool ImGui::Keybind(const char* label, int* key, int* mode, bool show_label)
 
     }
     
-    // Store the menu hovered state
+    
     it_anim->second.hovered = menu_hovered;
     
-    // Handle menu opening/closing AFTER rendering so hovered state is current
+    
     if (hovered && g.IO.MouseClicked[1]) {
         it_anim->second.active = !it_anim->second.active;
     }
@@ -3275,7 +3275,7 @@ struct combo_state
     float arrow_roll = 1.57f, combo_size = 0.f;
 
     bool opened_combo = false, hovered = false;
-    int window_id = 0;  // Counter for forcing new window creation
+    int window_id = 0;  
 
 };
 
@@ -3335,14 +3335,14 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, float val, 
         bool was_closed = !it_anim->second.opened_combo;
         it_anim->second.opened_combo = !it_anim->second.opened_combo;
         if (was_closed) {
-            it_anim->second.window_id++; // Force new window on reopen
+            it_anim->second.window_id++; 
         }
     }
     
-    // Calculate combo_size BEFORE checking outside clicks
+    
     it_anim->second.combo_size = it_anim->second.opened_combo ? (26 * (ImMin(val, 5.f)) + 6) : 0.f;
     
-    // Check if click is outside both header and dropdown area
+    
     if (it_anim->second.opened_combo && g.IO.MouseClicked[0] && !hovered) {
         ImVec2 dropdown_min(bb.Min.x, bb.Max.y + 1);
         ImVec2 dropdown_max(bb.Max.x, bb.Max.y + 1 + it_anim->second.combo_size);

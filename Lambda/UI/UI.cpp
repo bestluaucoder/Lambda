@@ -3,6 +3,7 @@
 
 #include "../Features/Visuals/SkinChanger.h"
 #include "../Features/Visuals/World.h"
+#include "../Features/Visuals/ESPPreview.h"
 #include "../Resources/sound_player.hpp"
 
 static void UpdateSoundVisibility() {
@@ -44,6 +45,7 @@ void CMenu::SetupUI() {
 
 	auto player_esp = AddGroupBox("Player", "ESP");
 	auto chams = AddGroupBox("Player", "Chams");
+	auto esp_preview = AddGroupBox("Player", "Preview", 0.5f, 0);
 
 	auto other_esp = AddGroupBox("Visuals", "Other ESP");
 	auto effects = AddGroupBox("Visuals", "Effects");
@@ -636,7 +638,7 @@ void CMenu::SetupUI() {
 	config.config.config_subtab->SetCallback([]() {
 		const int subtab = config.config.config_subtab->get();
 		
-		// Config subtab (0)
+		
 		Config->config_list->SetVisible(subtab == 0);
 		Config->config_name->SetVisible(subtab == 0);
 		Config->load_button->SetVisible(subtab == 0);
@@ -644,11 +646,11 @@ void CMenu::SetupUI() {
 		Config->refresh_button->SetVisible(subtab == 0);
 		Config->open_dir_button->SetVisible(subtab == 0);
 		
-		// Menu subtab (1)
+		
 		config.menu_misc.experimental_lagcomp->SetVisible(subtab == 1);
 	});
 	
-	// Trigger initial visibility by calling the callback
+	
 	{
 		const int subtab = config.config.config_subtab->get();
 		Config->config_list->SetVisible(subtab == 0);

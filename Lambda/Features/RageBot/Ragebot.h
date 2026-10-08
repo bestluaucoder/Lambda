@@ -50,7 +50,7 @@ struct AimPoint_t {
 	Vector point;
 	int hitbox = 0;
 	bool multipoint = false;
-	bool dont_shoot = false; // if point was selected for early autostop
+	bool dont_shoot = false; 
 };
 
 class CRagebot {
@@ -90,7 +90,7 @@ private:
 	int last_target_shot = 0;
 	bool dont_shoot_next_points = false;
 
-	// multithreading part
+	
 	std::atomic<bool> remove_threads = false;
 	int inited_threads = 0;
 	std::atomic<int> selected_points = 0;
@@ -171,7 +171,7 @@ public:
 	void				CalcSpreadValues();
 	void				AutoStop(bool predict = false);
 	float				CalcHitchance(QAngle angles, LagRecord* target, int hitbox);
-	float				FastHitchance(LagRecord* target, float inaccuracy = -1.f, int hitbox_radius = 5); // fast hitchance approximation base on inaccuracy angle and distance
+	float				FastHitchance(LagRecord* target, float inaccuracy = -1.f, int hitbox_radius = 5); 
 	float				CalcMinDamage(CBasePlayer* target);
 	weapon_settings_t	GetWeaponSettings(int weaponId);
 	bool				IsArmored(int hitbox);

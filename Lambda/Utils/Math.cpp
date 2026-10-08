@@ -34,7 +34,7 @@ Vector Math::AngleFromVectors(Vector a, Vector b)
 	Vector delta = a - b;
 	float hyp = delta.Length();
 
-	// 57.295f - pi in degrees
+	
 	angles.y = std::atan(delta.y / delta.x) * 57.2957795131f;
 	angles.x = std::atan(-delta.z / hyp) * -57.2957795131f;
 	angles.z = 0.0f;
@@ -179,7 +179,7 @@ Vector Math::VectorRotate(const Vector& in1, const matrix3x4_t& in2)
 {
 	return Vector(in1.Dot(in2[0]), in1.Dot(in2[1]), in1.Dot(in2[2]));
 }
-//--------------------------------------------------------------------------------
+
 Vector Math::VectorRotate(const Vector& in1, const QAngle& in2)
 {
 	matrix3x4_t mat;

@@ -5,22 +5,22 @@
 #include "Matrix.h"
 #include "../Interfaces/IEngineTrace.h"
 
-#define MAXSTUDIOBONES		128		// total bones actually used (actually 256, but for optimization reasons we will use 90, player uses 86)
+#define MAXSTUDIOBONES		128		
 
 #define BONE_CALCULATE_MASK			0x1F
-#define BONE_PHYSICALLY_SIMULATED	0x01	// bone is physically simulated when physics are active
-#define BONE_PHYSICS_PROCEDURAL		0x02	// procedural when physics is active
-#define BONE_ALWAYS_PROCEDURAL		0x04	// bone is always procedurally animated
-#define BONE_SCREEN_ALIGN_SPHERE	0x08	// bone aligns to the screen, not constrained in motion.
-#define BONE_SCREEN_ALIGN_CYLINDER	0x10	// bone aligns to the screen, constrained by it's own axis.
-#define BONE_WORLD_ALIGN			0x20	// bone is rigidly aligned to the world (but can still translate)
+#define BONE_PHYSICALLY_SIMULATED	0x01	
+#define BONE_PHYSICS_PROCEDURAL		0x02	
+#define BONE_ALWAYS_PROCEDURAL		0x04	
+#define BONE_SCREEN_ALIGN_SPHERE	0x08	
+#define BONE_SCREEN_ALIGN_CYLINDER	0x10	
+#define BONE_WORLD_ALIGN			0x20	
 
 #define BONE_USED_MASK				0x000FFF00
 #define BONE_USED_BY_ANYTHING		0x000FFF00
-#define BONE_USED_BY_HITBOX			0x00000100	// bone (or child) is used by a hit box
-#define BONE_USED_BY_ATTACHMENT		0x00000200	// bone (or child) is used by an attachment point
+#define BONE_USED_BY_HITBOX			0x00000100	
+#define BONE_USED_BY_ATTACHMENT		0x00000200	
 #define BONE_USED_BY_VERTEX_MASK	0x0003FC00
-#define BONE_USED_BY_VERTEX_LOD0	0x00000400	// bone (or child) is used by the toplevel model via skinned vertex
+#define BONE_USED_BY_VERTEX_LOD0	0x00000400	
 #define BONE_USED_BY_VERTEX_LOD1	0x00000800	
 #define BONE_USED_BY_VERTEX_LOD2	0x00001000  
 #define BONE_USED_BY_VERTEX_LOD3	0x00002000
@@ -28,7 +28,7 @@
 #define BONE_USED_BY_VERTEX_LOD5	0x00008000
 #define BONE_USED_BY_VERTEX_LOD6	0x00010000
 #define BONE_USED_BY_VERTEX_LOD7	0x00020000
-#define BONE_USED_BY_BONE_MERGE		0x00040000	// bone is available for bone merge to occur against it
+#define BONE_USED_BY_BONE_MERGE		0x00040000	
 #define BONE_ALWAYS_SETUP			0x00080000
 
 #define BONE_USED_BY_VERTEX_AT_LOD(lod) ( BONE_USED_BY_VERTEX_LOD0 << (lod) )
@@ -37,11 +37,11 @@
 #define MAX_NUM_LODS 8
 
 #define BONE_TYPE_MASK				0x00F00000
-#define BONE_FIXED_ALIGNMENT		0x00100000	// bone can't spin 360 degrees, all interpolation is normalized around a fixed orientation
+#define BONE_FIXED_ALIGNMENT		0x00100000	
 
-#define BONE_HAS_SAVEFRAME_POS		0x00200000	// Vector48
-#define BONE_HAS_SAVEFRAME_ROT64	0x00400000	// Quaternion64
-#define BONE_HAS_SAVEFRAME_ROT32	0x00800000	// Quaternion32
+#define BONE_HAS_SAVEFRAME_POS		0x00200000	
+#define BONE_HAS_SAVEFRAME_ROT64	0x00400000	
+#define BONE_HAS_SAVEFRAME_ROT32	0x00800000	
 
 typedef unsigned long MDLHandle_t;
 
@@ -254,32 +254,32 @@ struct mstudiobone_t
 class studiohdr_t
 {
 public:
-    __int32 id;                     //0x0000 
-    __int32 version;                //0x0004 
-    long    checksum;               //0x0008 
-    char    szName[64];             //0x000C 
-    __int32 length;                 //0x004C 
-    Vector  vecEyePos;              //0x0050 
-    Vector  vecIllumPos;            //0x005C 
-    Vector  vecHullMin;             //0x0068 
-    Vector  vecHullMax;             //0x0074 
-    Vector  vecBBMin;               //0x0080 
-    Vector  vecBBMax;               //0x008C 
-    __int32 flags;                  //0x0098 
-    __int32 numbones;               //0x009C 
-    __int32 boneindex;              //0x00A0 
-    __int32 numbonecontrollers;     //0x00A4 
-    __int32 bonecontrollerindex;    //0x00A8 
-    __int32 numhitboxsets;          //0x00AC 
-    __int32 hitboxsetindex;         //0x00B0 
-    __int32 numlocalanim;           //0x00B4 
-    __int32 localanimindex;         //0x00B8 
-    __int32 numlocalseq;            //0x00BC 
-    __int32 localseqindex;          //0x00C0 
-    __int32 activitylistversion;    //0x00C4 
-    __int32 eventsindexed;          //0x00C8 
-    __int32 numtextures;            //0x00CC 
-    __int32 textureindex;           //0x00D0
+    __int32 id;                     
+    __int32 version;                
+    long    checksum;               
+    char    szName[64];             
+    __int32 length;                 
+    Vector  vecEyePos;              
+    Vector  vecIllumPos;            
+    Vector  vecHullMin;             
+    Vector  vecHullMax;             
+    Vector  vecBBMin;               
+    Vector  vecBBMax;               
+    __int32 flags;                  
+    __int32 numbones;               
+    __int32 boneindex;              
+    __int32 numbonecontrollers;     
+    __int32 bonecontrollerindex;    
+    __int32 numhitboxsets;          
+    __int32 hitboxsetindex;         
+    __int32 numlocalanim;           
+    __int32 localanimindex;         
+    __int32 numlocalseq;            
+    __int32 localseqindex;          
+    __int32 activitylistversion;    
+    __int32 eventsindexed;          
+    __int32 numtextures;            
+    __int32 textureindex;           
 
     mstudiohitboxset_t* GetHitboxSet(int i)
     {
@@ -295,15 +295,15 @@ public:
 };
 
 struct model_t {
-    void* fnHandle;               //0x0000 
-    char    szName[260];            //0x0004 
-    __int32 nLoadFlags;             //0x0108 
-    __int32 nServerCount;           //0x010C 
-    __int32 type;                   //0x0110 
-    __int32 flags;                  //0x0114 
-    Vector  vecMins;                //0x0118 
-    Vector  vecMaxs;                //0x0124 
-    float   radius;                 //0x0130 
+    void* fnHandle;               
+    char    szName[260];            
+    __int32 nLoadFlags;             
+    __int32 nServerCount;           
+    __int32 type;                   
+    __int32 flags;                  
+    Vector  vecMins;                
+    Vector  vecMaxs;                
+    float   radius;                 
     void* m_pKeyValues;
     union
     {

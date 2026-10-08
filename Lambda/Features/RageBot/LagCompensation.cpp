@@ -47,7 +47,7 @@ void CLagCompensation::RecordDataIntoTrack(CBasePlayer* player, LagRecord* recor
 void CLagCompensation::BacktrackEntity(LagRecord* record, bool copy_matrix, bool use_aim_matrix) {
 	CBasePlayer* player = record->player;
 
-	//player->m_flSimulationTime() = record->m_flSimulationTime;
+	
 	player->m_vecOrigin() = record->m_vecOrigin;
 	player->SetAbsOrigin(record->m_vecAbsOrigin);
 	player->m_fFlags() = record->m_fFlags;
@@ -147,7 +147,7 @@ void CLagCompensation::OnNetUpdate() {
         }
 
 		if (prev_valid)
-			// Increased threshold from 4096 (64 units²) to 9216 (96 units²) to reduce false positives
+			
 			new_record->breaking_lag_comp = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr() > 9216.f;
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
@@ -166,10 +166,10 @@ void CLagCompensation::OnNetUpdate() {
 			}
 		}
 
-		while (records.size() > (pl->IsTeammate() ? 4 : (TIME_TO_TICKS(0.4f) + 13))) // super puper proper lagcomp
+		while (records.size() > (pl->IsTeammate() ? 4 : (TIME_TO_TICKS(0.4f) + 13))) 
 			records.pop_front();
 
-		// Experimental mode: maintain a parallel std::vector copy (no pop_front fragmentation)
+		
 		if (config.menu_misc.experimental_lagcomp && config.menu_misc.experimental_lagcomp->get()) {
 			auto& rvec = lag_records_vec[i];
 			rvec.push_back(records.back());
@@ -207,8 +207,8 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 
 		Vector next_origin = new_record->m_vecOrigin + new_record->m_vecVelocity * ival;
 
-		// Ground collision: trace downward to find the surface so we never predict
-		// the player falling through the floor.
+		
+		
 		if (!(new_record->m_fFlags & FL_ONGROUND)) {
 			CGameTrace tr;
 			CTraceFilterWorldOnly filter;
@@ -264,16 +264,16 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 
 	float deltaTime = correct - (TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime);
 
-	// Widen tolerance for choked records — each choked tick adds one interval of valid
-	// sim-time offset that the server will still accept.
+	
+	
 	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
-	// Increased base tolerance to reduce false rejections
+	
 	float tolerance = 0.25f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick : 0.f);
 
 	if (std::abs(deltaTime) >= tolerance)
 		return false;
 
-	// Allow 1 tick of slack on the negative-BT guard to absorb choke rounding errors.
+	
 	if (GlobalVars->tickcount - record->update_tick < -1)
 		return false;
 	return true;

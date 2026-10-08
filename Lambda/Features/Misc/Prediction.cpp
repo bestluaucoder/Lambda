@@ -91,17 +91,17 @@ void CPrediction::Start(CUserCmd* cmd) {
 	Prediction->CheckMovingGround(Cheat.LocalPlayer, GlobalVars->frametime);
 	Prediction->SetLocalViewAngles(cmd->viewangles);
 
-	//RunPreThink(Cheat.LocalPlayer);
-	//RunThink(Cheat.LocalPlayer);
+	
+	
 
 	MoveHelper->SetHost(Cheat.LocalPlayer);
 	Prediction->SetupMove(Cheat.LocalPlayer, cmd, MoveHelper, &moveData);
 	GameMovement->ProcessMovement(Cheat.LocalPlayer, &moveData);
 	Prediction->FinishMove(Cheat.LocalPlayer, cmd, &moveData);
 
-	//MoveHelper->ProcessImpacts();
+	
 
-	//Cheat.LocalPlayer->PostThink();
+	
 
 	Cheat.LocalPlayer->m_flVelocityModifier() = backup_velocity_modifier;
 
@@ -338,7 +338,7 @@ int CPrediction::PredictTickbase() {
 	{
 		static CUserCmd* pLastCmd = nullptr;
 
-		// if command was not predicted - increment tickbase
+		
 		if (pLastCmd == nullptr || pLastCmd->hasbeenpredicted)
 			iTick = Cheat.LocalPlayer->m_nTickBase();
 		else

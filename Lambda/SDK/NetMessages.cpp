@@ -35,11 +35,11 @@ void CNetMessages::SendNetMessage(SharedVoiceData_t* data) {
 	msg.uncompressed_sample_offset() = data->uncompressed_sample_offset;
 
 
-	//player_info_t pinfo;
-	//if (EngineClient->GetPlayerInfo(EngineClient->GetLocalPlayer(), &pinfo)) {
-	//	msg.xuid() = pinfo.steamID64;
-	//	msg.has_bits() |= VoiceData_Has::Xuid;
-	//}
+	
+	
+	
+	
+	
 
 	INetChannel* netChan = ClientState->m_NetChannel;
 
@@ -61,11 +61,11 @@ void CNetMessages::SendDataRaw(VoiceDataOther* data) {
 	msg.uncompressed_sample_offset() = data->uncompressed_sample_offset;
 
 
-	//player_info_t pinfo;
-	//if (EngineClient->GetPlayerInfo(EngineClient->GetLocalPlayer(), &pinfo)) {
-	//	msg.xuid() = pinfo.steamID64;
-	//	msg.has_bits() |= VoiceData_Has::Xuid;
-	//}
+	
+	
+	
+	
+	
 
 	INetChannel* netChan = ClientState->m_NetChannel;
 

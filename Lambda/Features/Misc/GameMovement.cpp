@@ -78,7 +78,7 @@ void CMovement::AutoStrafe() {
 	QAngle new_angle = ctx.cmd->viewangles;
 
 	float speed_sqr = ctx.local_velocity.Length2DSqr();
-	float target_yaw = new_angle.yaw; // eye yaw at the moment
+	float target_yaw = new_angle.yaw; 
 	float offset = 0.f;
 	if (ctx.cmd->sidemove != 0.f || ctx.cmd->forwardmove != 0.f)
 		offset = RAD2DEG(std::atan2(-ctx.cmd->sidemove, ctx.cmd->forwardmove));

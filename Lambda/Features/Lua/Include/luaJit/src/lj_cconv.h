@@ -1,7 +1,4 @@
-/*
-** C type conversions.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
+
 
 #ifndef _LJ_CCONV_H
 #define _LJ_CCONV_H
@@ -11,22 +8,22 @@
 
 #if LJ_HASFFI
 
-/* Compressed C type index. ORDER CCX. */
+
 enum {
-  CCX_B,	/* Bool. */
-  CCX_I,	/* Integer. */
-  CCX_F,	/* Floating-point number. */
-  CCX_C,	/* Complex. */
-  CCX_V,	/* Vector. */
-  CCX_P,	/* Pointer. */
-  CCX_A,	/* Refarray. */
-  CCX_S		/* Struct/union. */
+  CCX_B,	
+  CCX_I,	
+  CCX_F,	
+  CCX_C,	
+  CCX_V,	
+  CCX_P,	
+  CCX_A,	
+  CCX_S		
 };
 
-/* Convert C type info to compressed C type index. ORDER CT. ORDER CCX. */
+
 static LJ_AINLINE uint32_t cconv_idx(CTInfo info)
 {
-  uint32_t idx = ((info >> 26) & 15u);  /* Dispatch bits. */
+  uint32_t idx = ((info >> 26) & 15u);  
   lua_assert(ctype_type(info) <= CT_MAYCONVERT);
 #if LJ_64
   idx = ((uint32_t)(U64x(f436fff5,fff7f021) >> 4*idx) & 15u);
@@ -42,7 +39,7 @@ static LJ_AINLINE uint32_t cconv_idx(CTInfo info)
 
 #define CCX(dst, src)		((CCX_##dst << 3) + CCX_##src)
 
-/* Conversion flags. */
+
 #define CCF_CAST	0x00000001u
 #define CCF_FROMTV	0x00000002u
 #define CCF_SAME	0x00000004u

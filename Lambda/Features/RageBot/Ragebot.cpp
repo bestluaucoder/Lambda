@@ -208,18 +208,18 @@ float CRagebot::CalcHitchance(QAngle angles, LagRecord* target, int hitbox) {
 bool CRagebot::CompareRecords(LagRecord* a, LagRecord* b) {
 	const Vector vec_diff = a->m_vecOrigin - b->m_vecOrigin;
 
-	// Looser position threshold - 2 units instead of 1
+	
 	if (vec_diff.LengthSqr() > 4.f)
 		return false;
 
 	QAngle angle_diff = a->m_angEyeAngles - b->m_angEyeAngles;
 	angle_diff.Normalize();
 
-	// More lenient yaw diff - allow wider angles
+	
 	if (std::abs(angle_diff.yaw) > 120.f)
 		return false;
 
-	// More lenient pitch diff
+	
 	if (std::abs(angle_diff.pitch) > 15.f)
 		return false;
 
@@ -340,7 +340,7 @@ void CRagebot::GetMultipoints(LagRecord* record, int hitbox_id, float scale) {
 	if (!hitbox)
 		return;
 
-	if (hitbox->flCapsuleRadius <= 0) // do not scan multipoints for feet
+	if (hitbox->flCapsuleRadius <= 0) 
 		return;
 
 	matrix3x4_t boneMatrix = record->clamped_matrix[hitbox->bone];
@@ -443,7 +443,7 @@ void CRagebot::SelectBestPoint(ScannedTarget_t* target) {
 		if (point.record && GlobalVars->tickcount - point.record->update_tick < 0)
 			eff_priority -= 8;
 
-		// Slightly prefer lower backtrack (more recent) when scores are close
+		
 		if (point.record) {
 			int bt = GlobalVars->tickcount - point.record->update_tick;
 			if (bt >= 0 && bt <= 4)
@@ -574,7 +574,7 @@ uintptr_t CRagebot::ThreadScan(int threadId) {
 
 			if (Ragebot->current_record->shooting)
 				priority += 2;
-			else if (Ragebot->current_record->m_angEyeAngles.pitch < 10.f) // aim at shitty defensive aa
+			else if (Ragebot->current_record->m_angEyeAngles.pitch < 10.f) 
 				priority += 1;
 
 			if (GlobalVars->tickcount - Ragebot->current_record->update_tick < 12
@@ -618,8 +618,8 @@ void CRagebot::ScanTarget(CBasePlayer* target) {
 		return;
 	}
 
-	// If the most recent record has breaking_lag_comp the server just teleported this
-	// enemy — any shot we fire now will get rejected as lagcomp failure. Skip this tick.
+	
+	
 	{
 		auto& recs = LagCompensation->records(target->EntIndex());
 		if (!recs.empty() && recs.back().breaking_lag_comp) {
@@ -673,7 +673,7 @@ void CRagebot::ScanTarget(CBasePlayer* target) {
 
 	result->angle = Math::VectorAngles_p(result->best_point.point - ctx.shoot_position);
 
-	if (frametime_issues || Exploits->IsShifting()) { // fast hitchance approx
+	if (frametime_issues || Exploits->IsShifting()) { 
 		result->hitchance = min(10.f / ((ctx.shoot_position - result->best_point.point).Length() * std::tan(EnginePrediction->WeaponInaccuracy())), 1.f);
 	}
 	else {
@@ -754,7 +754,7 @@ void CRagebot::Run() {
 
 		if (GlobalVars->realtime - last_frametime_check > 5.f) {
 			last_frametime_check = GlobalVars->realtime;
-			frametime_issues = EnginePrediction->frametime() > GlobalVars->interval_per_tick; // fps is below tickrate, limit targets to increase it
+			frametime_issues = EnginePrediction->frametime() > GlobalVars->interval_per_tick; 
 		}
 	}
 
@@ -782,7 +782,7 @@ void CRagebot::Run() {
 	int m_nWeaponMode = Cheat.LocalPlayer->m_bIsScoped() ? 1 : 0;
 	float min_jump_inaccuracy_tan = 0.f;
 
-	if (settings.auto_stop->get(2) && !local_on_ground) { // superior "dynamic autostop"
+	if (settings.auto_stop->get(2) && !local_on_ground) { 
 		float flInaccuracyJumpInitial = ctx.weapon_info->_flInaccuracyUnknown;
 
 		float fSqrtMaxJumpSpeed = std::sqrt(cvars.sv_jump_impulse->GetFloat());
@@ -1122,11 +1122,11 @@ void CRagebot::Knifebot() {
 			}
 
 			Vector target_position = record->m_vecOrigin;
-			target_position.z = std::clamp(ctx.shoot_position.z, record->m_vecOrigin.z, record->m_vecOrigin.z + record->m_vecMaxs.z) - 0.01f; // shitty valve tracer is broken if start.z == end.z
+			target_position.z = std::clamp(ctx.shoot_position.z, record->m_vecOrigin.z, record->m_vecOrigin.z + record->m_vecMaxs.z) - 0.01f; 
 
 			float distance = (target_position - ctx.shoot_position).LengthSqr();
 
-			if (distance > 6400.f) { // out of range
+			if (distance > 6400.f) { 
 				if (distance < 32768.f)
 					Exploits->block_charge = true;
 				continue;
@@ -1191,7 +1191,7 @@ void CRagebot::Knifebot() {
 			if ((should_right_click ? right_click_dmg : left_click_dmg) < health && Exploits->GetExploitType() == CExploits::E_DoubleTap)
 				Exploits->ForceTeleport();
 
-			ctx.last_shot_time = GlobalVars->realtime + 0.5f; // prevent from charging
+			ctx.last_shot_time = GlobalVars->realtime + 0.5f; 
 
 			if (config.visuals.chams.shot_chams->get()) {
 				memcpy(record->clamped_matrix, record->bone_matrix, sizeof(matrix3x4_t) * 128);

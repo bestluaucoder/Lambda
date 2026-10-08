@@ -1,5 +1,4 @@
-/* C:\Users\Anton\Downloads\gamesense421.vtf (26.01.2024 19:43:15)
-   StartOffset(h): 00000000, EndOffset(h): 00015613, Длина(h): 00015614 */
+
 
 unsigned char gradient_material_vtf[22096] = {
 	0x56, 0x54, 0x46, 0x00, 0x07, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,

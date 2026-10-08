@@ -124,7 +124,7 @@ void CEventListner::FireGameEvent(IGameEvent* event) {
 			LagCompensation->Invalidate(user_id_pl);
 			esp_info.m_flLastUpdateTime = 0.f;
 			esp_info.m_nHealth = 0;
-			Ragebot->CalcSpreadValues(); // maybe we got bad values previously?
+			Ragebot->CalcSpreadValues(); 
 
 			break;
 		}
@@ -133,7 +133,7 @@ void CEventListner::FireGameEvent(IGameEvent* event) {
 			ctx.should_buy = true;
 			ctx.planting_bomb = false;
 
-			//Utils::ForceFullUpdate();
+			
 
 			AntiAim->ResetManual();
 			Miscellaneous::ClearKillfeed();

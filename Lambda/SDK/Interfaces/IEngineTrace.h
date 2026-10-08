@@ -73,9 +73,9 @@
 #define   SURF_NOCHOP                   0x4000   
 #define   SURF_HITBOX                   0x8000   
 
-// -----------------------------------------------------
-// spatial content masks - used for spatial queries (traceline,etc.)
-// -----------------------------------------------------
+
+
+
 #define   MASK_ALL                      (0xFFFFFFFF)
 #define   MASK_SOLID                    (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
 #define   MASK_PLAYERSOLID              (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
@@ -126,17 +126,17 @@
 #define CHAR_TEX_WOOD			'W'
 #define CHAR_TEX_GLASS			'Y'
 #define CHAR_TEX_WARPSHIELD		'Z'
-#define CHAR_TEX_CLAY			1 	// L4D addition
-#define CHAR_TEX_PLASTER		2	// L4D addition
-#define CHAR_TEX_ROCK			3	// L4D addition
-#define CHAR_TEX_RUBBER			4	// L4D addition
-#define CHAR_TEX_SHEETROCK		5	// L4D addition
-#define CHAR_TEX_CLOTH			6	// L4D addition
-#define CHAR_TEX_CARPET			7	// L4D addition
-#define CHAR_TEX_PAPER			8	// L4D addition
-#define CHAR_TEX_UPHOLSTERY		9	// L4D addition
-#define CHAR_TEX_PUDDLE			10	// L4D addition
-#define CHAR_TEX_MUD			11	// L4D addition
+#define CHAR_TEX_CLAY			1 	
+#define CHAR_TEX_PLASTER		2	
+#define CHAR_TEX_ROCK			3	
+#define CHAR_TEX_RUBBER			4	
+#define CHAR_TEX_SHEETROCK		5	
+#define CHAR_TEX_CLOTH			6	
+#define CHAR_TEX_CARPET			7	
+#define CHAR_TEX_PAPER			8	
+#define CHAR_TEX_UPHOLSTERY		9	
+#define CHAR_TEX_PUDDLE			10	
+#define CHAR_TEX_MUD			11	
 #pragma endregion
 
 enum EHitGroupIndex : int
@@ -173,27 +173,27 @@ inline std::string GetHitgroupName(int hg) {
 enum Collision_Group_t
 {
     COLLISION_GROUP_NONE = 0,
-    COLLISION_GROUP_DEBRIS,			// Collides with nothing but world and static stuff
-    COLLISION_GROUP_DEBRIS_TRIGGER, // Same as debris, but hits triggers
-    COLLISION_GROUP_INTERACTIVE_DEBRIS,	// Collides with everything except other interactive debris or debris
-    COLLISION_GROUP_INTERACTIVE,	// Collides with everything except interactive debris or debris
+    COLLISION_GROUP_DEBRIS,			
+    COLLISION_GROUP_DEBRIS_TRIGGER, 
+    COLLISION_GROUP_INTERACTIVE_DEBRIS,	
+    COLLISION_GROUP_INTERACTIVE,	
     COLLISION_GROUP_PLAYER,
     COLLISION_GROUP_BREAKABLE_GLASS,
     COLLISION_GROUP_VEHICLE,
-    COLLISION_GROUP_PLAYER_MOVEMENT,  // For HL2, same as Collision_Group_Player, for
-    COLLISION_GROUP_NPC,			// Generic NPC group
-    COLLISION_GROUP_IN_VEHICLE,		// for any entity inside a vehicle
-    COLLISION_GROUP_WEAPON,			// for any weapons that need collision detection
-    COLLISION_GROUP_VEHICLE_CLIP,	// vehicle clip brush to restrict vehicle movement
-    COLLISION_GROUP_PROJECTILE,		// Projectiles!
-    COLLISION_GROUP_DOOR_BLOCKER,	// Blocks entities not permitted to get near moving doors
-    COLLISION_GROUP_PASSABLE_DOOR,	// Doors that the player shouldn't collide with
-    COLLISION_GROUP_DISSOLVING,		// Things that are dissolving are in this group
-    COLLISION_GROUP_PUSHAWAY,		// Nonsolid on client and server, pushaway in player code
-    COLLISION_GROUP_NPC_ACTOR,		// Used so NPCs in scripts ignore the player.
-    COLLISION_GROUP_NPC_SCRIPTED,	// USed for NPCs in scripts that should not collide with each other
+    COLLISION_GROUP_PLAYER_MOVEMENT,  
+    COLLISION_GROUP_NPC,			
+    COLLISION_GROUP_IN_VEHICLE,		
+    COLLISION_GROUP_WEAPON,			
+    COLLISION_GROUP_VEHICLE_CLIP,	
+    COLLISION_GROUP_PROJECTILE,		
+    COLLISION_GROUP_DOOR_BLOCKER,	
+    COLLISION_GROUP_PASSABLE_DOOR,	
+    COLLISION_GROUP_DISSOLVING,		
+    COLLISION_GROUP_PUSHAWAY,		
+    COLLISION_GROUP_NPC_ACTOR,		
+    COLLISION_GROUP_NPC_SCRIPTED,	
     COLLISION_GROUP_PZ_CLIP,
-    COLLISION_GROUP_DEBRIS_BLOCK_PROJECTILE, // Only collides with bullets
+    COLLISION_GROUP_DEBRIS_BLOCK_PROJECTILE, 
     LAST_SHARED_COLLISION_GROUP
 };
 
@@ -211,8 +211,8 @@ struct cplane_t
 {
     Vector normal;
     float dist;
-    uint8_t type;   // for fast side tests
-    uint8_t signbits;  // signx + (signy<<1) + (signz<<1)
+    uint8_t type;   
+    uint8_t signbits;  
     uint8_t pad[2];
 
 };
@@ -234,11 +234,11 @@ public:
     virtual TraceType GetTraceType() const = 0;
 };
 
-//-----------------------------------------------------------------------------
-// Classes are expected to inherit these + implement the ShouldHitEntity method
-//-----------------------------------------------------------------------------
 
-// This is the one most normal traces will inherit from
+
+
+
+
 class CTraceFilter : public ITraceFilter
 {
 public:
@@ -248,7 +248,7 @@ public:
         pSkip = (void*)ent;
     }
 
-    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int /*contentsMask*/)
+    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int )
     {
         return !(pEntityHandle == pSkip);
     }
@@ -267,7 +267,7 @@ public:
         pSkip = pEntityHandle;
     }
 
-    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int /*contentsMask*/)
+    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int )
     {
         return !(pEntityHandle == pSkip);
     }
@@ -281,7 +281,7 @@ public:
 class CTraceFilterEntitiesOnly : public ITraceFilter
 {
 public:
-    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int /*contentsMask*/)
+    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int )
     {
         return true;
     }
@@ -292,13 +292,13 @@ public:
 };
 
 
-//-----------------------------------------------------------------------------
-// Classes need not inherit from these
-//-----------------------------------------------------------------------------
+
+
+
 class CTraceFilterWorldOnly : public ITraceFilter
 {
 public:
-    bool ShouldHitEntity(IHandleEntity* /*pServerEntity*/, int /*contentsMask*/)
+    bool ShouldHitEntity(IHandleEntity* , int )
     {
         return false;
     }
@@ -311,7 +311,7 @@ public:
 class CTraceFilterWorldAndPropsOnly : public ITraceFilter
 {
 public:
-    virtual bool ShouldHitEntity(IHandleEntity* /*pServerEntity*/, int /*contentsMask*/)
+    virtual bool ShouldHitEntity(IHandleEntity* , int )
     {
         return false;
     }
@@ -328,7 +328,7 @@ public:
     {
         pEnt = ent;
     }
-    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int /*contentsMask*/)
+    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int )
     {
         return pEntityHandle != (IHandleEntity*)pEnt;
     }
@@ -349,7 +349,7 @@ public:
         pEnt1 = ent1;
         pEnt2 = ent2;
     }
-    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int /*contentsMask*/)
+    bool ShouldHitEntity(IHandleEntity* pEntityHandle, int )
     {
         return !(pEntityHandle == (IHandleEntity*)pEnt1 || pEntityHandle == (IHandleEntity*)pEnt2);
     }
@@ -366,7 +366,7 @@ private:
 class CTraceFilterHitAll : public CTraceFilter
 {
 public:
-    virtual bool ShouldHitEntity(IHandleEntity* /*pServerEntity*/, int /*contentsMask*/)
+    virtual bool ShouldHitEntity(IHandleEntity* , int )
     {
         return true;
     }
@@ -394,22 +394,22 @@ enum class DebugTraceCounterBehavior_t
     kTRACE_COUNTER_INC,
 };
 
-//-----------------------------------------------------------------------------
-// Enumeration interface for EnumerateLinkEntities
-//-----------------------------------------------------------------------------
+
+
+
 class IEntityEnumerator
 {
 public:
-    // This gets called with each handle
+    
     virtual bool EnumEntity(IHandleEntity* pHandleEntity) = 0;
 };
 
 
 struct BrushSideInfo_t
 {
-    Vector4D plane;               // The plane of the brush side
-    unsigned short bevel;    // Bevel plane?
-    unsigned short thin;     // Thin?
+    Vector4D plane;               
+    unsigned short bevel;    
+    unsigned short thin;     
 };
 
 class CPhysCollide;
@@ -419,7 +419,7 @@ struct vcollide_t
     unsigned short solidCount : 15;
     unsigned short isPacked : 1;
     unsigned short descSize;
-    // VPhysicsSolids
+    
     CPhysCollide** solids;
     char* pKeyValues;
     void* pUserData;
@@ -428,7 +428,7 @@ struct vcollide_t
 struct cmodel_t
 {
     Vector         mins, maxs;
-    Vector         origin;        // for sounds or lights
+    Vector         origin;        
     int            headnode;
     vcollide_t     vcollisionData;
 };
@@ -437,21 +437,21 @@ struct csurface_t
 {
     const char* name;
     short          surfaceProps;
-    unsigned short flags;         // BUGBUG: These are declared per surface, not per material, but this database is per-material now
+    unsigned short flags;         
 };
 
-//-----------------------------------------------------------------------------
-// A ray...
-//-----------------------------------------------------------------------------
+
+
+
 struct Ray_t
 {
-    VectorAligned  m_Start;  // starting point, centered within the extents
-    VectorAligned  m_Delta;  // direction + length of the ray
-    VectorAligned  m_StartOffset; // Add this to m_Start to Get the actual ray start
-    VectorAligned  m_Extents;     // Describes an axis aligned box extruded along a ray
+    VectorAligned  m_Start;  
+    VectorAligned  m_Delta;  
+    VectorAligned  m_StartOffset; 
+    VectorAligned  m_Extents;     
     const matrix3x4_t* m_pWorldAxisTransform;
-    bool m_IsRay;  // are the extents zero?
-    bool m_IsSwept;     // is delta != 0?
+    bool m_IsRay;  
+    bool m_IsSwept;     
 
     Ray_t() : m_pWorldAxisTransform(NULL) {}
 
@@ -474,7 +474,7 @@ struct Ray_t
         m_pWorldAxisTransform = NULL;
         m_IsRay = true;
 
-        // Offset m_Start to be in the center of the box...
+        
         m_StartOffset.Init();
         m_Start = start;
     }
@@ -490,7 +490,7 @@ struct Ray_t
         m_Extents *= 0.5f;
         m_IsRay = (m_Extents.LengthSqr() < 1e-6);
 
-        // Offset m_Start to be in the center of the box...
+        
         m_StartOffset = maxs + mins;
         m_StartOffset *= 0.5f;
         m_Start = start + m_StartOffset;
@@ -524,18 +524,18 @@ public:
 
 public:
 
-    // these members are aligned!!
-    Vector         startpos;            // start position
-    Vector         endpos;              // final position
-    cplane_t       plane;               // surface normal at impact
+    
+    Vector         startpos;            
+    Vector         endpos;              
+    cplane_t       plane;               
 
-    float          fraction;            // time completed, 1.0 = didn't hit anything
+    float          fraction;            
 
-    int            contents;            // contents on other side of surface hit
-    unsigned short dispFlags;           // displacement flags for marking surfaces with data
+    int            contents;            
+    unsigned short dispFlags;           
 
-    bool           allsolid;            // if true, plane is not valid
-    bool           startsolid;          // if true, the initial point was in a solid area
+    bool           allsolid;            
+    bool           startsolid;          
 
     CBaseTrace() {}
 
@@ -552,13 +552,13 @@ public:
 
 public:
 
-    float               fractionleftsolid;  // time we left a solid, only valid if we started in solid
-    csurface_t          surface;            // surface hit (impact surface)
-    int                 hitgroup;           // 0 == generic, non-zero is specific body part
-    short               physicsbone;        // physics bone hit by trace in studio
-    unsigned short      worldSurfaceIndex;  // Index of the msurface2_t, if applicable
+    float               fractionleftsolid;  
+    csurface_t          surface;            
+    int                 hitgroup;           
+    short               physicsbone;        
+    unsigned short      worldSurfaceIndex;  
     CBaseEntity* hit_entity;
-    int                 hitbox;                       // box hit by trace in studio
+    int                 hitbox;                       
 
     CGameTrace() {}
 
@@ -658,11 +658,11 @@ public:
         return trace;
     }
 
-    // find nearest point to line
+    
     Vector          ClosestPoint(const Vector& start, const Vector& end, const Vector& point);
-    // calculates distance between line and point
+    
     float           DistanceToRay(const Vector& start, const Vector& end, const Vector& point);
-    // segment to segment distance
+    
     float           SegmentToSegment(const Vector& s1, const Vector& s2, const Vector& k1, const Vector& k2);
 
     bool            IntersectBBHitbox(const Vector& start, const Vector& delta, const Vector& min, const Vector& max);

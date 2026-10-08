@@ -17,7 +17,7 @@ struct PlayerHurt_t {
 };
 
 struct RegisteredShot_t {
-	// client info
+	
 	Vector client_shoot_pos;
 	Vector target_pos;
 	QAngle client_angle;
@@ -27,11 +27,11 @@ struct RegisteredShot_t {
 	float hitchance = 0;
 	int backtrack = 0;
 	LagRecord* record;
-	QAngle player_angle; // for building correct matrix
+	QAngle player_angle; 
 	bool safe_point = false;
 	std::vector<Vector> client_impacts;
 
-	// acked info
+	
 	Vector shoot_pos;
 	Vector end_pos;
 	QAngle angle;

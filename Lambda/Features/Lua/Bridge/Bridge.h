@@ -16,7 +16,7 @@
 struct LuaScript_t {
 	bool loaded = false;
 	std::string name;
-	std::string ui_name; // added star if loaded
+	std::string ui_name; 
 	std::filesystem::path path;
 	sol::environment* env = nullptr;
 	std::vector<CMenuTab*> tabs;

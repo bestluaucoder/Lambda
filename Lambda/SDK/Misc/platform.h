@@ -1,10 +1,10 @@
-//===== Copyright � 1996-2005, Valve Corporation, All rights reserved. ======//
-//
-// Purpose:
-//
-// $NoKeywords: $
-//
-//===========================================================================//
+
+
+
+
+
+
+
 #pragma once
 
 #include <malloc.h>
@@ -17,19 +17,19 @@
 
 #define COMPILER_MSVC
 
-//-----------------------------------------------------------------------------
-// NOTE: All compiler defines are Set up in the base VPC scripts
-// COMPILER_MSVC, COMPILER_MSVC32, COMPILER_MSVC64, COMPILER_MSVCX360
-// COMPILER_GCC
-// The rationale for this is that we need COMPILER_MSVC for the pragma blocks
-// #pragma once that occur at the top of all header files, therefore we can't
-// place the defines for these in here.
-//-----------------------------------------------------------------------------
 
 
-//-----------------------------------------------------------------------------
-// Set up platform defines.
-//-----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 #ifdef _WIN32
 #define IsPlatformLinux()	false
 #define IsPlatformPosix()	false
@@ -55,7 +55,7 @@
 #define PLATFORM_WINDOWS_PC32 1
 #endif
 
-#else // _X360
+#else 
 
 #define IsPlatformWindowsPC()	false
 #define IsPlatformWindowsPC64() false
@@ -63,7 +63,7 @@
 #define IsPlatformX360()		true
 #define PLATFORM_X360 1
 
-#endif // _X360
+#endif 
 
 #elif defined(POSIX)
 #define IsPlatformX360()		false
@@ -98,9 +98,9 @@
 #error
 #endif
 
-//-----------------------------------------------------------------------------
-// Set up platform type defines.
-//-----------------------------------------------------------------------------
+
+
+
 #ifdef PLATFORM_X360
 #ifndef _CONSOLE
 #define _CONSOLE
@@ -114,9 +114,9 @@
 
 
 
-//-----------------------------------------------------------------------------
-// Set up build configuration defines.
-//-----------------------------------------------------------------------------
+
+
+
 #ifdef _CERT
 #define IsCert() true
 #else
@@ -137,7 +137,7 @@
 #define IsRetail() false
 #endif
 
-// Maximum and minimum representable values
+
 #if !defined(PLATFORM_OSX) && !defined(__STDC_LIMIT_MACROS)
 
 #ifndef INT8_MAX
@@ -192,7 +192,7 @@
 #define  UINT64_MIN			0
 #endif
 
-#endif // !PLATFORM_OSX && !__STDC_LIMIT_MACROS
+#endif 
 
 #ifndef  UINT_MIN
 #define  UINT_MIN			UINT32_MIN
@@ -203,7 +203,7 @@
 
 #ifdef GNUC
 #undef offsetof
-//#define offsetof( type, var ) __builtin_offsetof( type, var ) 
+
 #define offsetof(s,m)	(size_t)&(((s *)0)->m)
 #else
 #include <stddef.h>
@@ -215,21 +215,21 @@
 #define  FLOAT32_MIN		FLT_MIN
 #define  FLOAT64_MIN		DBL_MIN
 
-//-----------------------------------------------------------------------------
-// Long is evil because it's treated differently by different compilers
-// Preventing its use is nasty however. This #define, which should be
-// turned on in individual VPC files, causes you to include tier0/valve_off.h
-// before standard C + windows headers, and include tier0/valve_on.h after
-// standard C + windows headers. So, there's some painful overhead to disabling long
-//-----------------------------------------------------------------------------
+
+
+
+
+
+
+
 #ifdef DISALLOW_USE_OF_LONG
 #define long			long_is_the_devil_stop_using_it_use_int32_or_int64
 #endif
 
 
-//-----------------------------------------------------------------------------
-// Various compiler-specific keywords
-//-----------------------------------------------------------------------------
+
+
+
 #ifdef COMPILER_MSVC
 
 #ifdef FORCEINLINE
@@ -243,44 +243,44 @@
 #define FORCEINLINE_TEMPLATE	__forceinline
 #define NULLTERMINATED			__nullterminated
 
-// This can be used to ensure the size of pointers to members when declaring
-// a pointer type for a class that has only been forward declared
+
+
 #define SINGLE_INHERITANCE		__single_inheritance
 #define MULTIPLE_INHERITANCE	__multiple_inheritance
 #define EXPLICIT				explicit
 #define NO_VTABLE				__declspec( novtable )
 
-// gcc doesn't allow storage specifiers on explicit template instatiation, but visual studio needs them to avoid link errors.
+
 #define TEMPLATE_STATIC			static
 
-// Used for dll exporting and importing
+
 #define DLL_EXPORT				extern "C" __declspec( dllexport )
 #define DLL_IMPORT				extern "C" __declspec( dllimport )
 
-// Can't use extern "C" when DLL exporting a class
+
 #define DLL_CLASS_EXPORT		__declspec( dllexport )
 #define DLL_CLASS_IMPORT		__declspec( dllimport )
 
-// Can't use extern "C" when DLL exporting a global
+
 #define DLL_GLOBAL_EXPORT		extern __declspec( dllexport )
 #define DLL_GLOBAL_IMPORT		extern __declspec( dllimport )
 
-// Pass hints to the compiler to prevent it from generating unnessecary / stupid code
-// in certain situations.  Several compilers other than MSVC also have an equivilent
-// construct.
-//
-// Essentially the 'Hint' is that the condition specified is assumed to be true at
-// that point in the compilation.  If '0' is passed, then the compiler assumes that
-// any subsequent code in the same 'basic block' is unreachable, and thus usually
-// removed.
+
+
+
+
+
+
+
+
 #define HINT(THE_HINT)			__assume((THE_HINT))
 
-// decls for aligning data
+
 #define DECL_ALIGN(x)			__declspec( align( x ) )
 
-// GCC had a few areas where it didn't construct objects in the same order 
-// that Windows does. So when CVProfile::CVProfile() would access g_pMemAlloc,
-// it would crash because the allocator wasn't initalized yet.
+
+
+
 #define CONSTRUCT_EARLY
 
 #define SELECTANY				__declspec(selectany)
@@ -314,8 +314,8 @@
 #define  FORCEINLINE		inline
 #endif
 
-// GCC 3.4.1 has a bug in supporting forced inline of templated functions
-// this macro lets us not force inlining in that case
+
+
 #define FORCEINLINE_TEMPLATE	inline
 #define SINGLE_INHERITANCE
 #define MULTIPLE_INHERITANCE
@@ -326,15 +326,15 @@
 
 #define TEMPLATE_STATIC
 
-// Used for dll exporting and importing
+
 #define DLL_EXPORT				extern "C" __attribute__ ((visibility("default"))
 #define DLL_IMPORT				extern "C"
 
-// Can't use extern "C" when DLL exporting a class
+
 #define DLL_CLASS_EXPORT		__attribute__ ((visibility("default"))
 #define DLL_CLASS_IMPORT
 
-// Can't use extern "C" when DLL exporting a global
+
 #define DLL_GLOBAL_EXPORT		__attribute__((visibility("default"))
 #define DLL_GLOBAL_IMPORT		extern
 
@@ -356,13 +356,13 @@
 
 #else
 
-#define DECL_ALIGN(x)			/* */
+#define DECL_ALIGN(x)			
 #define SELECTANY				static
 
 #endif
 
 #if defined( GNUC )
-// gnuc has the align decoration at the end
+
 #define ALIGN4
 #define ALIGN8 
 #define ALIGN16
@@ -375,7 +375,7 @@
 #define ALIGN32_POST DECL_ALIGN(32)
 #define ALIGN128_POST DECL_ALIGN(128)
 #else
-// MSVC has the align at the start of the struct
+
 #define ALIGN4 DECL_ALIGN(4)
 #define ALIGN8 DECL_ALIGN(8)
 #define ALIGN16 DECL_ALIGN(16)
@@ -390,21 +390,21 @@
 #endif
 
 
-// This can be used to declare an abstract (interface only) class.
-// Classes marked abstract should not be instantiated.  If they are, and access violation will occur.
-//
-// Example of use:
-//
-// abstract_class CFoo
-// {
-//      ...
-// }
-//
-// MSDN __declspec(novtable) documentation: http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclang/html/_langref_novtable.asp
-//
-// Note: NJS: This is not enabled for regular PC, due to not knowing the implications of exporting a class with no no vtable.
-//       It's probable that this shouldn't be an issue, but an experiment should be done to verify this.
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #ifndef COMPILER_MSVCX360
 #define abstract_class class
 #else
@@ -412,10 +412,10 @@
 #endif
 
 
-//-----------------------------------------------------------------------------
-// Why do we need this? It would be nice to make it die die die
-//-----------------------------------------------------------------------------
-// Alloca defined for this platform
+
+
+
+
 #if defined( COMPILER_MSVC ) && !defined( WINDED )
 #if defined(_M_IX86)
 #define __i386__	1
@@ -426,56 +426,56 @@
 #define id386	1
 #else
 #define id386	0
-#endif  // __i386__
+#endif  
 
 
-//-----------------------------------------------------------------------------
-// Disable annoying unhelpful warnings
-//-----------------------------------------------------------------------------
+
+
+
 #ifdef COMPILER_MSVC
-// Remove warnings from warning level 4.
-#pragma warning(disable : 4514) // warning C4514: 'acosl' : unreferenced inline function has been removed
-#pragma warning(disable : 4100) // warning C4100: 'hwnd' : unreferenced formal parameter
-#pragma warning(disable : 4127) // warning C4127: conditional expression is constant
-#pragma warning(disable : 4512) // warning C4512: 'InFileRIFF' : assignment operator could not be generated
-#pragma warning(disable : 4611) // warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
-#pragma warning(disable : 4710) // warning C4710: function 'x' not inlined
-#pragma warning(disable : 4702) // warning C4702: unreachable code
-#pragma warning(disable : 4505) // unreferenced local function has been removed
-#pragma warning(disable : 4239) // nonstandard extension used : 'argument' ( conversion from class Vector to class Vector& )
-#pragma warning(disable : 4097) // typedef-name 'BaseClass' used as synonym for class-name 'CFlexCycler::CBaseFlex'
-#pragma warning(disable : 4324) // Padding was added at the end of a structure
-#pragma warning(disable : 4244) // type conversion warning.
-#pragma warning(disable : 4305)	// truncation from 'const double ' to 'float '
-#pragma warning(disable : 4786)	// Disable warnings about long symbol names
-#pragma warning(disable : 4250) // 'X' : inherits 'Y::Z' via dominance
-#pragma warning(disable : 4201) // nonstandard extension used : nameless struct/union
+
+#pragma warning(disable : 4514) 
+#pragma warning(disable : 4100) 
+#pragma warning(disable : 4127) 
+#pragma warning(disable : 4512) 
+#pragma warning(disable : 4611) 
+#pragma warning(disable : 4710) 
+#pragma warning(disable : 4702) 
+#pragma warning(disable : 4505) 
+#pragma warning(disable : 4239) 
+#pragma warning(disable : 4097) 
+#pragma warning(disable : 4324) 
+#pragma warning(disable : 4244) 
+#pragma warning(disable : 4305)	
+#pragma warning(disable : 4786)	
+#pragma warning(disable : 4250) 
+#pragma warning(disable : 4201) 
 
 #if _MSC_VER >= 1300
-#pragma warning(disable : 4511)	// Disable warnings about private copy constructors
-#pragma warning(disable : 4121)	// warning C4121: 'symbol' : alignment of a member was sensitive to packing
-#pragma warning(disable : 4530)	// warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc (disabled due to std headers having exception syntax)
+#pragma warning(disable : 4511)	
+#pragma warning(disable : 4121)	
+#pragma warning(disable : 4530)	
 #endif
 
 #if _MSC_VER >= 1400
-#pragma warning(disable : 4996)	// functions declared deprecated
+#pragma warning(disable : 4996)	
 #endif
 
-// When we port to 64 bit, we'll have to resolve the int, ptr vs size_t 32/64 bit problems...
+
 #if !defined( COMPILER_MSVC64 )
 #if ( CROSS_PLATFORM_VERSION < 1 )
-#pragma warning( disable : 4267 )	// conversion from 'size_t' to 'int', possible loss of data
-#pragma warning( disable : 4311 )	// pointer truncation from 'char *' to 'int'
-#pragma warning( disable : 4312 )	// conversion from 'unsigned int' to 'memhandle_t' of greater size
+#pragma warning( disable : 4267 )	
+#pragma warning( disable : 4311 )	
+#pragma warning( disable : 4312 )	
 #endif
 #endif
 
 #endif
 
 
-//-----------------------------------------------------------------------------
-// Stack-based allocation related helpers
-//-----------------------------------------------------------------------------
+
+
+
 #if defined( COMPILER_GCC )
 
 #define stackalloc( _size )		alloca( ALIGN_VALUE( _size, 16 ) )
@@ -496,9 +496,9 @@
 #define  stackfree( _p )			0
 
 
-//-----------------------------------------------------------------------------
-// Used to break into the debugger
-//-----------------------------------------------------------------------------
+
+
+
 #ifdef COMPILER_MSVC64
 #define DebuggerBreak()		__debugbreak()
 #elif COMPILER_MSVC32
@@ -514,9 +514,9 @@
 #endif
 
 
-//-----------------------------------------------------------------------------
-// DLL export for platform utilities
-//-----------------------------------------------------------------------------
+
+
+
 #ifndef STATIC_TIER0
 
 #ifdef TIER0_DLL_EXPORT
@@ -529,20 +529,20 @@
 #define PLATFORM_CLASS		DLL_CLASS_IMPORT
 #endif
 
-#else	// BUILD_AS_DLL
+#else	
 
 #define PLATFORM_INTERFACE	extern
 #define PLATFORM_OVERLOAD
 #define PLATFORM_CLASS
 
-#endif	// BUILD_AS_DLL
+#endif	
 
-//-----------------------------------------------------------------------------
-// Posix platform helpers
-//-----------------------------------------------------------------------------
+
+
+
 #ifdef PLATFORM_POSIX
 
-// Visual Studio likes to put an underscore in front of anything that looks like a portable function.
+
 #define _strupr strupr
 #define _getcwd getcwd
 #define _open open
@@ -560,46 +560,46 @@
 #define _access access
 #define _strtoi64 strtoll
 
-#if !defined( _snprintf )	// some vpc's define this on the command line
+#if !defined( _snprintf )	
 #define _snprintf snprintf
 #endif
 
 #include <alloca.h>
-#include <unistd.h>											// Get unlink
+#include <unistd.h>											
 #include <errno.h>
 
-#endif // PLATFORM_POSIX
+#endif 
 
 
-//-----------------------------------------------------------------------------
-// Generally useful platform-independent macros (move to another file?)
-//-----------------------------------------------------------------------------
 
-// need macro for constant expression
+
+
+
+
 #define ALIGN_VALUE( val, alignment ) ( ( val + alignment - 1 ) & ~( alignment - 1 ) ) 
 
-// Force a function call site -not- to inlined. (useful for profiling)
+
 #define DONT_INLINE(a) (((int)(a)+1)?(a):(a))
 
-// Marks the codepath from here until the next branch entry point as unreachable,
-// and asserts if any attempt is made to execute it.
+
+
 #define UNREACHABLE() { Assert(0); HINT(0); }
 
-// In cases where no default is present or appropriate, this causes MSVC to generate
-// as little code as possible, and throw an assertion in debug.
+
+
 #define NO_DEFAULT default: UNREACHABLE();
 
-// Defines MAX_PATH
+
 #ifndef MAX_PATH
 #define MAX_PATH  260
 #endif
 
 
-//-----------------------------------------------------------------------------
-// FP exception handling
-//-----------------------------------------------------------------------------
-//#define CHECK_FLOAT_EXCEPTIONS		1
-//#define CHECK_FPU_CONTROL_WORD_SET	1	// x360 only
+
+
+
+
+
 
 #if defined( COMPILER_MSVC64 )
 
@@ -611,15 +611,15 @@ inline void SetupFPUControlWord()
 
 inline void SetupFPUControlWordForceExceptions()
 {
-    // use local to Get and store control word
+    
     uint16 tmpCtrlW;
     __asm
     {
-        fnclex						/* clear all current exceptions */
-        fnstcw word ptr[tmpCtrlW]	/* Get current control word */
-        and [tmpCtrlW], 0FCC0h		/* Keep infinity control + rounding control */
-        or [tmpCtrlW], 0230h		/* Set to 53-bit, mask only inexact, underflow */
-        fldcw word ptr[tmpCtrlW]	/* put new control word in FPU */
+        fnclex						
+        fnstcw word ptr[tmpCtrlW]	
+        and [tmpCtrlW], 0FCC0h		
+        or [tmpCtrlW], 0230h		
+        fldcw word ptr[tmpCtrlW]	
     }
 }
 
@@ -634,14 +634,14 @@ inline void SetupFPUControlWord()
 
 inline void SetupFPUControlWord()
 {
-    // use local to Get and store control word
+    
     uint16 tmpCtrlW;
     __asm
     {
-        fnstcw word ptr[tmpCtrlW]	/* Get current control word */
-        and [tmpCtrlW], 0FCC0h		/* Keep infinity control + rounding control */
-        or [tmpCtrlW], 023Fh		/* Set to 53-bit, mask only inexact, underflow */
-        fldcw word ptr[tmpCtrlW]	/* put new control word in FPU */
+        fnstcw word ptr[tmpCtrlW]	
+        and [tmpCtrlW], 0FCC0h		
+        or [tmpCtrlW], 023Fh		
+        fldcw word ptr[tmpCtrlW]	
     }
 }
 
@@ -653,8 +653,8 @@ inline void SetupFPUControlWord()
 {
     __volatile unsigned short int __cw;
     __asm __volatile("fnstcw %0" : "=m" (__cw));
-    __cw = __cw & 0x0FCC0;	// keep infinity control, keep rounding mode
-    __cw = __cw | 0x023F;	// Set 53-bit, no exceptions
+    __cw = __cw & 0x0FCC0;	
+    __cw = __cw | 0x023F;	
     __asm __volatile("fldcw %0" : : "m" (__cw));
 }
 
@@ -678,30 +678,30 @@ FORCEINLINE bool IsFPUControlWordSet()
 
 inline void SetupFPUControlWord()
 {
-    // Set round-to-nearest in FPSCR
-    // (cannot assemble, must use op-code form)
-    __emit(0xFF80010C);	// mtfsfi  7,0
+    
+    
+    __emit(0xFF80010C);	
 
-                        // Favour compatibility over speed (make sure the VPU Set to Java-compliant mode)
-                        // NOTE: the VPU *always* uses round-to-nearest
+                        
+                        
     __vector4  a = { 0.0f, 0.0f, 0.0f, 0.0f };
-    a;				//	Avoid compiler warning
+    a;				
     __asm
     {
-        mtvscr a;	// Clear the Vector Status & Control Register to zero
+        mtvscr a;	
     }
 }
 
-#endif // COMPILER_MSVCX360
+#endif 
 
 
-//-----------------------------------------------------------------------------
-// Purpose: Standard functions for handling endian-ness
-//-----------------------------------------------------------------------------
 
-//-------------------------------------
-// Basic swaps
-//-------------------------------------
+
+
+
+
+
+
 
 template <typename T>
 inline T WordSwapC(T w)
@@ -727,9 +727,9 @@ inline T DWordSwapC(T dw)
     return *((T*)&temp);
 }
 
-//-------------------------------------
-// Fast swaps
-//-------------------------------------
+
+
+
 
 #if defined( COMPILER_MSVCX360 )
 
@@ -758,7 +758,7 @@ inline T DWordSwap360Intr(T dw)
 #define DWordSwap DWordSwapAsm
 
 #pragma warning(push)
-#pragma warning (disable:4035) // no return value
+#pragma warning (disable:4035) 
 
 template <typename T>
 inline T WordSwapAsm(T w)
@@ -789,9 +789,9 @@ inline T DWordSwapAsm(T dw)
 
 #endif
 
-//-------------------------------------
-// The typically used methods.
-//-------------------------------------
+
+
+
 
 #if defined( _SGI_SOURCE ) || defined( PLATFORM_X360 )
 #define	PLAT_BIG_ENDIAN 1
@@ -800,8 +800,8 @@ inline T DWordSwapAsm(T dw)
 #endif
 
 
-// If a swapped float passes through the fpu, the bytes may Get changed.
-// Prevent this by swapping floats as DWORDs.
+
+
 #define SafeSwapFloat( pOut, pIn )	(*((unsigned int*)pOut) = DWordSwap( *((unsigned int*)pIn) ))
 
 #if defined(PLAT_LITTLE_ENDIAN)
@@ -818,7 +818,7 @@ inline T DWordSwapAsm(T dw)
 #define SwapLong( val )				BigLong( val )
 #define SwapDWord( val )			BigDWord( val )
 
-// Pass floats by pointer for swapping to avoid truncation in the fpu
+
 #define BigFloat( pOut, pIn )		SafeSwapFloat( pOut, pIn )
 #define LittleFloat( pOut, pIn )	( *pOut = *pIn )
 #define SwapFloat( pOut, pIn )		BigFloat( pOut, pIn )
@@ -838,16 +838,16 @@ inline T DWordSwapAsm(T dw)
 #define SwapLong( val )				LittleLong( val )
 #define SwapDWord( val )			LittleDWord( val )
 
-// Pass floats by pointer for swapping to avoid truncation in the fpu
+
 #define BigFloat( pOut, pIn )		( *pOut = *pIn )
 #define LittleFloat( pOut, pIn )	SafeSwapFloat( pOut, pIn )
 #define SwapFloat( pOut, pIn )		LittleFloat( pOut, pIn )
 
 #else
 
-// @Note (toml 05-02-02): this technique expects the compiler to
-// optimize the expression and eliminate the other path. On any new
-// platform/compiler this should be tested.
+
+
+
 inline short BigShort(short val) { int test = 1; return (*(char *)&test == 1) ? WordSwap(val) : val; }
 inline uint16 BigWord(uint16 val) { int test = 1; return (*(char *)&test == 1) ? WordSwap(val) : val; }
 inline long BigLong(long val) { int test = 1; return (*(char *)&test == 1) ? DWordSwap(val) : val; }
@@ -861,14 +861,14 @@ inline uint16 SwapWord(uint16 val) { return WordSwap(val); }
 inline long SwapLong(long val) { return DWordSwap(val); }
 inline uint32_t SwapDWord(uint32_t val) { return DWordSwap(val); }
 
-// Pass floats by pointer for swapping to avoid truncation in the fpu
+
 inline void BigFloat(float *pOut, const float *pIn) { int test = 1; (*(char *)&test == 1) ? SafeSwapFloat(pOut, pIn) : (*pOut = *pIn); }
 inline void LittleFloat(float *pOut, const float *pIn) { int test = 1; (*(char *)&test == 1) ? (*pOut = *pIn) : SafeSwapFloat(pOut, pIn); }
 inline void SwapFloat(float *pOut, const float *pIn) { SafeSwapFloat(pOut, pIn); }
 
 #endif
 
-inline uint32_t LoadLittleDWord(uint32_t *base, unsigned int dwordIndex) //-V2009
+inline uint32_t LoadLittleDWord(uint32_t *base, unsigned int dwordIndex) 
 {
     return LittleDWord(base[dwordIndex]);
 }
@@ -878,13 +878,13 @@ inline void StoreLittleDWord(uint32_t *base, unsigned int dwordIndex, uint32_t d
     base[dwordIndex] = LittleDWord(dword);
 }
 
-// Protect against bad auto operator=
+
 #define DISALLOW_OPERATOR_EQUAL( _classname )			\
 	private:											\
 		_classname &operator=( const _classname & );	\
 	public:
 
-// Define a reasonable operator=
+
 #define IMPLEMENT_OPERATOR_EQUAL( _classname )			\
 	public:												\
 		_classname &operator=( const _classname &src )	\
@@ -901,15 +901,15 @@ inline void StoreLittleDWord(uint32_t *base, unsigned int dwordIndex, uint32_t d
 #define Plat_FastMemcpy memcpy
 #endif
 
-//-----------------------------------------------------------------------------
-// XBOX Components valid in PC compilation space
-//-----------------------------------------------------------------------------
+
+
+
 
 #define XBOX_DVD_SECTORSIZE			2048
-#define XBOX_DVD_ECC_SIZE			32768 // driver reads in quantum ECC blocks
+#define XBOX_DVD_ECC_SIZE			32768 
 #define XBOX_HDD_SECTORSIZE			512
 
-// Custom windows messages for Xbox input
+
 #define WM_XREMOTECOMMAND					(WM_USER + 100)
 #define WM_XCONTROLLER_KEY					(WM_USER + 101)
 #define WM_SYS_UI							(WM_USER + 102)
@@ -940,7 +940,7 @@ inline const char *GetPlatformExt(void)
     return IsPlatformX360() ? ".360" : "";
 }
 
-// flat view, 6 hw threads
+
 #define XBOX_PROCESSOR_0			( 1<<0 )
 #define XBOX_PROCESSOR_1			( 1<<1 )
 #define XBOX_PROCESSOR_2			( 1<<2 )
@@ -948,7 +948,7 @@ inline const char *GetPlatformExt(void)
 #define XBOX_PROCESSOR_4			( 1<<4 )
 #define XBOX_PROCESSOR_5			( 1<<5 )
 
-// core view, 3 cores with 2 hw threads each
+
 #define XBOX_CORE_0_HWTHREAD_0		XBOX_PROCESSOR_0
 #define XBOX_CORE_0_HWTHREAD_1		XBOX_PROCESSOR_1
 #define XBOX_CORE_1_HWTHREAD_0		XBOX_PROCESSOR_2
@@ -956,16 +956,16 @@ inline const char *GetPlatformExt(void)
 #define XBOX_CORE_2_HWTHREAD_0		XBOX_PROCESSOR_4
 #define XBOX_CORE_2_HWTHREAD_1		XBOX_PROCESSOR_5
 
-//-----------------------------------------------------------------------------
-// Include additional dependant header components.
-//-----------------------------------------------------------------------------
+
+
+
 #if defined( PLATFORM_X360 )
 #include "xbox/xbox_core.hpp"
 #endif
 
-//-----------------------------------------------------------------------------
-// Methods to invoke the constructor, copy constructor, and destructor
-//-----------------------------------------------------------------------------
+
+
+
 
 template <class T>
 inline T* Construct(T* pMemory)
@@ -1020,88 +1020,33 @@ inline void Destruct(T* pMemory)
 }
 
 
-//
-// GET_OUTER()
-//
-// A platform-independent way for a contained class to Get a pointer to its
-// owner. If you know a class is exclusively used in the context of some
-// "outer" class, this is a much more space efficient way to Get at the outer
-// class than having the inner class store a pointer to it.
-//
-//	class COuter
-//	{
-//		class CInner // Note: this does not need to be a nested class to work
-//		{
-//			void PrintAddressOfOuter()
-//			{
-//				printf( "Outer is at 0x%x\n", GET_OUTER( COuter, m_Inner ) );
-//			}
-//		};
-//
-//		CInner m_Inner;
-//		friend class CInner;
-//	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #define GET_OUTER( OuterType, OuterMember ) \
    ( ( OuterType * ) ( (uint8_t *)this - offsetof( OuterType, OuterMember ) ) )
 
 
-/*	TEMPLATE_FUNCTION_TABLE()
 
-(Note added to platform.h so platforms that correctly support templated
-functions can handle portions as templated functions rather than wrapped
-functions)
-
-Helps automate the process of creating an array of function
-templates that are all specialized by a single integer.
-This sort of thing is often useful in optimization work.
-
-For example, using TEMPLATE_FUNCTION_TABLE, this:
-
-TEMPLATE_FUNCTION_TABLE(int, Function, ( int blah, int blah ), 10)
-{
-return argument * argument;
-}
-
-is equivilent to the following:
-
-(NOTE: the function has to be wrapped in a class due to code
-generation bugs involved with directly specializing a function
-based on a constant.)
-
-template<int argument>
-class FunctionWrapper
-{
-public:
-int Function( int blah, int blah )
-{
-return argument*argument;
-}
-}
-
-typedef int (*FunctionType)( int blah, int blah );
-
-class FunctionName
-{
-public:
-enum { count = 10 };
-FunctionType functions[10];
-};
-
-FunctionType FunctionName::functions[] =
-{
-FunctionWrapper<0>::Function,
-FunctionWrapper<1>::Function,
-FunctionWrapper<2>::Function,
-FunctionWrapper<3>::Function,
-FunctionWrapper<4>::Function,
-FunctionWrapper<5>::Function,
-FunctionWrapper<6>::Function,
-FunctionWrapper<7>::Function,
-FunctionWrapper<8>::Function,
-FunctionWrapper<9>::Function
-};
-*/
 
 PLATFORM_INTERFACE bool vtune(bool resume);
 

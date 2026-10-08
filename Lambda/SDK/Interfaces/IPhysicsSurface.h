@@ -12,13 +12,13 @@ struct surfacephysicsparams_t
 
 struct surfaceaudioparams_t
 {
-	float reflectivity; // like elasticity, but how much sound should be reflected by this surface
-	float hardnessFactor; // like elasticity, but only affects impact sound choices
-	float roughnessFactor; // like friction, but only affects scrape sound choices
-	float roughThreshold; // surface roughness > this causes "rough" scrapes, < this causes "smooth" scrapes
-	float hardThreshold; // surface hardness > this causes "hard" impacts, < this causes "soft" impacts
-	float hardVelocityThreshold; // collision velocity > this causes "hard" impacts, < this causes "soft" impacts
-	float highPitchOcclusion; //a value betweeen 0 and 100 where 0 is not occluded at all and 100 is silent (except for any additional reflected sound)
+	float reflectivity; 
+	float hardnessFactor; 
+	float roughnessFactor; 
+	float roughThreshold; 
+	float hardThreshold; 
+	float hardVelocityThreshold; 
+	float highPitchOcclusion; 
 	float midPitchOcclusion;
 	float lowPitchOcclusion;
 };

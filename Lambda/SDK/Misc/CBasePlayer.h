@@ -23,117 +23,117 @@
 
 enum EMoveType
 {
-    MOVETYPE_NONE = 0,	// never moves
-    MOVETYPE_ISOMETRIC,			// For players -- in TF2 commander view, etc.
-    MOVETYPE_WALK,				// Player only - moving on the ground
-    MOVETYPE_STEP,				// gravity, special edge handling -- monsters use this
-    MOVETYPE_FLY,				// No gravity, but still collides with stuff
-    MOVETYPE_FLYGRAVITY,		// flies through the air + is affected by gravity
-    MOVETYPE_VPHYSICS,			// uses VPHYSICS for simulation
-    MOVETYPE_PUSH,				// no clip to world, push and crush
-    MOVETYPE_NOCLIP,			// No gravity, no collisions, still do velocity/avelocity
-    MOVETYPE_LADDER,			// Used by players only when going onto a ladder
-    MOVETYPE_OBSERVER,			// Observer movement, depends on player's observer mode
-    MOVETYPE_CUSTOM,			// Allows the entity to describe its own physics
+    MOVETYPE_NONE = 0,	
+    MOVETYPE_ISOMETRIC,			
+    MOVETYPE_WALK,				
+    MOVETYPE_STEP,				
+    MOVETYPE_FLY,				
+    MOVETYPE_FLYGRAVITY,		
+    MOVETYPE_VPHYSICS,			
+    MOVETYPE_PUSH,				
+    MOVETYPE_NOCLIP,			
+    MOVETYPE_LADDER,			
+    MOVETYPE_OBSERVER,			
+    MOVETYPE_CUSTOM,			
 
-    // should always be defined as the last item in the list
+    
     MOVETYPE_LAST = MOVETYPE_CUSTOM,
 
     MOVETYPE_MAX_BITS = 4
 };
 
 enum LifeState_t {
-    LIFE_ALIVE,				 // alive
-    LIFE_DYING,				 // playing death animation or still falling off of a ledge waiting to hit ground
-    LIFE_DEAD,				 // dead. lying still.
+    LIFE_ALIVE,				 
+    LIFE_DYING,				 
+    LIFE_DEAD,				 
     LIFE_RESPAWNABLE,
     LIFE_DISCARDBODY,
 };
 
 enum
 {
-    EF_BONEMERGE = 0x001,	// Performs bone merge on client side
-    EF_BRIGHTLIGHT = 0x002,	// DLIGHT centered at entity origin
-    EF_DIMLIGHT = 0x004,	// player flashlight
-    EF_NOINTERP = 0x008,	// don't interpolate the next frame
-    EF_NOSHADOW = 0x010,	// Don't cast no shadow
-    EF_NODRAW = 0x020,	// don't draw entity
-    EF_NORECEIVESHADOW = 0x040,	// Don't receive no shadow
-    EF_BONEMERGE_FASTCULL = 0x080,	// For use with EF_BONEMERGE. If this is set, then it places this ent's origin at its
-    // parent and uses the parent's bbox + the max extents of the aiment.
-    // Otherwise, it sets up the parent's bones every frame to figure out where to place
-    // the aiment, which is inefficient because it'll setup the parent's bones even if
-    // the parent is not in the PVS.
-    EF_ITEM_BLINK = 0x100,	// blink an item so that the user notices it.
-    EF_PARENT_ANIMATES = 0x200,	// always assume that the parent entity is animating
-    EF_MARKED_FOR_FAST_REFLECTION = 0x400,	// marks an entity for reflection rendering when using $reflectonlymarkedentities material variable
-    EF_NOSHADOWDEPTH = 0x800,	// Indicates this entity does not render into any shadow depthmap
-    EF_SHADOWDEPTH_NOCACHE = 0x1000,	// Indicates this entity cannot be cached in shadow depthmap and should render every frame
+    EF_BONEMERGE = 0x001,	
+    EF_BRIGHTLIGHT = 0x002,	
+    EF_DIMLIGHT = 0x004,	
+    EF_NOINTERP = 0x008,	
+    EF_NOSHADOW = 0x010,	
+    EF_NODRAW = 0x020,	
+    EF_NORECEIVESHADOW = 0x040,	
+    EF_BONEMERGE_FASTCULL = 0x080,	
+    
+    
+    
+    
+    EF_ITEM_BLINK = 0x100,	
+    EF_PARENT_ANIMATES = 0x200,	
+    EF_MARKED_FOR_FAST_REFLECTION = 0x400,	
+    EF_NOSHADOWDEPTH = 0x800,	
+    EF_SHADOWDEPTH_NOCACHE = 0x1000,	
     EF_NOFLASHLIGHT = 0x2000,
-    EF_NOCSM = 0x4000,	// Indicates this entity does not render into the cascade shadow depthmap
+    EF_NOCSM = 0x4000,	
     EF_MAX_BITS = 15
 };
 
-// entity flags, CBaseEntity::m_iEFlags
+
 enum
 {
-    EFL_KILLME = (1 << 0),	// This entity is marked for death -- This allows the game to actually delete ents at a safe time
-    EFL_DORMANT = (1 << 1),	// Entity is dormant, no updates to client
-    EFL_NOCLIP_ACTIVE = (1 << 2),	// Lets us know when the noclip command is active.
-    EFL_SETTING_UP_BONES = (1 << 3),	// Set while a model is setting up its bones.
-    EFL_KEEP_ON_RECREATE_ENTITIES = (1 << 4), // This is a special entity that should not be deleted when we restart entities only
+    EFL_KILLME = (1 << 0),	
+    EFL_DORMANT = (1 << 1),	
+    EFL_NOCLIP_ACTIVE = (1 << 2),	
+    EFL_SETTING_UP_BONES = (1 << 3),	
+    EFL_KEEP_ON_RECREATE_ENTITIES = (1 << 4), 
 
-    EFL_DIRTY_SHADOWUPDATE = (1 << 5),	// Client only- need shadow manager to update the shadow...
-    EFL_NOTIFY = (1 << 6),	// Another entity is watching events on this entity (used by teleport)
+    EFL_DIRTY_SHADOWUPDATE = (1 << 5),	
+    EFL_NOTIFY = (1 << 6),	
 
-    // The default behavior in ShouldTransmit is to not send an entity if it doesn't
-    // have a model. Certain entities want to be sent anyway because all the drawing logic
-    // is in the client DLL. They can set this flag and the engine will transmit them even
-    // if they don't have a model.
+    
+    
+    
+    
     EFL_FORCE_CHECK_TRANSMIT = (1 << 7),
 
-    EFL_BOT_FROZEN = (1 << 8),	// This is set on bots that are frozen.
-    EFL_SERVER_ONLY = (1 << 9),	// Non-networked entity.
-    EFL_NO_AUTO_EDICT_ATTACH = (1 << 10), // Don't attach the edict; we're doing it explicitly
+    EFL_BOT_FROZEN = (1 << 8),	
+    EFL_SERVER_ONLY = (1 << 9),	
+    EFL_NO_AUTO_EDICT_ATTACH = (1 << 10), 
 
-    // Some dirty bits with respect to abs computations
+    
     EFL_DIRTY_ABSTRANSFORM = (1 << 11),
     EFL_DIRTY_ABSVELOCITY = (1 << 12),
     EFL_DIRTY_ABSANGVELOCITY = (1 << 13),
     EFL_DIRTY_SURROUNDING_COLLISION_BOUNDS = (1 << 14),
     EFL_DIRTY_SPATIAL_PARTITION = (1 << 15),
-    EFL_HAS_PLAYER_CHILD = (1 << 16),	// One of the child entities is a player.
+    EFL_HAS_PLAYER_CHILD = (1 << 16),	
 
-    EFL_IN_SKYBOX = (1 << 17),	// This is set if the entity detects that it's in the skybox.
-    // This forces it to pass the "in PVS" for transmission.
-    EFL_USE_PARTITION_WHEN_NOT_SOLID = (1 << 18),	// Entities with this flag set show up in the partition even when not solid
-    EFL_TOUCHING_FLUID = (1 << 19),	// Used to determine if an entity is floating
+    EFL_IN_SKYBOX = (1 << 17),	
+    
+    EFL_USE_PARTITION_WHEN_NOT_SOLID = (1 << 18),	
+    EFL_TOUCHING_FLUID = (1 << 19),	
 
-    // FIXME: Not really sure where I should add this...
+    
     EFL_IS_BEING_LIFTED_BY_BARNACLE = (1 << 20),
-    EFL_NO_ROTORWASH_PUSH = (1 << 21),		// I shouldn't be pushed by the rotorwash
+    EFL_NO_ROTORWASH_PUSH = (1 << 21),		
     EFL_NO_THINK_FUNCTION = (1 << 22),
     EFL_NO_GAME_PHYSICS_SIMULATION = (1 << 23),
 
     EFL_CHECK_UNTOUCH = (1 << 24),
-    EFL_DONTBLOCKLOS = (1 << 25),		// I shouldn't block NPC line-of-sight
-    EFL_DONTWALKON = (1 << 26),		// NPC;s should not walk on this entity
-    EFL_NO_DISSOLVE = (1 << 27),		// These guys shouldn't dissolve
-    EFL_NO_MEGAPHYSCANNON_RAGDOLL = (1 << 28),	// Mega physcannon can't ragdoll these guys.
-    EFL_NO_WATER_VELOCITY_CHANGE = (1 << 29),	// Don't adjust this entity's velocity when transitioning into water
-    EFL_NO_PHYSCANNON_INTERACTION = (1 << 30),	// Physcannon can't pick these up or punt them
-    EFL_NO_DAMAGE_FORCES = (1 << 31),	// Doesn't accept forces from physics damage
+    EFL_DONTBLOCKLOS = (1 << 25),		
+    EFL_DONTWALKON = (1 << 26),		
+    EFL_NO_DISSOLVE = (1 << 27),		
+    EFL_NO_MEGAPHYSCANNON_RAGDOLL = (1 << 28),	
+    EFL_NO_WATER_VELOCITY_CHANGE = (1 << 29),	
+    EFL_NO_PHYSCANNON_INTERACTION = (1 << 30),	
+    EFL_NO_DAMAGE_FORCES = (1 << 31),	
 };
 
 enum EObsMode
 {
-    OBS_MODE_NONE = 0,	// not in spectator mode
-    OBS_MODE_DEATHCAM,	// special mode for death cam animation
-    OBS_MODE_FREEZECAM,	// zooms to a target, and freeze-frames on them
-    OBS_MODE_FIXED,		// view from a fixed camera position
-    OBS_MODE_IN_EYE,	// follow a player in first person view
-    OBS_MODE_CHASE,		// follow a player in third person view
-    OBS_MODE_ROAMING,	// free roaming
+    OBS_MODE_NONE = 0,	
+    OBS_MODE_DEATHCAM,	
+    OBS_MODE_FREEZECAM,	
+    OBS_MODE_FIXED,		
+    OBS_MODE_IN_EYE,	
+    OBS_MODE_CHASE,		
+    OBS_MODE_ROAMING,	
 
     NUM_OBSERVER_MODES,
 };
@@ -143,9 +143,9 @@ enum InvalidatePhysicsBits_t
     POSITION_CHANGED = 0x1,
     ANGLES_CHANGED = 0x2,
     VELOCITY_CHANGED = 0x4,
-    ANIMATION_CHANGED = 0x8,		// Means cycle has changed, or any other event which would cause render-to-texture shadows to need to be rerendeded
-    BOUNDS_CHANGED = 0x10,		// Means render bounds have changed, so shadow decal projection is required, etc.
-    SEQUENCE_CHANGED = 0x20,		// Means sequence has changed, only interesting when surrounding bounds depends on sequence																				
+    ANIMATION_CHANGED = 0x8,		
+    BOUNDS_CHANGED = 0x10,		
+    SEQUENCE_CHANGED = 0x20,		
 };
 
 enum animstate_layer_t
@@ -297,20 +297,20 @@ struct CCSGOPlayerAnimationState
 static_assert(sizeof(CCSGOPlayerAnimationState) == 0x348);
 
 struct AnimationLayer {
-    bool m_bClientBlend;		 //0x0000
-    float m_flBlendIn;			 //0x0004
-    void* m_pStudioHdr;			 //0x0008
-    int m_nDispatchSequence;     //0x000C
-    int m_nDispatchSequence_2;   //0x0010
-    uint32_t m_nOrder = 0;           //0x0014
-    uint32_t m_nSequence = 0;        //0x0018
-    float m_flPrevCycle = 0.f;       //0x001C
-    float m_flWeight = 0.f;          //0x0020
-    float m_flWeightDeltaRate = 0.f; //0x0024
-    float m_flPlaybackRate = 0.f;    //0x0028
-    float m_flCycle = 0.f;           //0x002C
-    CBasePlayer* m_pOwner = nullptr;       //0x0030
-    char pad_0038[4];            //0x0034
+    bool m_bClientBlend;		 
+    float m_flBlendIn;			 
+    void* m_pStudioHdr;			 
+    int m_nDispatchSequence;     
+    int m_nDispatchSequence_2;   
+    uint32_t m_nOrder = 0;           
+    uint32_t m_nSequence = 0;        
+    float m_flPrevCycle = 0.f;       
+    float m_flWeight = 0.f;          
+    float m_flWeightDeltaRate = 0.f; 
+    float m_flPlaybackRate = 0.f;    
+    float m_flCycle = 0.f;           
+    CBasePlayer* m_pOwner = nullptr;       
+    char pad_0038[4];            
 
     void set_data(const AnimationLayer& other) {
         if (m_pOwner != other.m_pOwner)
@@ -334,8 +334,8 @@ public:
 
     matrix3x4_t* m_pBones;
 
-    int m_ReadableBones;		// Which bones can be read.
-    int m_WritableBones;		// Which bones can be written.
+    int m_ReadableBones;		
+    int m_WritableBones;		
 };
 
 class CStudioHdr;
@@ -419,7 +419,7 @@ public:
 
     inline bool IsArmored(const int iHitGroup)
     {
-        // @ida isarmored: server.dll @ 55 8B EC 32 D2
+        
 
         bool bIsArmored = false;
 

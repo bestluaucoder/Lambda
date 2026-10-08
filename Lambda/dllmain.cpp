@@ -1,4 +1,4 @@
-﻿#include <Windows.h>
+#include <Windows.h>
 #include <locale.h>
 #include <DbgHelp.h>
 #include <codecvt>

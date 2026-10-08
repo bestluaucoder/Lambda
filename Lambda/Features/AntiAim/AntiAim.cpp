@@ -35,7 +35,7 @@ static int PredictOptimalFakelag(int fakelag_limit) {
 			sample_head = (sample_head + 1) % 8;
 			if (sample_count < 8) ++sample_count;
 
-			// Use median of last 8 samples — robust against outlier bursts
+			
 			int sorted[8];
 			int n = sample_count;
 			for (int i = 0; i < n; i++) sorted[i] = choke_samples[(sample_head - 1 - i + 8) % 8];
@@ -77,22 +77,22 @@ static int PredictOptimalFakelag(int fakelag_limit) {
 			info.push(delta);
 		info.ticks_since_burst = 0;
 	} else {
-		// Enemy hasn't updated: they are choking this tick
+		
 		++info.ticks_since_burst;
 	}
 
 	info.last_sim_time    = sim;
 	info.last_update_real = now;
 
-	// We want our packet to arrive at the server on the same tick as the enemy's
-	// next burst. The enemy bursts every choke_estimate ticks on average.
-	// ticks_since_burst tells us how many ticks into their current choke we are.
-	// Remaining ticks until their burst = max(1, choke_estimate - ticks_since_burst)
+	
+	
+	
+	
 	int remaining = (std::max)(1, info.choke_estimate - info.ticks_since_burst);
 
-	// Our packet arrives our_delay ticks from now. We want to choke such that
-	// (our_delay + desired_choke) aligns with the enemy's next burst arrival.
-	// enemy burst arrives at: TIME_TO_TICKS(in_latency) + remaining ticks from now
+	
+	
+	
 	int enemy_arrival = TIME_TO_TICKS(in_latency) + remaining;
 	int desired_choke = enemy_arrival - our_delay;
 
@@ -291,7 +291,7 @@ CBasePlayer* CAntiAim::GetNearestTarget() {
 		if (!pl->IsPlayer() || pl->IsTeammate() || !pl->IsAlive())
 			continue;
 
-		if (EnginePrediction->curtime() - WorldESP->GetESPInfo(i).m_flLastUpdateTime > 10.f) // old dormant
+		if (EnginePrediction->curtime() - WorldESP->GetESPInfo(i).m_flLastUpdateTime > 10.f) 
 			continue;
 
 		QAngle angleToPlayer = Math::VectorAngles(pl->m_vecOrigin() - eyePos);
@@ -511,13 +511,13 @@ bool CAntiAim::IsPeeking() {
 			break;
 	}
 
-	//int r = peeked ? 0 : 255;
-	//int g = peeked ? 255 : 0;
+	
+	
 
-	//DebugOverlay->AddBoxOverlay(scan_points[0], Vector(-1, -1, -1), Vector(1, 1, 1), QAngle(), r, g, 0, 255, GlobalVars->interval_per_tick * 2);
-	//DebugOverlay->AddBoxOverlay(scan_points[1], Vector(-1, -1, -1), Vector(1, 1, 1), QAngle(), r, g, 0, 255, GlobalVars->interval_per_tick * 2);
-	//DebugOverlay->AddBoxOverlay(scan_points[2], Vector(-1, -1, -1), Vector(1, 1, 1), QAngle(), r, g, 0, 255, GlobalVars->interval_per_tick * 2);
-	//DebugOverlay->AddBoxOverlay(scan_points[3], Vector(-1, -1, -1), Vector(1, 1, 1), QAngle(), r, g, 0, 255, GlobalVars->interval_per_tick * 2);
+	
+	
+	
+	
 
 
 	ctx.active_weapon = backup_active_weapon;

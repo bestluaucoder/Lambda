@@ -12,22 +12,22 @@
 GrenadeWarning* NadeWarning = new GrenadeWarning;
 
 Vector RayCircleIntersection(Vector ray, Vector center, float r) {
-	// (x - center.x) ** 2 + (y - center.y) ** 2 = r ** 2
-	// ray.y * x = ray.x * y 
-	// if std::abs(ray.x) > std::abs(ray.y): y = (ray.y / ray.x) * x else x = (ray.x / ray.y) * y
+	
+	
+	
 
 	if (std::abs(ray.x) > std::abs(ray.y)) {
 		float k = ray.y / ray.x;
 
-		// (x - center.x) ** 2 + ((ray.y / ray.x) * x - center.y) ** 2 = r ** 2
-		// x ** 2 - 2 * x * center.x + center.x ** 2 + (ray.y / ray.x * x) ** 2 - 2 * (ray.y / ray.x) * x * center.y + center.y * center.y - r ** 2 = 0
+		
+		
 		float a = 1 + k * k;
 		float b = -2 * center.x - 2 * k * center.y;
 		float c = center.Length2DSqr() - r * r;
 
 		float d = b * b - 4 * a * c;
 
-		if (d < 0) { // no intersections, find nearest
+		if (d < 0) { 
 			Vector nearest_on_ray = ray * center.Dot(ray);
 			Vector diff = (nearest_on_ray - center).Normalized();
 
@@ -59,15 +59,15 @@ Vector RayCircleIntersection(Vector ray, Vector center, float r) {
 	else {
 		float k = ray.x / ray.y;
 
-		// (k * y - center.x) ** 2 + (y - center.y) ** 2 = r ** 2
-		// (y * k) ** 2 - 2 * k * y * center.x + center.x ** 2 + y ** 2 - 2 * y * center.y + center.y ** 2 - r ** 2 = 0
+		
+		
 		float a = 1 + k * k;
 		float b = -2 * center.y - 2 * k * center.x;
 		float c = center.Length2DSqr() - r * r;
 
 		float d = b * b - 4 * a * c;
 
-		if (d < 0) { // no intersections, find nearest
+		if (d < 0) { 
 			Vector nearest_on_ray = ray * center.Dot(ray);
 			Vector diff = (nearest_on_ray - center).Normalized();
 
@@ -105,8 +105,8 @@ float CalculateThrowYaw(const Vector& wish_dir, const Vector& vel, float throw_v
 
 	float cos_pitch = dir_normalized.Dot(wish_dir) / wish_dir.Length();
 
-	//Vector dir = (wish_dir - vel * 1.25f) / (std::clamp(throw_velocity * 0.9f, 15.f, 750.f) * (std::clamp(throw_strength, 0.f, 1.f) * 0.7f + 0.3f));
-	//return Math::VectorAngles_p(dir).yaw;
+	
+	
 
 	Vector real_dir = RayCircleIntersection(dir_normalized, vel * 1.25f, std::clamp(throw_velocity * 0.9f, 15.f, 750.f) * (std::clamp(throw_strength, 0.f, 1.f) * 0.7f + 0.3f) * cos_pitch) - vel * 1.25f;
 	return Math::VectorAngles_p(real_dir).yaw;
@@ -764,10 +764,10 @@ int GrenadePrediction::CalcDamage(Vector pos, CBasePlayer* target, CBaseEntity* 
 	float d = ((delta.Length() - b) / c);
 	float flDamage = a * exp(-d * d);
 
-	// do main damage calculation here
+	
 	auto dmg = max(static_cast<int>(ceilf(CSGO_Armor(flDamage, target->m_ArmorValue()))), 0);
 
-	// clip max damage.
+	
 	dmg = min(dmg, (target->m_ArmorValue() > 0) ? 57 : 98);
 
 	return dmg;

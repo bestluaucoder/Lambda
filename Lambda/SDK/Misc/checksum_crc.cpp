@@ -142,12 +142,12 @@ JustAfew:
         return;
     }
 
-    // We may need to do some alignment work up front, and at the end, so that
-    // the main loop is aligned and only has to worry about 8 uint8_t at a time.
-    //
-    // The low-order two bits of pb and nBuffer in total control the
-    // upfront work.
-    //
+    
+    
+    
+    
+    
+    
     nFront = ((unsigned int)pb) & 3;
     nBuffer -= nFront;
     switch (nFront) {

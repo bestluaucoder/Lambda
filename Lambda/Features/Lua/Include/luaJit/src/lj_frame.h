@@ -1,7 +1,4 @@
-/*
-** Stack frames.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
+
 
 #ifndef _LJ_FRAME_H
 #define _LJ_FRAME_H
@@ -9,9 +6,9 @@
 #include "lj_obj.h"
 #include "lj_bc.h"
 
-/* -- Lua stack frame ----------------------------------------------------- */
 
-/* Frame type markers in callee function slot (callee base-1). */
+
+
 enum {
   FRAME_LUA, FRAME_C, FRAME_CONT, FRAME_VARG,
   FRAME_LUAP, FRAME_CP, FRAME_PCALL, FRAME_PCALLH
@@ -20,7 +17,7 @@ enum {
 #define FRAME_P			4
 #define FRAME_TYPEP		(FRAME_TYPE|FRAME_P)
 
-/* Macros to access and modify Lua frames. */
+
 #define frame_gc(f)		(gcref((f)->fr.func))
 #define frame_func(f)		(&frame_gc(f)->fn)
 #define frame_ftsz(f)		((f)->fr.tp.ftsz)
@@ -48,17 +45,17 @@ enum {
 #define frame_prevl(f)		((f) - (1+bc_a(frame_pc(f)[-1])))
 #define frame_prevd(f)		((TValue *)((char *)(f) - frame_sized(f)))
 #define frame_prev(f)		(frame_islua(f)?frame_prevl(f):frame_prevd(f))
-/* Note: this macro does not skip over FRAME_VARG. */
+
 
 #define setframe_pc(f, pc)	(setmref((f)->fr.tp.pcr, (pc)))
 #define setframe_ftsz(f, sz)	((f)->fr.tp.ftsz = (sz))
 #define setframe_gc(f, p)	(setgcref((f)->fr.func, (p)))
 
-/* -- C stack frame ------------------------------------------------------- */
 
-/* Macros to access and modify the C stack frame chain. */
 
-/* These definitions must match with the arch-specific *.dasc files. */
+
+
+
 #if LJ_TARGET_X86
 #define CFRAME_OFS_ERRF		(15*4)
 #define CFRAME_OFS_NRES		(14*4)
@@ -163,7 +160,7 @@ enum {
 #endif
 
 #define CFRAME_RESUME		1
-#define CFRAME_UNWIND_FF	2  /* Only used in unwinder. */
+#define CFRAME_UNWIND_FF	2  
 #define CFRAME_RAWMASK		(~(intptr_t)(CFRAME_RESUME|CFRAME_UNWIND_FF))
 
 #define cframe_errfunc(cf)	(*(int32_t *)(((char *)(cf))+CFRAME_OFS_ERRF))

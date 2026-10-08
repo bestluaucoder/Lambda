@@ -288,7 +288,7 @@ void CWorldESP::DrawPlayer(int id) {
 	DrawName(info);
 	DrawFlags(info);
 	DrawWeapon(info);
-	//SpinningStar(info);
+	
 }
 
 void CWorldESP::DrawBox(const ESPInfo_t& info) {
@@ -486,10 +486,10 @@ void CWorldESP::DrawFlags(const ESPInfo_t& info) {
 		line_offset += 10;
 	}
 
-	//if (record) {
-	//	Render->Line(Render->WorldToScreen(record->m_vecOrigin), Render->WorldToScreen(record->m_vecOrigin + record->m_vecVelocity), Color());
-	//	Render->Text(std::to_string(record->m_vecVelocity.Length()), Render->WorldToScreen(record->m_vecOrigin + record->m_vecVelocity), Color(), SmallFont, TEXT_OUTLINED);
-	//}
+	
+	
+	
+	
 }
 
 void CWorldESP::DrawWeapon(const ESPInfo_t& info) {
@@ -525,7 +525,7 @@ void CWorldESP::OtherESP() {
 	if (!Cheat.InGame) 
 		return;
 
-	//RenderDebugMessages();
+	
 	
 	for (int i = 0; i < EntityList->GetHighestEntityIndex(); i++) {
 		CBaseEntity* ent = EntityList->GetClientEntity(i);

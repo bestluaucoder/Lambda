@@ -386,7 +386,7 @@ void CConfig::Init() {
 void CConfig::parse(nlohmann::json& cfg) {
     sound_preview_blocked = true;
 
-    // First pass: reset all keybind toggled states
+    
     for (auto& item : items) {
         if (item.item->GetType() == WidgetType::KeyBind) {
             ((CKeyBind*)item.item)->toggled = false;

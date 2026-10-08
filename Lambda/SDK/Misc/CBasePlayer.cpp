@@ -8,12 +8,12 @@
 void CCSGOPlayerAnimationState::Update(const QAngle& angles, bool bForce) {
 	static auto fn = Utils::PatternScan("client.dll", "55 8B EC 83 E4 F8 83 EC 18 56 57 8B F9 F3 0F 11 54 24");
 
-	// xmm2 eye yaw
-	// xmm1 eye pitch
-	// bForce on stack
-	// ecx animstate
+	
+	
+	
+	
 
-	//fn(state, nullptr, 0.0f, angles.yaw, angles.pitch, nullptr);
+	
 
 	float eyeYaw = angles.yaw;
 	float eyePitch = angles.pitch;
@@ -270,13 +270,13 @@ bool CBasePlayer::IsAlive() {
 
 	return PlayerResource->m_bAlive()[EntIndex()];
 
-	//if (m_iTeamNum() != 2 && m_iTeamNum() != 3)
-	//	return false;
+	
+	
 
-	//if (m_lifeState() != LIFE_ALIVE)
-	//	return false;
+	
+	
 
-	//return true;
+	
 }
 
 float CBasePlayer::GetMaxDesyncDelta() {
@@ -353,7 +353,7 @@ inline float SimpleSpline(float value)
 {
 	float valueSquared = value * value;
 
-	// Nice little ease-in, ease-out spline-like curve
+	
 	return (3 * valueSquared - 2 * valueSquared * value);
 }
 
@@ -408,13 +408,13 @@ float CBasePlayer::GetMaxSpeed() {
 }
 
 void CBasePlayer::DrawServerHitboxes(float duration, bool monoColor) {
-	// mov     eax, [edi]
-	// mov     ecx, edi
-	// push    1
-	// call    dword ptr[eax + 0DCh]
-	// movss   xmm1, [esp + 0ECh + var_C8]
-	// mov     ecx, eax
-	// call    DrawServerHitboxes
+	
+	
+	
+	
+	
+	
+	
 	static void* drawServerHitboxes = Utils::PatternScan("server.dll", "55 8B EC 81 EC ? ? ? ? 53 56 8B 35 ? ? ? ? 8B D9 57 8B CE");
 
 	void* serverEntity = UTIL_GetServerPlayer(EntIndex());

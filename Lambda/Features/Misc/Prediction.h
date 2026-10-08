@@ -125,8 +125,8 @@ public:
 	int	 PredictTickbase();
 
 	CPrediction() {
-		predictionRandomSeed = *(int**)Utils::PatternScan("client.dll", "8B 47 40 A3", 0x4); // 0x10DA7244
-		predictionEntity = *(CBaseEntity***)Utils::PatternScan("client.dll", "0F 5B C0 89 35", 0x5); // 0x1532D108
+		predictionRandomSeed = *(int**)Utils::PatternScan("client.dll", "8B 47 40 A3", 0x4); 
+		predictionEntity = *(CBaseEntity***)Utils::PatternScan("client.dll", "0F 5B C0 89 35", 0x5); 
 	}
 };
 

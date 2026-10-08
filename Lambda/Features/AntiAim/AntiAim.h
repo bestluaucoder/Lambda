@@ -77,7 +77,7 @@ class CAntiAim {
 	int manualAngleState = 0;
 	CBasePlayer* target;
 
-	// Anti aim builder
+	
 	float pitch = 0.f;
 public:
 	float base_yaw = 0.f;

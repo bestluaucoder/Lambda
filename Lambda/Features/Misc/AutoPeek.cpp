@@ -55,7 +55,7 @@ void CAutoPeek::CreateMove() {
 		return;
 
 	if (returning) {
-		block_buttons &= ctx.cmd->buttons; // if player will release buttons, they will not be blocked type shi
+		block_buttons &= ctx.cmd->buttons; 
 		ctx.cmd->buttons &= ~block_buttons;
 
 		if (block_buttons & IN_FORWARD && ctx.cmd->forwardmove > 0.f)

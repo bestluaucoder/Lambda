@@ -25,7 +25,7 @@ public:
 	bool m_bRenderWhenOccluded;
 	bool m_bRenderWhenUnoccluded;
 	bool m_bFullBloomRender;
-	int m_nFullBloomStencilTestValue; // only render full bloom objects if stencil is equal to this value (value of -1 implies no stencil test)
+	int m_nFullBloomStencilTestValue; 
 	int m_nRenderStyle;
 	int m_nSplitScreenSlot;
 
@@ -47,7 +47,7 @@ public:
 		Vector m_vMins;
 		Vector m_vMaxs;
 		float m_flBirthTimeIndex;
-		float m_flTerminationTimeIndex; //when to die
+		float m_flTerminationTimeIndex; 
 		Color m_colColor;
 	};
 

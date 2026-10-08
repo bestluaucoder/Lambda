@@ -3,7 +3,7 @@
 void CLuaHookManager::registerHook(ELuaCallbacks event, int scriptId, sol::protected_function func) {
 	LuaHook_t hk = { scriptId, func };
 
-	hooks[event].push_back(hk); // return hook function
+	hooks[event].push_back(hk); 
 }
 
 void CLuaHookManager::unregisterHooks(int scriptId) {
