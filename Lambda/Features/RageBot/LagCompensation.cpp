@@ -169,8 +169,6 @@ void CLagCompensation::OnNetUpdate() {
 			float time_delta = new_record->m_flSimulationTime - prev_valid->m_flSimulationTime;
 			
 			float max_move = 64.f;
-			if (cvars.sv_lagcompensation_teleport_dist)
-				max_move = cvars.sv_lagcompensation_teleport_dist->GetFloat();
 			
 			if (time_delta > GlobalVars->interval_per_tick)
 				max_move *= (time_delta / GlobalVars->interval_per_tick);
@@ -237,16 +235,28 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	new_record->update_tick += ticks;
 
 	const float gravity = cvars.sv_gravity->GetFloat();
-	const float ival    = GlobalVars->interval_per_tick;
+	const float ival = GlobalVars->interval_per_tick;
 	const float friction = 4.f;
 	const float stop_speed = 100.f;
 
 	Vector velocity = new_record->m_vecVelocity;
 	int flags = new_record->m_fFlags;
+	bool on_ground = (flags & FL_ONGROUND) != 0;
+
+	float current_speed = velocity.Length2D();
+	float max_speed = 250.f;
+	
+	if (record->player->m_bIsScoped())
+		max_speed = 100.f;
+	else if ((flags & FL_DUCKING) || new_record->m_flDuckAmout > 0.5f)
+		max_speed = 100.f;
 
 	for (int i = 0; i < ticks; i++) {
-		if (!(flags & FL_ONGROUND)) {
+		if (!on_ground) {
 			velocity.z -= gravity * ival * 0.5f;
+
+			if (velocity.z < -gravity * 0.5f)
+				velocity.z = -gravity * 0.5f;
 		}
 		else {
 			velocity.z = 0.f;
@@ -270,17 +280,30 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 
 		Vector next_origin = new_record->m_vecOrigin + velocity * ival;
 
-		if (!(flags & FL_ONGROUND)) {
+		if (!on_ground) {
 			CGameTrace tr;
 			CTraceFilterWorldOnly filter;
 			Ray_t ray;
-			ray.Init(next_origin + Vector(0, 0, 2.f), next_origin - Vector(0, 0, 2.f));
+			ray.Init(next_origin + Vector(0, 0, 2.f), next_origin - Vector(0, 0, 8.f));
 			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
 
 			if (tr.fraction < 1.f && tr.plane.normal.z > 0.7f) {
-				next_origin.z  = tr.endpos.z;
+				next_origin.z = tr.endpos.z + 2.f;
 				velocity.z = 0.f;
+				on_ground = true;
 				flags |= FL_ONGROUND;
+			}
+		}
+		else {
+			CGameTrace tr;
+			CTraceFilterWorldOnly filter;
+			Ray_t ray;
+			ray.Init(next_origin, next_origin - Vector(0, 0, 2.f));
+			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
+
+			if (tr.fraction >= 1.f || tr.plane.normal.z <= 0.7f) {
+				on_ground = false;
+				flags &= ~FL_ONGROUND;
 			}
 		}
 
@@ -291,9 +314,11 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	new_record->m_fFlags = flags;
 	new_record->m_vecAbsOrigin = new_record->m_vecOrigin;
 
-	Utils::MatrixMove(new_record->aim_matrix,     128, record->m_vecOrigin, new_record->m_vecOrigin);
+	Utils::MatrixMove(new_record->aim_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
 	Utils::MatrixMove(new_record->opposite_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
 	Utils::MatrixMove(new_record->bone_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
+
+	new_record->BuildMatrix();
 
 	return new_record;
 }
@@ -367,6 +392,8 @@ void CLagCompensation::Reset(int index) {
 		lag_records_vec[index].clear();
 		max_simulation_time[index] = 0.f;
 		last_update_tick[index] = 0;
+		max_tickbase[index] = 0;
+		is_in_defensive[index] = false;
 	}
 	else {
 		for (int i = 0; i < (int)lag_records.size(); i++) {
@@ -374,6 +401,8 @@ void CLagCompensation::Reset(int index) {
 			lag_records_vec[i].clear();
 			max_simulation_time[i] = 0.f;
 			last_update_tick[i] = 0;
+			max_tickbase[i] = 0;
+			is_in_defensive[i] = false;
 		}
 	}
 }

@@ -264,30 +264,72 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 	if (nci)
 		total_latency = nci->GetLatency(FLOW_INCOMING) + nci->GetLatency(FLOW_OUTGOING);
 
-	int max_predict_ticks = 0;
 	LagRecord* newest_record = nullptr;
-	bool is_breaking_lc = false;
+	LagRecord* second_newest = nullptr;
 
-	for (int i = records.size() - 1; i >= 0; i--) {
-		LagRecord* record = &records[i];
+	if (!records.empty()) {
+		newest_record = &records.back();
+		if (records.size() > 1)
+			second_newest = &records[records.size() - 2];
+	}
 
-		if (i == (int)records.size() - 1) {
-			newest_record = record;
-			
-			if (record->prev_record) {
-				float sim_diff = record->m_flSimulationTime - record->prev_record->m_flSimulationTime;
-				int sim_ticks = TIME_TO_TICKS(sim_diff);
-				
-				if (sim_ticks > 16 && sim_ticks <= 22) {
-					max_predict_ticks = std::clamp(sim_ticks - record->m_nChokedTicks - 2, 0, 14);
-					is_breaking_lc = true;
-				}
-			}
+	if (!newest_record)
+		return;
+
+	bool in_defensive = LagCompensation->IsPlayerInDefensive(player->EntIndex());
+	int max_tickbase = LagCompensation->GetMaxTickbase(player->EntIndex());
+	int current_tickbase = TIME_TO_TICKS(newest_record->m_flSimulationTime);
+
+	int predict_ticks = 0;
+	bool should_predict = false;
+	float confidence = 0.f;
+
+	if (newest_record->prev_record) {
+		float sim_diff = newest_record->m_flSimulationTime - newest_record->prev_record->m_flSimulationTime;
+		int sim_ticks = TIME_TO_TICKS(sim_diff);
+		int choked_ticks = newest_record->m_nChokedTicks;
+
+		if (in_defensive && max_tickbase > current_tickbase) {
+			int defensive_shift = max_tickbase - current_tickbase;
+			predict_ticks = std::clamp(defensive_shift - 1, 1, 14);
+			should_predict = true;
+			confidence = 0.95f;
+		}
+		else if (sim_ticks >= 16 && sim_ticks <= 22) {
+			predict_ticks = std::clamp(sim_ticks - choked_ticks - 1, 1, 14);
+			should_predict = true;
+			confidence = 0.9f;
+		}
+		else if (sim_ticks > choked_ticks + 2 && sim_ticks >= 3) {
+			int gap = sim_ticks - choked_ticks;
+			predict_ticks = std::clamp(gap - 1, 1, 14);
+			should_predict = true;
+			confidence = 0.7f + (gap * 0.03f);
+		}
+		else if (choked_ticks >= 12 && sim_ticks >= choked_ticks) {
+			predict_ticks = std::clamp(TIME_TO_TICKS(total_latency * 0.5f), 1, 6);
+			should_predict = true;
+			confidence = 0.6f;
 		}
 	}
 
-	if (settings.prediction && settings.prediction->get() && newest_record && is_breaking_lc && max_predict_ticks > 0) {
-		LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest_record, max_predict_ticks);
+	if (second_newest && newest_record->prev_record) {
+		Vector vel_change = newest_record->m_vecVelocity - newest_record->prev_record->m_vecVelocity;
+		float vel_delta = vel_change.Length();
+		
+		if (vel_delta > 200.f && predict_ticks > 0) {
+			predict_ticks = std::clamp(predict_ticks - 2, 1, 14);
+			confidence *= 0.85f;
+		}
+		
+		if (newest_record->m_vecVelocity.Length2D() < 5.f && predict_ticks > 4) {
+			predict_ticks = std::clamp(predict_ticks / 2, 1, 14);
+			confidence *= 0.9f;
+		}
+	}
+
+	if (settings.prediction && settings.prediction->get() && should_predict && predict_ticks > 0 && confidence >= 0.5f) {
+		LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest_record, predict_ticks);
 		if (extrapolated) {
 			target_records.push(extrapolated);
 		}

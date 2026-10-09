@@ -302,12 +302,19 @@ void CWorldESP::UpdatePlayer(int id) {
 		else
 			info.m_flAlpha = 1.f;
 
-		if (unupdatedTime > 6)
+		if (unupdatedTime > 6) {
 			info.m_bValid = false;
+			info.sound_positions.clear();
+			info.sound_timestamps.clear();
+			info.has_velocity = false;
+		}
 	}
 	else {
 		info.m_flAlpha = 1.f;
 		info.m_flLastUpdateTime = GlobalVars->curtime;
+		info.sound_positions.clear();
+		info.sound_timestamps.clear();
+		info.has_velocity = false;
 		
 		if (config.visuals.other_esp.radar->get())
 			player->m_bSpotted() = true;

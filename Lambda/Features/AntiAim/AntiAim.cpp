@@ -355,15 +355,15 @@ int CAntiAim::DesyncFreestand() {
 	bool leftUnwallbangable = false;
 	bool rightUnwallbangable = false;
 
-	if (leftCovered) {
-		surfacedata_t* surfaceData = PhysicsProps->GetSurfaceData(leftTrace.surface.surfaceProps);
+	if (leftCovered && PhysicSurfaceProps) {
+		surfacedata_t* surfaceData = PhysicSurfaceProps->GetSurfaceData(leftTrace.surface.surfaceProps);
 		if (surfaceData && surfaceData->game.flPenetrationModifier < 0.3f) {
 			leftUnwallbangable = true;
 		}
 	}
 
-	if (rightCovered) {
-		surfacedata_t* surfaceData = PhysicsProps->GetSurfaceData(rightTrace.surface.surfaceProps);
+	if (rightCovered && PhysicSurfaceProps) {
+		surfacedata_t* surfaceData = PhysicSurfaceProps->GetSurfaceData(rightTrace.surface.surfaceProps);
 		if (surfaceData && surfaceData->game.flPenetrationModifier < 0.3f) {
 			rightUnwallbangable = true;
 		}

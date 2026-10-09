@@ -98,7 +98,6 @@ struct CVars {
 	ConVar* sv_gravity;
 	ConVar* sv_jump_impulse;
 	ConVar* sv_maxunlag;
-	ConVar* sv_lagcompensation_teleport_dist;
 	ConVar* weapon_recoil_scale;
 	ConVar* cl_csm_shadows;
 	ConVar* cl_foot_contact_shadows;
