@@ -90,7 +90,29 @@ void CEventListner::FireGameEvent(IGameEvent* event) {
 
 			if (victim && victim->m_bDormant()) {
 				victim->m_iHealth() = event->GetInt("health");
-				WorldESP->GetESPInfo(user_id_pl).m_nHealth = victim->m_iHealth();
+				auto& esp_info = WorldESP->GetESPInfo(user_id_pl);
+				esp_info.m_nHealth = victim->m_iHealth();
+				
+				int attacker_id = EngineClient->GetPlayerForUserID(event->GetInt("attacker"));
+				if (attacker_id > 0 && attacker_id <= ClientState->m_nMaxClients) {
+					CBasePlayer* attacker = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(attacker_id));
+					if (attacker && !attacker->m_bDormant()) {
+						QAngle attack_angle;
+						EngineClient->GetViewAngles(attack_angle);
+						Vector attacker_eye = attacker->GetEyePosition();
+						Vector direction = Math::AngleVectors(attack_angle);
+						
+						float max_range = 8192.f;
+						CGameTrace tr = EngineTrace->TraceRay(attacker_eye, attacker_eye + direction * max_range, MASK_SHOT, attacker);
+						
+						if (tr.hit_entity == victim || (tr.endpos - victim->m_vecOrigin()).LengthSqr() < 16384.f) {
+							victim->m_vecOrigin() = tr.endpos;
+							esp_info.m_vecOrigin = tr.endpos;
+							esp_info.m_flLastUpdateTime = GlobalVars->curtime;
+							esp_info.m_bValid = true;
+						}
+					}
+				}
 			}
 
 			break;

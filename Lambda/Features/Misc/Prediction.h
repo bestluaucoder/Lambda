@@ -109,6 +109,7 @@ public:
 	void StartCommand(CBasePlayer* player, CUserCmd* cmd);
 	void RunPreThink(CBasePlayer* player);
 	void RunThink(CBasePlayer* player);
+	void RunPostThink(CBasePlayer* player);
 	void BackupData();
 
 	void Update();

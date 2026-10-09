@@ -22,6 +22,11 @@ struct ESPInfo_t {
 	float			m_flLastUpdateTime = 0.f;
 	float			m_flLastSharedData = 0.f;
 	int				m_iActiveWeapon;
+	
+	Vector			estimated_velocity;
+	std::vector<Vector> sound_positions;
+	std::vector<float> sound_timestamps;
+	bool			has_velocity = false;
 
 	void reset() {
 		player = nullptr;
@@ -30,6 +35,10 @@ struct ESPInfo_t {
 		m_flLastUpdateTime = 0.f;
 		m_flAlpha = 0.f;
 		m_bValid = false;
+		estimated_velocity = Vector(0, 0, 0);
+		has_velocity = false;
+		sound_positions.clear();
+		sound_timestamps.clear();
 	}
 };
 

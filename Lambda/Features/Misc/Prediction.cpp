@@ -33,6 +33,10 @@ void CPrediction::RunThink(CBasePlayer* player) {
 	player->Think();
 }
 
+void CPrediction::RunPostThink(CBasePlayer* player) {
+	player->PostThink();
+}
+
 void CPrediction::BackupData() {
 	if (ctx.active_weapon) {
 		if (ctx.active_weapon->IsGrenade())
@@ -83,6 +87,9 @@ void CPrediction::Start(CUserCmd* cmd) {
 	Prediction->bInPrediction = true;
 	Prediction->bIsFirstTimePredicted = false;
 
+	if (cmd->buttons & IN_ATTACK)
+		cmd->buttons &= ~IN_USE;
+
 	GameMovement->StartTrackPredictionErrors(Cheat.LocalPlayer);
 
 	Cheat.LocalPlayer->UpdateButtonState(cmd->buttons);
@@ -91,17 +98,16 @@ void CPrediction::Start(CUserCmd* cmd) {
 	Prediction->CheckMovingGround(Cheat.LocalPlayer, GlobalVars->frametime);
 	Prediction->SetLocalViewAngles(cmd->viewangles);
 
-	
-	
+	RunPreThink(Cheat.LocalPlayer);
+
+	RunThink(Cheat.LocalPlayer);
 
 	MoveHelper->SetHost(Cheat.LocalPlayer);
 	Prediction->SetupMove(Cheat.LocalPlayer, cmd, MoveHelper, &moveData);
 	GameMovement->ProcessMovement(Cheat.LocalPlayer, &moveData);
 	Prediction->FinishMove(Cheat.LocalPlayer, cmd, &moveData);
 
-	
-
-	
+	RunPostThink(Cheat.LocalPlayer);
 
 	Cheat.LocalPlayer->m_flVelocityModifier() = backup_velocity_modifier;
 
@@ -159,6 +165,8 @@ void CPrediction::Repredict(CUserCmd* cmd, QAngle angles) {
 	Cheat.LocalPlayer->m_vecMins() = pre_prediction.m_vecMins;
 	Cheat.LocalPlayer->m_vecMaxs() = pre_prediction.m_vecMaxs;
 
+	RunPreThink(Cheat.LocalPlayer);
+
 	GameMovement->StartTrackPredictionErrors(Cheat.LocalPlayer);
 	MoveHelper->SetHost(Cheat.LocalPlayer);
 	Prediction->SetupMove(Cheat.LocalPlayer, cmd, MoveHelper, &moveData);
@@ -166,6 +174,8 @@ void CPrediction::Repredict(CUserCmd* cmd, QAngle angles) {
 	Prediction->FinishMove(Cheat.LocalPlayer, cmd, &moveData);
 	GameMovement->FinishTrackPredictionErrors(Cheat.LocalPlayer);
 	MoveHelper->SetHost(nullptr);
+
+	RunPostThink(Cheat.LocalPlayer);
 
 	if (ctx.active_weapon) {
 		ctx.active_weapon->UpdateAccuracyPenality();
@@ -239,30 +249,30 @@ void CPrediction::RestoreNetvars(int place) {
 	auto fall_vel_diff = nv.m_flFallVelocity - Cheat.LocalPlayer->m_flFallVelocity();
 	auto net_origin_diff = nv.m_vecNetworkOrigin - Cheat.LocalPlayer->m_vecNetworkOrigin();
 
-	if (std::abs(aim_punch_diff.pitch) <= 0.03125f && std::abs(aim_punch_diff.yaw) <= 0.03125 && std::abs(aim_punch_diff.roll) <= 0.03125f)
+	if (std::abs(aim_punch_diff.pitch) <= 0.015625f && std::abs(aim_punch_diff.yaw) <= 0.015625f && std::abs(aim_punch_diff.roll) <= 0.015625f)
 		Cheat.LocalPlayer->m_aimPunchAngle() = nv.m_aimPunchAngle;
 	else
 		has_prediction_errors = true;
 
-	if (std::abs(aim_punch_vel_diff.pitch) <= 0.03125f && std::abs(aim_punch_vel_diff.yaw) <= 0.03125 && std::abs(aim_punch_vel_diff.roll) <= 0.03125f)
+	if (std::abs(aim_punch_vel_diff.pitch) <= 0.015625f && std::abs(aim_punch_vel_diff.yaw) <= 0.015625f && std::abs(aim_punch_vel_diff.roll) <= 0.015625f)
 		Cheat.LocalPlayer->m_aimPunchAngleVel() = nv.m_aimPunchAngleVel;
 	else
 		has_prediction_errors = true;
 
-	if (std::abs(viewoffset_diff.z) <= 0.065f)
+	if (std::abs(viewoffset_diff.z) <= 0.03125f)
 		Cheat.LocalPlayer->m_vecViewOffset() = nv.m_vecViewOffset;
 	else
 		has_prediction_errors = true;
 
-	if (std::abs(fall_vel_diff) <= 0.5f)
+	if (std::abs(fall_vel_diff) <= 0.25f)
 		Cheat.LocalPlayer->m_flFallVelocity() = nv.m_flFallVelocity;
 	else
 		has_prediction_errors = true;
 
-	if (std::abs(velocity_diff.x) > 0.5f || std::abs(velocity_diff.y) > 0.5f || std::abs(velocity_diff.z) > 0.5f)
+	if (std::abs(velocity_diff.x) > 0.25f || std::abs(velocity_diff.y) > 0.25f || std::abs(velocity_diff.z) > 0.25f)
 		has_prediction_errors = true;
 
-	if (std::abs(net_origin_diff.x) > 0.0625f || std::abs(net_origin_diff.y) > 0.0625f || std::abs(net_origin_diff.z) > 0.0625f)
+	if (std::abs(net_origin_diff.x) > 0.03125f || std::abs(net_origin_diff.y) > 0.03125f || std::abs(net_origin_diff.z) > 0.03125f)
 		has_prediction_errors = true;
 }
 

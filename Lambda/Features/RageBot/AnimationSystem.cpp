@@ -212,23 +212,22 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 	memcpy(record->animlayers, player->GetAnimlayers(), 13 * sizeof(AnimationLayer));
 
 	if (record->prev_record) {
-		animstate->flMoveWeight        = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight;
-		animstate->flPrimaryCycle      = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flCycle;
-		animstate->flAccelerationWeight = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight;
-
 		float server_time_diff = record->m_flServerTime - record->prev_record->m_flServerTime;
 		float sim_time_diff    = record->m_flSimulationTime - record->prev_record->m_flSimulationTime;
 		float time_diff;
 
-		if (sim_time_diff < 0.f || std::abs(sim_time_diff - server_time_diff) > TICKS_TO_TIME(4))
+		if (sim_time_diff < 0.f || sim_time_diff > 1.f || std::abs(sim_time_diff - server_time_diff) > TICKS_TO_TIME(4))
 			time_diff = server_time_diff;
 		else
 			time_diff = sim_time_diff;
 
-		if (time_diff < GlobalVars->interval_per_tick)
-			time_diff = GlobalVars->interval_per_tick;
+		time_diff = std::clamp(time_diff, GlobalVars->interval_per_tick, 1.f);
 
 		{
+			animstate->flMoveWeight        = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight;
+			animstate->flPrimaryCycle      = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flCycle;
+			animstate->flAccelerationWeight = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight;
+
 			int time_ticks = TIME_TO_TICKS(time_diff);
 
 			const float prev_cycle    = record->prev_record->animlayers[ANIMATION_LAYER_ALIVELOOP].m_flCycle;
@@ -241,17 +240,20 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 				if (cycle_delta < 0.f)
 					cycle_delta += 1.f;
 				
+				cycle_delta = std::clamp(cycle_delta, 0.f, 1.f);
+				
 				if (cycle_delta < 0.5f) {
 					float est = cycle_delta / (playback_rate * GlobalVars->interval_per_tick);
-					cycle_ticks = (std::clamp)(static_cast<int>(std::roundf(est)), 1, 14);
+					cycle_ticks = std::clamp(static_cast<int>(std::roundf(est)), 1, 15);
 				}
 			}
 
 			int final_ticks = (std::min)(time_ticks, cycle_ticks);
-			record->m_nChokedTicks = (std::clamp)(final_ticks - 1, 0, 14);
+			record->m_nChokedTicks = std::clamp(final_ticks - 1, 0, 15);
 		}
 
 		Vector origin_diff = player->m_vecOrigin() - record->prev_record->m_vecOrigin;
+		float origin_dist = origin_diff.Length();
 		player->m_vecVelocity() = origin_diff / time_diff;
 
 		if (player->m_fFlags() & FL_ONGROUND) {
@@ -266,14 +268,19 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			}
 
 			float vel_length = player->m_vecVelocity().Length();
-			if (vel_length > max_speed * 1.1f)
-				player->m_vecVelocity() *= (max_speed * 1.1f) / vel_length;
+			float max_speed_limit = max_speed * 1.2f;
+			if (vel_length > max_speed_limit)
+				player->m_vecVelocity() *= max_speed_limit / vel_length;
+
+			if (origin_dist / time_diff > max_speed * 2.5f)
+				player->m_vecVelocity() *= 0.5f;
 
 			float anim_speed = 0.f;
 
 			if (record->prev_record->m_fFlags & FL_ONGROUND
 				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight > 0.f
 				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight < 1.f
+				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flPlaybackRate > 0.f
 				&& record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flPlaybackRate
 				   == record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flPlaybackRate) {
 				float anim_modifier = 0.35f * (1.f - record->animlayers[ANIMATION_LAYER_MOVEMENT_STRAFECHANGE].m_flWeight);
@@ -284,8 +291,8 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 				}
 			}
 
-			if (anim_speed > 0.f && player->m_vecVelocity().Length() > 0.001f)
-				player->m_vecVelocity() *= anim_speed / player->m_vecVelocity().Length();
+			if (anim_speed > 0.f && vel_length > 0.001f)
+				player->m_vecVelocity() *= anim_speed / vel_length;
 
 			if (record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight <= 0.f
 				&& origin_diff.Length2DSqr() < 1.f)
@@ -295,22 +302,26 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 			float last_vel = record->prev_record->m_vecVelocity.LengthSqr();
 			float cur_vel  = player->m_vecVelocity().LengthSqr();
 
-			if (last_vel > (100.f * 100.f) && last_vel * 16.f < cur_vel)
-				player->m_vecVelocity() *= 0.22f;
+			if (last_vel > (120.f * 120.f) && last_vel * 12.f < cur_vel)
+				player->m_vecVelocity() *= 0.25f;
 
 			float vel_len = player->m_vecVelocity().Length();
-			if (vel_len > 3500.f)
-				player->m_vecVelocity() *= 3500.f / vel_len;
+			if (vel_len > 4000.f)
+				player->m_vecVelocity() *= 4000.f / vel_len;
 
+			const float jumpFallCycle = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flCycle;
 			const float jumpFallRate = record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flPlaybackRate;
-			animstate->flDurationInAir = jumpFallRate > 0.0001f
-				? record->prev_record->animlayers[ANIMATION_LAYER_MOVEMENT_JUMP_OR_FALL].m_flCycle / jumpFallRate
+			animstate->flDurationInAir = (jumpFallRate > 0.0001f && jumpFallCycle > 0.f)
+				? jumpFallCycle / jumpFallRate
 				: 0.f;
 		}
 	}
 
 	if (animstate->nLastUpdateFrame >= GlobalVars->framecount)
 		animstate->nLastUpdateFrame = GlobalVars->framecount - 1;
+
+	if (animstate->flLastUpdateTime > GlobalVars->curtime)
+		animstate->flLastUpdateTime = GlobalVars->curtime - GlobalVars->interval_per_tick;
 
 	unupdated_animstate[idx] = *animstate;
 
@@ -408,7 +419,7 @@ void CAnimationSystem::RunInterpolation() {
 
 		interpolate_data_t* data = &interpolate_data[i];
 
-		if ((data->net_origin - data->origin).LengthSqr() > 8192) {
+		if ((data->net_origin - data->origin).LengthSqr() > 4096.f) {
 			data->origin = data->net_origin;
 			data->valid = false;
 			continue;

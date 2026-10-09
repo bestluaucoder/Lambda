@@ -16140,7 +16140,7 @@ namespace nlohmann
 
             result["copyright"] = "(C) 2013-2021 Niels Lohmann";
             result["name"] = "JSON for Modern C++";
-            result["url"] = "https:
+            result["url"] = "https://github.com/nlohmann/json";
             result["version"]["string"] =
                 std::to_string(NLOHMANN_JSON_VERSION_MAJOR) + "." +
                 std::to_string(NLOHMANN_JSON_VERSION_MINOR) + "." +

@@ -9,7 +9,7 @@
 #define LUAJIT_VERSION_NUM	20005  
 #define LUAJIT_VERSION_SYM	luaJIT_version_2_0_5
 #define LUAJIT_COPYRIGHT	"Copyright (C) 2005-2017 Mike Pall"
-#define LUAJIT_URL		"http:
+#define LUAJIT_URL		"http://luajit.org"
 
 
 #define LUAJIT_MODE_MASK	0x00ff

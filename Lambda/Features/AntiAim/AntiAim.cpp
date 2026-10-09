@@ -335,28 +335,54 @@ int CAntiAim::DesyncFreestand() {
 	if (!target)
 		return 0;
 
-	Vector forward = (target->m_vecOrigin() - Cheat.LocalPlayer->m_vecOrigin()).Normalized();
-	Vector eyePos = Cheat.LocalPlayer->GetEyePosition();
+	Vector localOrigin = Cheat.LocalPlayer->m_vecOrigin();
+	Vector toTarget = (target->m_vecOrigin() - localOrigin).Normalized();
+	Vector headPos = localOrigin + Vector(0, 0, 64.f);
 
 	Vector right = Math::AngleVectors(QAngle(0, base_yaw + 90.f, 0));
+	Vector leftHeadPos = headPos - right * 16.f;
+	Vector rightHeadPos = headPos + right * 16.f;
 
-	Vector negPos = eyePos - right * 16.f;
-	Vector posPos = eyePos + right * 16.f;
+	CGameTrace leftTrace = EngineTrace->TraceRay(leftHeadPos, leftHeadPos + toTarget * 8192.f, MASK_SHOT, Cheat.LocalPlayer);
+	CGameTrace rightTrace = EngineTrace->TraceRay(rightHeadPos, rightHeadPos + toTarget * 8192.f, MASK_SHOT, Cheat.LocalPlayer);
 
-	CGameTrace negTrace = EngineTrace->TraceRay(negPos, negPos + forward * 100.f, MASK_SHOT_HULL | CONTENTS_GRATE, Cheat.LocalPlayer);
-	CGameTrace posTrace = EngineTrace->TraceRay(posPos, posPos + forward * 100.f, MASK_SHOT_HULL | CONTENTS_GRATE, Cheat.LocalPlayer);
+	bool leftCovered = leftTrace.fraction < 1.f && leftTrace.DidHitWorld();
+	bool rightCovered = rightTrace.fraction < 1.f && rightTrace.DidHitWorld();
 
-	if (negTrace.startsolid && posTrace.startsolid)
+	if (!leftCovered && !rightCovered)
 		return 0;
-	else if (negTrace.startsolid)
+
+	bool leftUnwallbangable = false;
+	bool rightUnwallbangable = false;
+
+	if (leftCovered) {
+		surfacedata_t* surfaceData = PhysicsProps->GetSurfaceData(leftTrace.surface.surfaceProps);
+		if (surfaceData && surfaceData->game.flPenetrationModifier < 0.3f) {
+			leftUnwallbangable = true;
+		}
+	}
+
+	if (rightCovered) {
+		surfacedata_t* surfaceData = PhysicsProps->GetSurfaceData(rightTrace.surface.surfaceProps);
+		if (surfaceData && surfaceData->game.flPenetrationModifier < 0.3f) {
+			rightUnwallbangable = true;
+		}
+	}
+
+	if (leftUnwallbangable && !rightUnwallbangable)
 		return -1;
-	else if (posTrace.startsolid)
+	if (rightUnwallbangable && !leftUnwallbangable)
 		return 1;
 
-	if (negTrace.fraction == 1.f && posTrace.fraction == 1.f)
-		return 0;
+	if (leftUnwallbangable && rightUnwallbangable)
+		return leftTrace.fraction < rightTrace.fraction ? -1 : 1;
 
-	return negTrace.fraction < posTrace.fraction ? -1 : 1;
+	if (leftCovered && !rightCovered)
+		return -1;
+	if (rightCovered && !leftCovered)
+		return 1;
+
+	return leftTrace.fraction < rightTrace.fraction ? -1 : 1;
 }
 
 void CAntiAim::SlowWalk() {

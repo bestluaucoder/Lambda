@@ -120,8 +120,38 @@ void CWorldESP::ProcessSound(const SoundInfo_t& sound) {
 
 	Vector origin = sound.vOrigin;
 
-	auto trace = EngineTrace->TraceHull(origin, origin - Vector(0, 0, 128), Vector(-16, -16, 0), Vector(16, 16, 72), MASK_SOLID, player);
-	player->m_vecOrigin() = trace.fraction == 1.f ? trace.startpos : trace.endpos;
+	auto trace = EngineTrace->TraceHull(origin, origin - Vector(0, 0, 192.f), Vector(-16, -16, 0), Vector(16, 16, 72), MASK_PLAYERSOLID, player);
+	
+	if (trace.fraction < 1.f && trace.plane.normal.z > 0.7f)
+		player->m_vecOrigin() = trace.endpos;
+	else
+		player->m_vecOrigin() = origin - Vector(0, 0, 64.f);
+
+	if (!info.sound_positions.empty()) {
+		Vector last_pos = info.sound_positions.back();
+		Vector delta = player->m_vecOrigin() - last_pos;
+		float dist = delta.Length2D();
+		float time_delta = GlobalVars->curtime - info.sound_timestamps.back();
+		
+		if (time_delta > 0.f && dist > 1.f) {
+			Vector estimated_velocity = delta / time_delta;
+			estimated_velocity.z = 0.f;
+			
+			float speed = estimated_velocity.Length();
+			if (speed > 5.f && speed < 350.f) {
+				info.estimated_velocity = estimated_velocity;
+				info.has_velocity = true;
+			}
+		}
+	}
+
+	info.sound_positions.push_back(player->m_vecOrigin());
+	info.sound_timestamps.push_back(GlobalVars->curtime);
+	
+	while (info.sound_positions.size() > 5) {
+		info.sound_positions.erase(info.sound_positions.begin());
+		info.sound_timestamps.erase(info.sound_timestamps.begin());
+	}
 
 	info.m_flLastUpdateTime = GlobalVars->curtime;
 	info.m_bValid = true;
@@ -246,6 +276,26 @@ void CWorldESP::UpdatePlayer(int id) {
 
 	if (info.m_bDormant) {
 		float unupdatedTime = GlobalVars->curtime - info.m_flLastUpdateTime;
+
+		if (info.has_velocity && unupdatedTime > 0.f && unupdatedTime < 2.f) {
+			Vector extrapolated_pos = info.m_vecOrigin + info.estimated_velocity * unupdatedTime;
+			
+			CGameTrace tr;
+			CTraceFilterWorldOnly filter;
+			Ray_t ray;
+			ray.Init(info.m_vecOrigin, extrapolated_pos);
+			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
+			
+			if (tr.fraction > 0.9f) {
+				player->m_vecOrigin() = extrapolated_pos;
+			}
+			else {
+				player->m_vecOrigin() = info.m_vecOrigin;
+			}
+		}
+		else {
+			player->m_vecOrigin() = info.m_vecOrigin;
+		}
 
 		if (unupdatedTime > 3)
 			info.m_flAlpha = max((6 - unupdatedTime) * 0.33f, 0.f);

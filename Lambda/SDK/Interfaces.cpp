@@ -96,6 +96,7 @@ void Interfaces::Initialize() {
 	cvars.weapon_recoil_scale = CVar->FindVar("weapon_recoil_scale");
 	cvars.sv_jump_impulse = CVar->FindVar("sv_jump_impulse");
 	cvars.sv_maxunlag = CVar->FindVar("sv_maxunlag");
+	cvars.sv_lagcompensation_teleport_dist = CVar->FindVar("sv_lagcompensation_teleport_dist");
 	cvars.cl_csm_shadows = CVar->FindVar("cl_csm_shadows");
 	cvars.cl_foot_contact_shadows = CVar->FindVar("cl_foot_contact_shadows");
 	cvars.cl_lagcompensation = CVar->FindVar("cl_lagcompensation");

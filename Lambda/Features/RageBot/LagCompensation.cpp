@@ -113,11 +113,29 @@ void CLagCompensation::OnNetUpdate() {
 		if (prev_record && prev_record->player != pl) {
 			records.clear();
 			prev_record = nullptr;
+			max_tickbase[i] = 0;
+			is_in_defensive[i] = false;
 		}
 
 		if (prev_record && prev_record->animlayers[ANIMATION_LAYER_ALIVELOOP].m_flCycle == pl->GetAnimlayers()[ANIMATION_LAYER_ALIVELOOP].m_flCycle) {
 			pl->m_flOldSimulationTime() = pl->m_flSimulationTime();
 			continue;
+		}
+
+		int current_tickbase = TIME_TO_TICKS(pl->m_flSimulationTime());
+		
+		if (std::abs(current_tickbase - max_tickbase[i]) > 64) {
+			max_tickbase[i] = 0;
+			is_in_defensive[i] = false;
+		}
+
+		if (current_tickbase > max_tickbase[i]) {
+			max_tickbase[i] = current_tickbase;
+			is_in_defensive[i] = false;
+		}
+		else if (max_tickbase[i] > current_tickbase) {
+			int defensive_ticks = (std::min)(14, (std::max)(0, max_tickbase[i] - current_tickbase - 1));
+			is_in_defensive[i] = defensive_ticks > 0;
 		}
 
 		LagRecord* new_record = &records.emplace_back();
@@ -129,7 +147,7 @@ void CLagCompensation::OnNetUpdate() {
 
 		new_record->shifting_tickbase = max_simulation_time[i] >= new_record->m_flSimulationTime;
 
-		if (new_record->m_flSimulationTime > max_simulation_time[i] || abs(max_simulation_time[i] - new_record->m_flSimulationTime) > 3.f)
+		if (new_record->m_flSimulationTime > max_simulation_time[i] || std::abs(max_simulation_time[i] - new_record->m_flSimulationTime) > 3.f)
 			max_simulation_time[i] = new_record->m_flSimulationTime;
 
 		last_update_tick[i] = GlobalVars->tickcount;
@@ -150,11 +168,21 @@ void CLagCompensation::OnNetUpdate() {
 			float dist_sq = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr();
 			float time_delta = new_record->m_flSimulationTime - prev_valid->m_flSimulationTime;
 			
-			float max_move_sq = 8192.f;
-			if (time_delta > GlobalVars->interval_per_tick * 2.f)
-				max_move_sq = 12288.f;
+			float max_move = 64.f;
+			if (cvars.sv_lagcompensation_teleport_dist)
+				max_move = cvars.sv_lagcompensation_teleport_dist->GetFloat();
+			
+			if (time_delta > GlobalVars->interval_per_tick)
+				max_move *= (time_delta / GlobalVars->interval_per_tick);
+			
+			float max_move_sq = max_move * max_move;
 			
 			new_record->breaking_lag_comp = dist_sq > max_move_sq;
+			
+			Vector velocity_delta = new_record->m_vecVelocity - prev_valid->m_vecVelocity;
+			float velocity_change = velocity_delta.Length() / time_delta;
+			if (velocity_change > 320.f)
+				new_record->breaking_lag_comp = true;
 		}
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
@@ -173,14 +201,14 @@ void CLagCompensation::OnNetUpdate() {
 			}
 		}
 
-		while (records.size() > (pl->IsTeammate() ? 4 : (TIME_TO_TICKS(0.4f) + 13))) 
+		while (records.size() > (pl->IsTeammate() ? 4 : TIME_TO_TICKS(cvars.sv_maxunlag->GetFloat()) + 3)) 
 			records.pop_front();
 
 		
 		if (config.menu_misc.experimental_lagcomp && config.menu_misc.experimental_lagcomp->get()) {
 			auto& rvec = lag_records_vec[i];
 			rvec.push_back(records.back());
-			const size_t max_vec = pl->IsTeammate() ? 4 : (TIME_TO_TICKS(0.4f) + 13);
+			const size_t max_vec = pl->IsTeammate() ? 4 : TIME_TO_TICKS(cvars.sv_maxunlag->GetFloat()) + 3;
 			if (rvec.size() > max_vec)
 				rvec.erase(rvec.begin());
 		}
@@ -192,6 +220,9 @@ void CLagCompensation::OnNetUpdate() {
 }
 
 LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
+	if (ticks <= 0)
+		return nullptr;
+
 	const float time = TICKS_TO_TIME(ticks);
 
 	auto& records = extrapolated_records[record->player->EntIndex()];
@@ -207,28 +238,49 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 
 	const float gravity = cvars.sv_gravity->GetFloat();
 	const float ival    = GlobalVars->interval_per_tick;
+	const float friction = 4.f;
+	const float stop_speed = 100.f;
 
 	Vector velocity = new_record->m_vecVelocity;
+	int flags = new_record->m_fFlags;
 
 	for (int i = 0; i < ticks; i++) {
-		if (!(new_record->m_fFlags & FL_ONGROUND))
-			velocity.z -= gravity * ival;
-		else
+		if (!(flags & FL_ONGROUND)) {
+			velocity.z -= gravity * ival * 0.5f;
+		}
+		else {
 			velocity.z = 0.f;
+			
+			float speed = velocity.Length2D();
+			if (speed > 0.1f) {
+				float drop = 0.f;
+				float control = speed < stop_speed ? stop_speed : speed;
+				drop = control * friction * ival;
+				
+				float new_speed = speed - drop;
+				if (new_speed < 0.f) new_speed = 0.f;
+				
+				if (speed > 0.f) {
+					new_speed /= speed;
+					velocity.x *= new_speed;
+					velocity.y *= new_speed;
+				}
+			}
+		}
 
 		Vector next_origin = new_record->m_vecOrigin + velocity * ival;
 
-		if (!(new_record->m_fFlags & FL_ONGROUND)) {
+		if (!(flags & FL_ONGROUND)) {
 			CGameTrace tr;
 			CTraceFilterWorldOnly filter;
 			Ray_t ray;
-			ray.Init(next_origin, next_origin - Vector(0, 0, 2.f));
+			ray.Init(next_origin + Vector(0, 0, 2.f), next_origin - Vector(0, 0, 2.f));
 			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
 
-			if (tr.fraction < 1.f && velocity.z <= 0.f) {
+			if (tr.fraction < 1.f && tr.plane.normal.z > 0.7f) {
 				next_origin.z  = tr.endpos.z;
 				velocity.z = 0.f;
-				new_record->m_fFlags |= FL_ONGROUND;
+				flags |= FL_ONGROUND;
 			}
 		}
 
@@ -236,6 +288,7 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	}
 
 	new_record->m_vecVelocity = velocity;
+	new_record->m_fFlags = flags;
 	new_record->m_vecAbsOrigin = new_record->m_vecOrigin;
 
 	Utils::MatrixMove(new_record->aim_matrix,     128, record->m_vecOrigin, new_record->m_vecOrigin);
@@ -264,25 +317,29 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 	if (!record || !record->player || record->shifting_tickbase || record->breaking_lag_comp || record->invalid)
 		return false;
 
-	float correct = 0.0f;
-
 	INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
+	
+	float correct = 0.0f;
 	if (nci)
-		correct += nci->GetLatency(FLOW_OUTGOING) + nci->GetLatency(FLOW_INCOMING);
+		correct = nci->GetLatency(FLOW_OUTGOING) + nci->GetLatency(FLOW_INCOMING);
 
 	correct += GetLerpTime();
 	correct = std::clamp(correct, 0.0f, cvars.sv_maxunlag->GetFloat());
 
-	float deltaTime = correct - (TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime);
-
-	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
+	float record_age = TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime;
 	
+	if (record_age < 0.f || record_age > cvars.sv_maxunlag->GetFloat())
+		return false;
+
+	float deltaTime = correct - record_age;
+	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
 	float tolerance = 0.2f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick * 0.5f : 0.f);
 
 	if (std::abs(deltaTime) >= tolerance)
 		return false;
 
-	if (GlobalVars->tickcount - record->update_tick > 32)
+	int tick_diff = GlobalVars->tickcount - record->update_tick;
+	if (tick_diff > TIME_TO_TICKS(cvars.sv_maxunlag->GetFloat()) + 2)
 		return false;
 
 	return true;

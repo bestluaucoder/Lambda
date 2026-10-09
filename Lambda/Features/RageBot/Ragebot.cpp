@@ -259,6 +259,40 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 
 	bool ex_back = config.ragebot.aimbot.extended_backtrack->get() && !frametime_issues;
 
+	INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
+	float total_latency = 0.f;
+	if (nci)
+		total_latency = nci->GetLatency(FLOW_INCOMING) + nci->GetLatency(FLOW_OUTGOING);
+
+	int max_predict_ticks = 0;
+	LagRecord* newest_record = nullptr;
+	bool is_breaking_lc = false;
+
+	for (int i = records.size() - 1; i >= 0; i--) {
+		LagRecord* record = &records[i];
+
+		if (i == (int)records.size() - 1) {
+			newest_record = record;
+			
+			if (record->prev_record) {
+				float sim_diff = record->m_flSimulationTime - record->prev_record->m_flSimulationTime;
+				int sim_ticks = TIME_TO_TICKS(sim_diff);
+				
+				if (sim_ticks > 16 && sim_ticks <= 22) {
+					max_predict_ticks = std::clamp(sim_ticks - record->m_nChokedTicks - 2, 0, 14);
+					is_breaking_lc = true;
+				}
+			}
+		}
+	}
+
+	if (settings.prediction && settings.prediction->get() && newest_record && is_breaking_lc && max_predict_ticks > 0) {
+		LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest_record, max_predict_ticks);
+		if (extrapolated) {
+			target_records.push(extrapolated);
+		}
+	}
+
 	LagRecord* last_valid_record = nullptr;
 	for (int i = records.size() - 1; i >= 0; i--) {
 		const auto record = &records[i];
@@ -301,24 +335,6 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 		auto last_record = &records.back();
 		if (!last_record->shifting_tickbase && !last_record->invalid && GlobalVars->tickcount - last_record->update_tick >= 0)
 			target_records.push(last_record);
-	}
-
-	if (settings.prediction && settings.prediction->get() && !target_records.empty()) {
-		INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
-		if (nci) {
-			float in_latency = nci->GetLatency(FLOW_INCOMING);
-			int pred_ticks = TIME_TO_TICKS(in_latency);
-
-			pred_ticks = std::clamp(pred_ticks, 1, 12);
-
-			LagRecord* newest = target_records.front();
-			LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest, pred_ticks);
-			if (extrapolated) {
-				while (!target_records.empty())
-					target_records.pop();
-				target_records.push(extrapolated);
-			}
-		}
 	}
 }
 
