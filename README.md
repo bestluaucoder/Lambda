@@ -11,3 +11,5 @@ If you want to add a new feature or fix, please open a pull request and describe
 [Discord](https://discord.gg/lmbda)
 
 <img width="1075" height="589" alt="image" src="https://github.com/user-attachments/assets/dd1938b8-a691-4cb2-8044-141e2ecfbec4" />
+
+credits @drei
