@@ -91,12 +91,12 @@ class CWorldESP {
 		float time = 0.f;
 	};
 
-	ESPInfo_t	esp_info[64];
+	ESPInfo_t	esp_info[65];
 	std::vector<DamageMarker_t> damage_markers;
 	std::vector<Hitmarker_t> hit_markers;
 
 public:
-	ESPInfo_t&	GetESPInfo(int idx) { return esp_info[idx]; };
+	ESPInfo_t&	GetESPInfo(int idx) { static ESPInfo_t dummy; return (idx < 0 || idx >= 65) ? dummy : esp_info[idx]; };
 	void		ProcessSound(const SoundInfo_t& sound);
 	void		RegisterCallback();
 	void		AntiFatality();

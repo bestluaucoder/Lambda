@@ -46,13 +46,13 @@ static int PredictOptimalFakelag(int fakelag_limit) {
 		}
 	};
 
-	static EnemyChokeHistory enemy_info[64]{};
+	static EnemyChokeHistory enemy_info[65]{};
 
 	int   nearest_idx  = -1;
 	float nearest_dist = 1e9f;
 	Vector eye_pos = Cheat.LocalPlayer->GetEyePosition();
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* pl = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 		if (!pl || !pl->IsAlive() || pl->IsTeammate() || pl->m_bDormant())
 			continue;
@@ -282,7 +282,7 @@ CBasePlayer* CAntiAim::GetNearestTarget() {
 	QAngle viewAngle; EngineClient->GetViewAngles(viewAngle);
 	CBasePlayer* nearestPlayer = nullptr;
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* pl = (CBasePlayer*)EntityList->GetClientEntity(i);
 
 		if (!pl)
@@ -507,7 +507,7 @@ bool CAntiAim::IsPeeking() {
 	auto backup_weapon_data = ctx.weapon_info;
 
 	bool peeked = false;
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 
 		auto& info = WorldESP->GetESPInfo(i);

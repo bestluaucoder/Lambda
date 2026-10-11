@@ -18,14 +18,20 @@ static const std::unordered_map<std::string_view, std::string> miss_color = {
 	{"spread", "\aFFE59E"},
 	{"prediction error", "\aFFE59E"},
 	{"occlusion", "\aFFE59E"},
-	{"correction", "\aEAFFA6"},
+	{"resolver wrong side", "\aEAFFA6"},
+	{"hitbox shifted", "\aFFE59E"},
 	{"lagcomp failure", "\aEAFFA6"},
-	{"unknown", "\aEAFFA6"},
+	{"safepoint failed", "\aEAFFA6"},
 	{"death", "\aE6B1B1"},
 	{"damage rejection", "\aE6B1B1"},
 	{"unregistered shot", "\aE6B1B1"},
 	{"player death", "\aFFFFFF"},
 };
+
+static std::string MissColor(const std::string& reason) {
+	auto it = miss_color.find(reason);
+	return it != miss_color.end() ? it->second : std::string("\aFFFFFF");
+}
 
 void CShotManager::LogMiss(RegisteredShot_t* shot) {
 	std::string extra_info;
@@ -79,11 +85,13 @@ void CShotManager::LogMiss(RegisteredShot_t* shot) {
 		extra_info += " | \aACCENTteleported\a_MAIN_";
 	if (shot->safe_point)
 		extra_info += " | \aACCENTsafe\a_MAIN_";
+	if (shot->tickbase_shift != 0)
+		extra_info += " | \aACCENTshift " + std::to_string(shot->tickbase_shift) + "t\a_MAIN_";
 
 	Console->Event(std::format("missed \aACCENT{}\a_MAIN_'s \aACCENT{}\a_MAIN_ due to {}{}\a_MAIN_ (hc: \aACCENT{}%%\a_MAIN_ | bt: \aACCENT{}t\a_MAIN_{})\n",
 		shot->record->player->GetName(),
 		GetDamagegroupName(shot->wanted_damagegroup),
-		miss_color.find(shot->miss_reason)->second,
+		MissColor(shot->miss_reason),
 		shot->miss_reason,
 		static_cast<int>(shot->hitchance * 100),
 		shot->backtrack,
@@ -329,11 +337,11 @@ void CShotManager::OnNetUpdate() {
 				Ray_t ray(shot->shoot_pos, shot->shoot_pos + direction * 8192);
 
 				if (!EngineTrace->ClipRayToPlayer(ray, MASK_SHOT_HULL | CONTENTS_GRATE, player, &trace) || trace.hit_entity != player) {
-					shot->miss_reason = "correction";
+					shot->miss_reason = "hitbox shifted";
 				}
 				else {
 					if (HitgroupToDamagegroup(trace.hitgroup) == shot->wanted_damagegroup) {
-						shot->miss_reason = "correction";
+						shot->miss_reason = "hitbox shifted";
 						Resolver->OnMiss(player, shot->record);
 					}
 					else {
@@ -406,7 +414,7 @@ void CShotManager::OnNetUpdate() {
 			if (shot->record->shooting)
 				extra_info += " | \aACCENTonshot\a_MAIN_";
 			if (!shot->miss_reason.empty())
-				extra_info += " | mismatch: " + miss_color.find(shot->miss_reason)->second + shot->miss_reason + "\a_MAIN_";
+				extra_info += " | mismatch: " + MissColor(shot->miss_reason) + shot->miss_reason + "\a_MAIN_";
 
 			Console->Event(std::format("hit \aACCENT{} \a_MAIN_in the {} for {} (hc: \aACCENT{}%%\a_MAIN_ | bt: \aACCENT{}t\a_MAIN_{})\n",
 				player->GetName(), 
@@ -435,7 +443,7 @@ void CShotManager::OnNetUpdate() {
 				if (shot->client_impacts.size() > 1) {
 					for (int i = 1; i < shot->client_impacts.size(); i++) {
 						if ((shot->client_impacts[i] - shot->target_pos).LengthSqr() < (target_hit_point - shot->target_pos).LengthSqr())
-							target_hit_point = shot->target_pos;
+							target_hit_point = shot->client_impacts[i];
 					}
 				}
 
@@ -464,10 +472,10 @@ void CShotManager::OnNetUpdate() {
 						if (break_lag_comp) {
 							it->miss_reason = "lagcomp failure";
 						} else if (shot->safe_point) {
-							it->miss_reason = "unknown";
+							it->miss_reason = "safepoint failed";
 						} else {
 							Resolver->OnMiss(player, shot->record);
-							it->miss_reason = "correction";
+							it->miss_reason = "resolver wrong side";
 						}
 					}
 				}
@@ -496,6 +504,7 @@ void CShotManager::AddShot(const Vector& shoot_pos, const Vector& target_pos, in
 	shot->wanted_damage = damage;
 	shot->wanted_damagegroup = damagegroup;
 	shot->safe_point = safe;
+	shot->tickbase_shift = ctx.tickbase_shift;
 
 	for (int i = 0; i < total_impacts; i++)
 		shot->client_impacts.push_back(impacts[i]);

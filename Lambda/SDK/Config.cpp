@@ -81,6 +81,7 @@ void CConfig::Init() {
     add(config.ragebot.aimbot.doubletap);
     add(config.ragebot.aimbot.doubletap_key);
     add(config.ragebot.aimbot.doubletap_options);
+    add(config.ragebot.aimbot.doubletap_shift);
     add(config.ragebot.aimbot.hide_shots);
     add(config.ragebot.aimbot.hide_shots_key);
     add(config.ragebot.aimbot.force_teleport);
@@ -363,6 +364,7 @@ void CConfig::Init() {
     add(config.misc.movement.edge_jump_key);
     add(config.misc.movement.infinity_duck);
     add(config.misc.movement.quick_stop);
+    add(config.misc.movement.fast_ladder);
     add(config.skins.override_knife);
     add(config.skins.override_agent);
     add(config.skins.knife_model);
@@ -372,7 +374,6 @@ void CConfig::Init() {
     add(config.skins.mask_changer_models); 
 
     add(config.config.config_subtab);
-    add(config.menu_misc.experimental_lagcomp);
 
     load_button->SetCallback(on_load);
     save_button->SetCallback(on_save);

@@ -344,7 +344,13 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 		memcpy(player->GetAnimlayers(), record->animlayers, sizeof(AnimationLayer) * 13);
 
 		Resolver->Apply(record);
+		const float resolved_foot_yaw = animstate->flFootYaw;
 		player->UpdateClientSideAnimation();
+
+		if (record->resolver_data.side != 0) {
+			animstate->flFootYaw = resolved_foot_yaw;
+			player->SetAbsAngles(QAngle(0.f, resolved_foot_yaw, 0.f));
+		}
 	}
 	else {
 		player->UpdateClientSideAnimation();
@@ -411,7 +417,7 @@ void CAnimationSystem::RunInterpolation() {
 	if (!Cheat.InGame)
 		return;
 
-	for (int i = 0; i < 64; i++) {
+	for (int i = 1; i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 
 		if (!player || player == Cheat.LocalPlayer || !player->IsAlive() || player->m_bDormant())

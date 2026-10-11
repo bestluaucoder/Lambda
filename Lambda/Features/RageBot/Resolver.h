@@ -46,7 +46,7 @@ struct ResolverData_t {
 	R_AntiAimType antiaim_type  = R_AntiAimType::UNKNOWN;
 	ResolverType  resolver_type = ResolverType::NONE;
 
-	ResolverLayer_t layers[10];
+	ResolverLayer_t layers[9];
 
 	float max_desync_delta     = 0.f;
 	int   side                 = 0;
@@ -56,13 +56,6 @@ struct ResolverData_t {
 };
 
 struct ResolverDataStatic_t {
-	int          brute_side     = 0;
-	float        brute_time     = 0.f;
-	float        last_resolved  = 0.f;
-	ResolverType res_type_last  = ResolverType::NONE;
-	int          last_side      = 0;
-	int          missed_shots   = 0;
-
 	float lby_delta       = 0.f;
 	float lby_last_update = 0.f;
 	float lby_value       = 0.f;
@@ -71,7 +64,6 @@ struct ResolverDataStatic_t {
 	std::array<float, JITTER_HISTORY> eye_yaw_history = {};
 	int eye_yaw_head  = 0;
 	int eye_yaw_count = 0;
-	int jitter_last_cluster = 0;
 
 	float prev_speed    = 0.f;
 	int   accel_side    = 0;
@@ -93,19 +85,12 @@ struct ResolverDataStatic_t {
 	float resolved_body_yaw    = 0.f;
 
 	void reset() {
-		brute_side           = 0;
-		brute_time           = 0.f;
-		last_resolved        = 0.f;
-		res_type_last        = ResolverType::NONE;
-		last_side            = 0;
-		missed_shots         = 0;
 		lby_delta            = 0.f;
 		lby_last_update      = 0.f;
 		lby_value            = 0.f;
 		eye_yaw_history.fill(0.f);
 		eye_yaw_head         = 0;
 		eye_yaw_count        = 0;
-		jitter_last_cluster  = 0;
 		prev_speed           = 0.f;
 		accel_side           = 0;
 		move_yaw_delta_sum   = 0.f;
@@ -124,7 +109,7 @@ struct ResolverDataStatic_t {
 };
 
 class CResolver {
-	ResolverDataStatic_t resolver_data[64];
+	ResolverDataStatic_t resolver_data[65];
 
 	float GetTime();
 	float GetLatency();
@@ -153,7 +138,7 @@ public:
 
 public:
 	CResolver() {
-		for (int i = 0; i < 64; ++i)
+		for (int i = 0; i < 65; ++i)
 			resolver_data[i].reset();
 	}
 

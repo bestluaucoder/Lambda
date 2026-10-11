@@ -109,7 +109,7 @@ private:
 	ScannedTarget_t* result_target;
 
 	std::vector<ScannedTarget_t> scanned_targets;
-	std::array<int, 64> delayed_ticks;
+	std::array<int, 65> delayed_ticks{};
 
 	inline bool hitbox_enabled(int hitbox) {
 		switch (hitbox)

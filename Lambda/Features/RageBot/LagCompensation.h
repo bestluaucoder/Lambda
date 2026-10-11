@@ -51,24 +51,23 @@ struct LagRecord {
 
 	ResolverData_t resolver_data;
 
-	LagRecord* prev_record;
+	LagRecord* prev_record = nullptr;
 
 	void BuildMatrix();
 };
 
 class CLagCompensation {
-	std::array<std::deque<LagRecord>, 64>  lag_records;
-	std::array<std::deque<LagRecord>, 64>  extrapolated_records;
-	std::array<std::vector<LagRecord>, 64> lag_records_vec;
-	float max_simulation_time[64];
-	int last_update_tick[64];
-	int max_tickbase[64];
-	bool is_in_defensive[64];
+	std::array<std::deque<LagRecord>, 65>  lag_records;
+	std::array<std::deque<LagRecord>, 65>  extrapolated_records;
+	std::array<LagRecord, 65> backup_records;
+	float max_simulation_time[65];
+	int last_update_tick[65];
+	int max_tickbase[65];
+	bool is_in_defensive[65];
 
 public:
 
 	__forceinline std::deque<LagRecord>& records(int index) { return lag_records[index]; };
-	__forceinline std::vector<LagRecord>& records_vec(int index) { return lag_records_vec[index]; };
 	__forceinline bool IsPlayerInDefensive(int idx) { return is_in_defensive[idx]; }
 	__forceinline int GetMaxTickbase(int idx) { return max_tickbase[idx]; }
 

@@ -40,7 +40,7 @@ void CAutoWall::ClipTraceToPlayers(const Vector& start, const Vector& end, const
 	}
 
 	float minFraction = trace->fraction;
-	for (int i = 0; i < ClientState->m_nMaxClients; ++i) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; ++i) {
 		CBasePlayer* pl = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 
 		if (!pl || !pl->IsAlive() || pl->m_bDormant())
@@ -240,8 +240,6 @@ bool CAutoWall::HandleBulletPenetration(CBasePlayer* attacker, CCSWeaponData* we
 }
 
 bool CAutoWall::FireBullet(CBasePlayer* attacker, const Vector& start, const Vector& end, FireBulletData_t& data, CBasePlayer* target) {
-	static ConVar* mp_friendlyfire = CVar->FindVar("mp_friendlyfire");
-
 	Vector eyePosition = start;
 	Vector direction = (end - start).Normalized();
 
@@ -255,14 +253,12 @@ bool CAutoWall::FireBullet(CBasePlayer* attacker, const Vector& start, const Vec
 	float maxRange = ctx.weapon_info->flRange;
 	float targetRange = (end - start).LengthSqr();
 
-	int possibleHitsRemaining = 4; 
+	int possibleHitsRemaining = 4;
 	data.damage = ctx.weapon_info->iDamage;
 	Ray_t ray;
 
-	bool friendlyFire = mp_friendlyfire->GetInt();
-
 	while (possibleHitsRemaining > 0 && data.damage >= 1.f) {
-		maxRange -= currentDistance;
+		maxRange = ctx.weapon_info->flRange - currentDistance;
 
 		Vector end = eyePosition + direction * maxRange;
 

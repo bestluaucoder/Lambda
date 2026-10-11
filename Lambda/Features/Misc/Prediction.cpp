@@ -189,27 +189,6 @@ void CPrediction::Repredict(CUserCmd* cmd, QAngle angles) {
 	cmd->viewangles = backup_angle;
 }
 
-void CPrediction::PatchAttackPacket(CUserCmd* cmd, bool restore)
-{
-	static bool m_bLastAttack = false;
-	static bool m_bInvalidCycle = false;
-	static float m_flLastCycle = 0.f;
-
-	if (!Cheat.LocalPlayer)
-		return;
-
-	if (restore)
-	{
-		m_bLastAttack = cmd->weaponselect || (cmd->buttons & IN_ATTACK);
-		m_flLastCycle = Cheat.LocalPlayer->m_flCycle();
-	}
-	else if (m_bLastAttack && !m_bInvalidCycle)
-		m_bInvalidCycle = Cheat.LocalPlayer->m_flCycle() == 0.f && m_flLastCycle > 0.f;
-
-	if (m_bInvalidCycle)
-		Cheat.LocalPlayer->m_flCycle() = m_flLastCycle;
-}
-
 void CPrediction::StoreNetvars(int place) {
 	CBasePlayer* local = Cheat.LocalPlayer;
 
@@ -301,12 +280,12 @@ void CPrediction::RunCommand(CUserCmd* cmd) {
 	if (!(cmd->buttons & IN_ATTACK))
 		return;
 
-	int lowest_cmd = cmd->command_number - 149;
+	int lowest_cmd = cmd->command_number - (MULTIPLAYER_BACKUP - 1);
 	int iter_cmd = cmd->command_number;
 	int fire_cmd = 0;
 
 	while (iter_cmd > lowest_cmd) {
-		auto cmd_data = local_data[iter_cmd % 150];
+		auto cmd_data = local_data[iter_cmd % MULTIPLAYER_BACKUP];
 		fire_cmd = iter_cmd;
 
 		if (!(cmd_data.m_nButtons & IN_ATTACK))
@@ -320,7 +299,7 @@ void CPrediction::RunCommand(CUserCmd* cmd) {
 	}
 
 	if (fire_cmd != 0 && cmd->command_number - fire_cmd >= 3)
-		weapon->m_flPostponeFireReadyTime() = TICKS_TO_TIME(local_data[(fire_cmd + 3) % 150].m_nTickBase) + 0.2f;
+		weapon->m_flPostponeFireReadyTime() = TICKS_TO_TIME(local_data[(fire_cmd + 3) % MULTIPLAYER_BACKUP].m_nTickBase) + 0.2f;
 }
 
 void CPrediction::NetUpdate() {

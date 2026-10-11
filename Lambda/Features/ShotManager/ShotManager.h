@@ -29,6 +29,7 @@ struct RegisteredShot_t {
 	LagRecord* record;
 	QAngle player_angle; 
 	bool safe_point = false;
+	int tickbase_shift = 0;
 	std::vector<Vector> client_impacts;
 
 	

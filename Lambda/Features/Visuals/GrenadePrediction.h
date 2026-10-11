@@ -10,7 +10,7 @@
 class GrenadePrediction {
 private:
 	CNewParticleEffect* pMolotovParticle = nullptr;
-	Vector lerped_velocity;
+	Vector lerped_velocity{};
 
 protected:
 	int nTick = 0;
@@ -24,7 +24,7 @@ protected:
 	Vector vecVelocity;
 	Vector vecOrigin;
 	Vector vecDetonate;
-	bool runningPrediction;
+	bool runningPrediction = false;
 	float flThrowTime;
 	float flExpireTime;
 	int nCollisionGroup;

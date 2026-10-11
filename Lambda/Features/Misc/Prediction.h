@@ -121,7 +121,6 @@ public:
 	void RestoreNetvars(int place);
 	void NetUpdate();
 
-	void PatchAttackPacket(CUserCmd* cmd, bool restore);
 	void RunCommand(CUserCmd* cmd);
 	int	 PredictTickbase();
 

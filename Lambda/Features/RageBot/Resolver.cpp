@@ -45,8 +45,8 @@ float CResolver::GetLatency()
 
 void CResolver::Reset(CBasePlayer* pl)
 {
-	if (pl) { resolver_data[pl->EntIndex()].reset(); return; }
-	for (int i = 0; i < 64; ++i) resolver_data[i].reset();
+	if (pl) { int idx = pl->EntIndex(); if (idx >= 0 && idx < 65) resolver_data[idx].reset(); return; }
+	for (int i = 0; i < 65; ++i) resolver_data[i].reset();
 }
 
 R_PlayerState CResolver::DetectPlayerState(CBasePlayer* player, AnimationLayer* animlayers)
@@ -182,13 +182,7 @@ int CResolver::ResolveJitter(CBasePlayer* player, LagRecord* record, ResolverDat
 	float dp = std::abs(cur_d - ap);
 	float dn = std::abs(cur_d - an);
 
-	if (dp < dn) {
-		p->jitter_last_cluster = 1;
-		return 1;
-	} else {
-		p->jitter_last_cluster = -1;
-		return -1;
-	}
+	return dp < dn ? 1 : -1;
 }
 
 void CResolver::UpdateVelocity(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
@@ -353,13 +347,12 @@ void CResolver::SetupResolverLayers(CBasePlayer* player, LagRecord* record)
 	SetupLayer(record, 0,  0.f);
 	SetupLayer(record, 1,  d);
 	SetupLayer(record, 2, -d);
-	SetupLayer(record, 3,  d * 0.5f);
-	SetupLayer(record, 4, -d * 0.5f);
-	SetupLayer(record, 5,  d * 0.75f);
-	SetupLayer(record, 6, -d * 0.75f);
-	SetupLayer(record, 7,  d * 0.33f);
-	SetupLayer(record, 8,  d * 0.66f);
-	SetupLayer(record, 9, -d * 0.66f);
+	SetupLayer(record, 3,  d * 0.75f);
+	SetupLayer(record, 4, -d * 0.75f);
+	SetupLayer(record, 5,  d * 0.5f);
+	SetupLayer(record, 6, -d * 0.5f);
+	SetupLayer(record, 7,  d * 0.25f);
+	SetupLayer(record, 8, -d * 0.25f);
 }
 
 int CResolver::ResolveAnim(CBasePlayer* player, LagRecord* record, ResolverDataStatic_t* p)
@@ -507,9 +500,11 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	record->resolver_data.player_state = DetectPlayerState(player, record->animlayers);
 	record->resolver_data.antiaim_type = DetectAntiAim(player, records);
 
-	auto*       p       = &resolver_data[player->EntIndex()];
-	const float curtime = GetTime();
-	const float latency = GetLatency();
+	int ent_idx = player->EntIndex();
+	if (ent_idx < 0 || ent_idx >= 65)
+		return;
+
+	auto*       p       = &resolver_data[ent_idx];
 
 	UpdateLBY         (player, record, p);
 	UpdateJitterHistory(player, record, p);
@@ -531,67 +526,49 @@ void CResolver::Run(CBasePlayer* player, LagRecord* record, std::deque<LagRecord
 	};
 
 	float lby_body_yaw = 0.f;
-	int lby_side = ResolveLBY(player, record, p, lby_body_yaw);
-	
-	if (lby_side) commit(lby_side, ResolverType::LBY, lby_body_yaw);
-
-	{
-		int st_side = ResolveSafeTick(player, record, p);
-		
-		if (st_side && resolved_type != ResolverType::LBY) {
-			commit(st_side, ResolverType::SAFETICK);
-		}
-	}
-
-	if (record->resolver_data.is_shifting_tickbase) {
-		int tb_side = ResolveTickbase(player, record, p);
-		commit(tb_side, ResolverType::TICKBASE);
-	}
 
 	bool isMoving = record->resolver_data.player_state == R_PlayerState::MOVING
 	             && (record->m_fFlags & FL_ONGROUND)
 	             && record->animlayers[ANIMATION_LAYER_MOVEMENT_MOVE].m_flWeight > 0.f;
 
-	if (!isMoving) {
-		int fs_side = ResolveFreestand(player, record, records);
-		if (fs_side) {
-			if (resolved_type == ResolverType::NONE) {
-				commit(fs_side, ResolverType::FREESTAND);
-			} else if (resolved_type == ResolverType::LBY && fs_side != resolved_side) {
-				commit(fs_side, ResolverType::FREESTAND);
-			}
-		}
-	}
-
 	int anim_side = ResolveAnim(player, record, p);
-	if (anim_side && resolved_type == ResolverType::NONE)
+	if (anim_side)
 		commit(anim_side, ResolverType::ANIM);
 
+	if (resolved_type == ResolverType::NONE && record->resolver_data.is_shifting_tickbase)
+		commit(ResolveTickbase(player, record, p), ResolverType::TICKBASE);
+
 	if (isMoving) {
-		if (p->move_yaw_side) commit(p->move_yaw_side, ResolverType::MOVEANGLE);
-		if (p->accel_side)    commit(p->accel_side,    ResolverType::VELOCITY);
-	} else if (!isMoving && resolved_type == ResolverType::NONE) {
-		if (record->resolver_data.antiaim_type == R_AntiAimType::JITTER && records.size() > 8) {
-			int jit = ResolveJitter(player, record, p);
-			if (jit) {
-				commit(jit, ResolverType::LOGIC);
-			} else {
-				float d = Math::AngleDiff(player->m_angEyeAngles().yaw, CircularMean(records, 8));
-				commit(d < 0.f ? 1 : -1, ResolverType::LOGIC);
-			}
+		if (resolved_type == ResolverType::NONE) {
+			if (p->accel_side)         commit(p->accel_side,    ResolverType::VELOCITY);
+			else if (p->move_yaw_side) commit(p->move_yaw_side, ResolverType::MOVEANGLE);
 		}
 	}
+	else {
+		if (resolved_type == ResolverType::NONE) {
+			int lby_side = ResolveLBY(player, record, p, lby_body_yaw);
+			if (lby_side) commit(lby_side, ResolverType::LBY, lby_body_yaw);
+		}
 
-	if (!resolved_side) {
-		resolved_side = -1;
-		resolved_type = ResolverType::DEFAULT;
+		if (resolved_type == ResolverType::NONE)
+			commit(ResolveSafeTick(player, record, p), ResolverType::SAFETICK);
+
+		if (resolved_type == ResolverType::NONE
+			&& record->resolver_data.antiaim_type == R_AntiAimType::JITTER && records.size() > 8) {
+			int jit = ResolveJitter(player, record, p);
+			if (jit)
+				commit(jit, ResolverType::LOGIC);
+		}
+
+		if (resolved_type == ResolverType::NONE) {
+			int fs_side = ResolveFreestand(player, record, records);
+			if (fs_side) commit(fs_side, ResolverType::FREESTAND);
+		}
 	}
 
 	record->resolver_data.side             = resolved_side;
 	record->resolver_data.resolver_type    = resolved_type;
 	record->resolver_data.resolved_body_yaw = resolved_body_yaw;
-
-	Apply(record);
 }
 
 void CResolver::OnMiss(CBasePlayer* player, LagRecord* record)

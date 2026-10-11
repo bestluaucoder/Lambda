@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "Globals.h"
 #include <intrin.h>
+#include <cmath>
 #include "../Utils/Console.h"
 #include "../UI/UI.h"
 #include "Misc/MoveMsg.h"
@@ -225,6 +226,40 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 	if (config.misc.movement.auto_jump->get()) {
 		if (!(Cheat.LocalPlayer->m_fFlags() & FL_ONGROUND) && Cheat.LocalPlayer->m_MoveType() != MOVETYPE_NOCLIP && Cheat.LocalPlayer->m_MoveType() != MOVETYPE_LADDER)
 			cmd->buttons &= ~IN_JUMP;
+	}
+
+	if (config.misc.movement.fast_ladder->get() && Cheat.LocalPlayer->m_MoveType() == MOVETYPE_LADDER) {
+		cmd->viewangles.yaw = std::floor(cmd->viewangles.yaw + 0.5f);
+
+		const float fmove = cmd->forwardmove;
+		const float smove = cmd->sidemove;
+
+		if (fmove > 0.f) {
+			if (cmd->viewangles.pitch < 45.f) {
+				cmd->viewangles.pitch = 89.f;
+				cmd->buttons |= IN_BACK | IN_MOVERIGHT;
+				cmd->buttons &= ~(IN_FORWARD | IN_MOVELEFT);
+				cmd->forwardmove = -450.f;
+				cmd->sidemove = 450.f;
+
+				if (smove == 0.f)     cmd->viewangles.yaw += 90.f;
+				else if (smove < 0.f) cmd->viewangles.yaw += 150.f;
+				else                  cmd->viewangles.yaw += 30.f;
+			}
+		}
+		else if (fmove < 0.f) {
+			cmd->viewangles.pitch = 89.f;
+			cmd->buttons |= IN_FORWARD | IN_MOVELEFT;
+			cmd->buttons &= ~(IN_BACK | IN_MOVERIGHT);
+			cmd->forwardmove = 450.f;
+			cmd->sidemove = -450.f;
+
+			if (smove == 0.f)     cmd->viewangles.yaw += 90.f;
+			else if (smove > 0.f) cmd->viewangles.yaw += 150.f;
+			else                  cmd->viewangles.yaw += 30.f;
+		}
+
+		cmd->viewangles.Normalize();
 	}
 
 	Movement->QuickStop();

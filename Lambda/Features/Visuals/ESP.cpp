@@ -21,7 +21,7 @@ CWorldESP* WorldESP = new CWorldESP;
 void CWorldESP::Draw() {
 	if (!config.visuals.esp.enable->get() || !Cheat.InGame || !Cheat.LocalPlayer) return;
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		UpdatePlayer(i);
 		DrawPlayer(i);
 	}

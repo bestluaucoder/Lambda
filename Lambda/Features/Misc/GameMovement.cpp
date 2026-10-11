@@ -118,7 +118,7 @@ void CMovement::AutoStrafe() {
 		if (abs(correct) < max_diff) {
 			strafe_side = -strafe_side;
 
-			float strafe_correct = min(90.f, RAD2DEG(std::asin(21.f / vel))) * strafe_side;
+			float strafe_correct = min(90.f, RAD2DEG(std::asin(min(21.f / vel, 1.f)))) * strafe_side;
 
 			new_angle.yaw += strafe_correct;
 			wish_side = strafe_correct > 0.f ? 1.f : -1.f;

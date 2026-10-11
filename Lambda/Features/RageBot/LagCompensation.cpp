@@ -11,11 +11,19 @@
 #include "Exploits.h"
 
 LagRecord* CLagCompensation::BackupData(CBasePlayer* player) {
-	LagRecord* record = new LagRecord;
+	if (!player)
+		return nullptr;
 
+	int idx = player->EntIndex();
+	if (idx < 0 || idx >= 65)
+		return nullptr;
+
+	LagRecord* record = &backup_records[idx];
 	record->player = player;
 	record->m_vecAbsOrigin = player->GetAbsOrigin();
 	RecordDataIntoTrack(player, record);
+	memcpy(record->aim_matrix, record->bone_matrix, sizeof(matrix3x4_t) * 128);
+	memcpy(record->clamped_matrix, record->bone_matrix, sizeof(matrix3x4_t) * 128);
 
 	return record;
 }
@@ -38,6 +46,7 @@ void CLagCompensation::RecordDataIntoTrack(CBasePlayer* player, LagRecord* recor
 
 	if (!record->bone_matrix_filled) {
 		memcpy(record->bone_matrix, player->GetCachedBoneData().Base(), sizeof(matrix3x4_t) * player->GetCachedBoneData().Count());
+		memcpy(record->aim_matrix, record->bone_matrix, sizeof(matrix3x4_t) * 128);
 		record->bone_matrix_filled = true;
 	}
 
@@ -72,7 +81,39 @@ void CLagCompensation::BacktrackEntity(LagRecord* record, bool copy_matrix, bool
 }
 
 void LagRecord::BuildMatrix() {
+	if (!player)
+		return;
+
+	bool aim_valid = false;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (aim_matrix[0][i][j] != 0.f) {
+				aim_valid = true;
+				break;
+			}
+		}
+		if (aim_valid) break;
+	}
+
+	if (!aim_valid)
+		memcpy(aim_matrix, bone_matrix, 128 * sizeof(matrix3x4_t));
+
 	memcpy(clamped_matrix, aim_matrix, 128 * sizeof(matrix3x4_t));
+
+	bool opp_valid = false;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (opposite_matrix[0][i][j] != 0.f) {
+				opp_valid = true;
+				break;
+			}
+		}
+		if (opp_valid) break;
+	}
+
+	if (!opp_valid)
+		memcpy(opposite_matrix, aim_matrix, 128 * sizeof(matrix3x4_t));
+
 	memcpy(safe_matrix, opposite_matrix, 128 * sizeof(matrix3x4_t));
 
 	if (config.antiaim.angles.legacy_desync->get())
@@ -97,7 +138,7 @@ void CLagCompensation::OnNetUpdate() {
 	INetChannel* nc = ClientState->m_NetChannel;
 	auto nci = EngineClient->GetNetChannelInfo();
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* pl = (CBasePlayer*)EntityList->GetClientEntity(i);
 
 		if (!pl || !pl->IsAlive() || pl == Cheat.LocalPlayer || pl->m_bDormant() || pl->m_iHealth() <= 0 || pl->m_lifeState() != LIFE_ALIVE)
@@ -165,22 +206,15 @@ void CLagCompensation::OnNetUpdate() {
         }
 
 		if (prev_valid) {
-			float dist_sq = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).LengthSqr();
+			float teleport_dist = cvars.sv_lagcompensation_teleport_dist ? cvars.sv_lagcompensation_teleport_dist->GetFloat() : 64.f;
 			float time_delta = new_record->m_flSimulationTime - prev_valid->m_flSimulationTime;
-			
-			float max_move = 64.f;
-			
+
 			if (time_delta > GlobalVars->interval_per_tick)
-				max_move *= (time_delta / GlobalVars->interval_per_tick);
-			
-			float max_move_sq = max_move * max_move;
-			
-			new_record->breaking_lag_comp = dist_sq > max_move_sq;
-			
-			Vector velocity_delta = new_record->m_vecVelocity - prev_valid->m_vecVelocity;
-			float velocity_change = velocity_delta.Length() / time_delta;
-			if (velocity_change > 320.f)
-				new_record->breaking_lag_comp = true;
+				teleport_dist *= (time_delta / GlobalVars->interval_per_tick);
+
+			float dist_2d_sq = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).Length2DSqr();
+
+			new_record->breaking_lag_comp = dist_2d_sq > teleport_dist * teleport_dist;
 		}
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
@@ -203,29 +237,23 @@ void CLagCompensation::OnNetUpdate() {
 			records.pop_front();
 
 		
-		if (config.menu_misc.experimental_lagcomp && config.menu_misc.experimental_lagcomp->get()) {
-			auto& rvec = lag_records_vec[i];
-			rvec.push_back(records.back());
-			const size_t max_vec = pl->IsTeammate() ? 4 : TIME_TO_TICKS(cvars.sv_maxunlag->GetFloat()) + 3;
-			if (rvec.size() > max_vec)
-				rvec.erase(rvec.begin());
-		}
+		if (!records.empty())
+			records.front().prev_record = nullptr;
 
-		INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
 		if (config.visuals.esp.show_server_hitboxes->get() && nci && nci->IsLoopback())
 			pl->DrawServerHitboxes(GlobalVars->interval_per_tick, true);
 	}
 }
 
 LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
-	if (ticks <= 0)
+	if (ticks <= 0 || !record || !record->player)
 		return nullptr;
 
 	const float time = TICKS_TO_TIME(ticks);
 
 	auto& records = extrapolated_records[record->player->EntIndex()];
 
-	while (records.size() > 64)
+	while (records.size() > 4)
 		records.pop_front();
 
 	LagRecord* new_record = &records.emplace_back();
@@ -234,18 +262,17 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	new_record->m_flSimulationTime += time;
 	new_record->update_tick += ticks;
 
-	const float gravity = cvars.sv_gravity->GetFloat();
+	const float gravity = cvars.sv_gravity ? cvars.sv_gravity->GetFloat() : 800.f;
 	const float ival = GlobalVars->interval_per_tick;
 	const float friction = 4.f;
 	const float stop_speed = 100.f;
+	const float sv_accelerate = 5.5f;
 
 	Vector velocity = new_record->m_vecVelocity;
 	int flags = new_record->m_fFlags;
 	bool on_ground = (flags & FL_ONGROUND) != 0;
 
-	float current_speed = velocity.Length2D();
 	float max_speed = 250.f;
-	
 	if (record->player->m_bIsScoped())
 		max_speed = 100.f;
 	else if ((flags & FL_DUCKING) || new_record->m_flDuckAmout > 0.5f)
@@ -255,25 +282,54 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 		if (!on_ground) {
 			velocity.z -= gravity * ival * 0.5f;
 
+			float speed2d = velocity.Length2D();
+			if (speed2d > 0.1f) {
+				Vector wishdir = velocity;
+				wishdir.z = 0.f;
+				wishdir.Normalize();
+
+				float wishspeed = (std::min)(speed2d, 30.f);
+				float currentspeed = velocity.Dot(wishdir);
+				float addspeed = wishspeed - currentspeed;
+				if (addspeed > 0.f) {
+					float accelspeed = 12.f * wishspeed * ival;
+					if (accelspeed > addspeed)
+						accelspeed = addspeed;
+					velocity += wishdir * accelspeed;
+				}
+			}
+
 			if (velocity.z < -gravity * 0.5f)
 				velocity.z = -gravity * 0.5f;
 		}
 		else {
 			velocity.z = 0.f;
-			
+
 			float speed = velocity.Length2D();
 			if (speed > 0.1f) {
-				float drop = 0.f;
 				float control = speed < stop_speed ? stop_speed : speed;
-				drop = control * friction * ival;
-				
+				float drop = control * friction * ival;
+
 				float new_speed = speed - drop;
-				if (new_speed < 0.f) new_speed = 0.f;
-				
-				if (speed > 0.f) {
-					new_speed /= speed;
-					velocity.x *= new_speed;
-					velocity.y *= new_speed;
+				if (new_speed < 0.f)
+					new_speed = 0.f;
+
+				new_speed /= speed;
+				velocity.x *= new_speed;
+				velocity.y *= new_speed;
+
+				Vector wishdir = velocity;
+				wishdir.z = 0.f;
+				wishdir.Normalize();
+
+				float wishspeed = (std::min)(speed, max_speed);
+				float currentspeed = velocity.Dot(wishdir);
+				float addspeed = wishspeed - currentspeed;
+				if (addspeed > 0.f) {
+					float accelspeed = sv_accelerate * ival * max_speed;
+					if (accelspeed > addspeed)
+						accelspeed = addspeed;
+					velocity += wishdir * accelspeed;
 				}
 			}
 		}
@@ -346,7 +402,7 @@ bool CLagCompensation::ValidRecord(LagRecord* record) {
 	
 	float correct = 0.0f;
 	if (nci)
-		correct = nci->GetLatency(FLOW_OUTGOING) + nci->GetLatency(FLOW_INCOMING);
+		correct = nci->GetLatency(FLOW_OUTGOING);
 
 	correct += GetLerpTime();
 	correct = std::clamp(correct, 0.0f, cvars.sv_maxunlag->GetFloat());
@@ -389,7 +445,7 @@ LagRecord* CLagCompensation::GetLastRecord(int idx) {
 void CLagCompensation::Reset(int index) {
 	if (index != -1) {
 		lag_records[index].clear();
-		lag_records_vec[index].clear();
+		extrapolated_records[index].clear();
 		max_simulation_time[index] = 0.f;
 		last_update_tick[index] = 0;
 		max_tickbase[index] = 0;
@@ -398,7 +454,7 @@ void CLagCompensation::Reset(int index) {
 	else {
 		for (int i = 0; i < (int)lag_records.size(); i++) {
 			lag_records[i].clear();
-			lag_records_vec[i].clear();
+			extrapolated_records[i].clear();
 			max_simulation_time[i] = 0.f;
 			last_update_tick[i] = 0;
 			max_tickbase[i] = 0;

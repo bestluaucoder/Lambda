@@ -16,8 +16,8 @@ class CAnimationSystem {
 		Vector backtrack_origin;
 	};
 
-	interpolate_data_t interpolate_data[64];
-	CCSGOPlayerAnimationState unupdated_animstate[64]; 
+	interpolate_data_t interpolate_data[65];
+	CCSGOPlayerAnimationState unupdated_animstate[65]; 
 
 	matrix3x4_t local_matrix[128];
 	matrix3x4_t prediction_matrix[128];

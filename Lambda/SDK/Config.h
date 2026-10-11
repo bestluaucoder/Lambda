@@ -56,6 +56,7 @@ struct config_t {
             CCheckBox* doubletap;
             CKeyBind* doubletap_key;
             CMultiCombo* doubletap_options;
+            CSliderInt* doubletap_shift;
             CCheckBox* hide_shots;
             CKeyBind* hide_shots_key;
             CKeyBind* force_teleport;
@@ -310,6 +311,7 @@ struct config_t {
             CKeyBind* edge_jump_key;
             CCheckBox* infinity_duck;
             CCheckBox* quick_stop;
+            CCheckBox* fast_ladder;
         } movement;
     } misc;
 
@@ -327,10 +329,6 @@ struct config_t {
     struct config_subtab_t {
         CComboBox* config_subtab;
     } config;
-
-    struct menu_misc_t {
-        CCheckBox* experimental_lagcomp;
-    } menu_misc;
 };
 
 extern config_t config;

@@ -237,7 +237,7 @@ void GrenadePrediction::Draw() {
 
 	if (weaponId == HeGrenade) {
 		int maxDamage = 0;
-		for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+		for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 			CBasePlayer* player = (CBasePlayer*)EntityList->GetClientEntity(i);
 
 			if (!player || player->IsTeammate() || !player->IsPlayer() || !player->IsAlive() || player->m_bDormant())
@@ -302,7 +302,7 @@ void GrenadePrediction::Draw() {
 	if (weaponId == Molotov || weaponId == IncGrenade) {
 		float minDistance = 10.f;
 
-		for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+		for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 			CBasePlayer* player = (CBasePlayer*)EntityList->GetClientEntity(i);
 
 			if (!player || player->IsTeammate() || !player->IsPlayer() || !player->IsAlive() || player->m_bDormant())

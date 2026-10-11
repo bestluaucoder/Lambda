@@ -184,17 +184,17 @@ float CRagebot::CalcHitchance(QAngle angles, LagRecord* target, int hitbox) {
 		float a = s_val.a;
 		float c = s_val.c;
 
-		float inaccuracy = a * EnginePrediction->WeaponInaccuracy();
-		float spread = c * EnginePrediction->WeaponSpread();
-
 		if (ctx.active_weapon->m_iItemDefinitionIndex() == 64)
 		{
 			a = 1.f - a * a;
 			c = 1.f - c * c;
 		}
 
+		float inaccuracy = a * EnginePrediction->WeaponInaccuracy();
+		float spread = c * EnginePrediction->WeaponSpread();
+
 		Vector direction = forward + (right * (s_val.bcos * inaccuracy + s_val.dcos * spread)) + (up * (s_val.bsin * inaccuracy + s_val.dsin * spread));
-		direction.Normalized();
+		direction.Normalize();
 
 		if (!EngineTrace->RayIntersectPlayer(ctx.shoot_position, ctx.shoot_position + (direction * 8192.f), target->player, target->clamped_matrix, damagegroup))
 			continue;
@@ -328,7 +328,9 @@ void CRagebot::SelectRecords(CBasePlayer* player, std::queue<LagRecord*>& target
 		}
 	}
 
-	if (settings.prediction && settings.prediction->get() && should_predict && predict_ticks > 0 && confidence >= 0.5f) {
+	bool ping_spiking = config.misc.miscellaneous.ping_spike && config.misc.miscellaneous.ping_spike->get();
+
+	if (settings.prediction && settings.prediction->get() && should_predict && predict_ticks > 0 && confidence >= 0.5f && !ping_spiking) {
 		LagRecord* extrapolated = LagCompensation->ExtrapolateRecord(newest_record, predict_ticks);
 		if (extrapolated) {
 			target_records.push(extrapolated);
@@ -422,18 +424,18 @@ void CRagebot::GetMultipoints(LagRecord* record, int hitbox_id, float scale) {
 	switch (hitbox_id) {
 	case HITBOX_HEAD:
 		for (auto& vert : verts)
-			AddPoint(AimPoint_t{ Math::VectorTransform(vert, boneMatrix), hitbox_id, true, dont_shoot_next_points });
+			AddPoint(AimPoint_t{ center + Math::VectorRotate(vert, boneMatrix), hitbox_id, true, dont_shoot_next_points });
 		if (record->m_angEyeAngles.pitch > 85.f && center.z >= ctx.shoot_position.z - 16.f)
 			AddPoint(AimPoint_t{ Vector(center.x, center.y, center.z + width * scale * 0.89f), hitbox_id, true, dont_shoot_next_points });
 		break;
 	case HITBOX_STOMACH:
 	case HITBOX_PELVIS:
-		AddPoint(AimPoint_t{ Math::VectorTransform(verts[1], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		AddPoint(AimPoint_t{ center + Math::VectorRotate(verts[1], boneMatrix), hitbox_id, true, dont_shoot_next_points });
 		[[ fallthrough ]];
 	case HITBOX_CHEST:
 	case HITBOX_UPPER_CHEST:
-		AddPoint(AimPoint_t{ Math::VectorTransform(verts[2], boneMatrix), hitbox_id, true, dont_shoot_next_points });
-		AddPoint(AimPoint_t{ Math::VectorTransform(verts[3], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		AddPoint(AimPoint_t{ center + Math::VectorRotate(verts[2], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		AddPoint(AimPoint_t{ center + Math::VectorRotate(verts[3], boneMatrix), hitbox_id, true, dont_shoot_next_points });
 		break;
 	case HITBOX_LEFT_UPPER_ARM:
 	case HITBOX_RIGHT_UPPER_ARM:
@@ -443,8 +445,8 @@ void CRagebot::GetMultipoints(LagRecord* record, int hitbox_id, float scale) {
 	case HITBOX_RIGHT_THIGH:
 	case HITBOX_LEFT_CALF:
 	case HITBOX_RIGHT_CALF:
-		AddPoint(AimPoint_t{ Math::VectorTransform(verts[0], boneMatrix), hitbox_id, true, dont_shoot_next_points });
-		AddPoint(AimPoint_t{ Math::VectorTransform(verts[1], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		AddPoint(AimPoint_t{ center + Math::VectorRotate(verts[0], boneMatrix), hitbox_id, true, dont_shoot_next_points });
+		AddPoint(AimPoint_t{ center + Math::VectorRotate(verts[1], boneMatrix), hitbox_id, true, dont_shoot_next_points });
 		break;
 	}
 }
@@ -531,7 +533,7 @@ void CRagebot::SelectBestPoint(ScannedTarget_t* target) {
 		delay = 0;
 	}
 
-	if (best_body_point.damage < target->player->m_iHealth() && best_head_point.damage > best_body_point.damage && (best_head_point.record->shooting || (settings.aim_head_if_safe->get() && best_head_point.safe_point))) {
+	if (best_head_point.record && best_body_point.damage < target->player->m_iHealth() && best_head_point.damage > best_body_point.damage && (best_head_point.record->shooting || (settings.aim_head_if_safe->get() && best_head_point.safe_point))) {
 		target->best_point = best_head_point;
 		return;
 	}
@@ -571,7 +573,7 @@ void CRagebot::TerminateThreads() {
 void CRagebot::ScanTargets() {
 	scanned_targets.clear();
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 
 		if (!player || !player->IsAlive() || player->IsTeammate() || player->m_bDormant() || player->m_bGunGameImmunity())
@@ -709,8 +711,11 @@ void CRagebot::ScanTarget(CBasePlayer* target) {
 		selected_points = 0;
 		scanned_points = 0;
 
-		while (!thread_work.empty())
-			thread_work.pop();
+		{
+			std::lock_guard<std::mutex> lock(scan_mutex);
+			while (!thread_work.empty())
+				thread_work.pop();
+		}
 
 		SelectPoints(record);
 
@@ -721,7 +726,6 @@ void CRagebot::ScanTarget(CBasePlayer* target) {
 	}
 
 	LagCompensation->BacktrackEntity(backup_record);
-	delete backup_record;
 
 	SelectBestPoint(result);
 	if (!result->best_point.record || result->best_point.damage < 2) {
@@ -1069,7 +1073,7 @@ void CRagebot::Zeusbot() {
 	LagRecord* best_record = nullptr;
 	ZeusPoint best{};
 
-	for (int i = 1; i <= ClientState->m_nMaxClients && i < 64; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 
 		if (!player || player == Cheat.LocalPlayer || !player->IsPlayer())
@@ -1126,7 +1130,6 @@ void CRagebot::Zeusbot() {
 		}
 
 		LagCompensation->BacktrackEntity(backup_record);
-		delete backup_record;
 	}
 
 	if (!best_record)
@@ -1158,7 +1161,7 @@ void CRagebot::Knifebot() {
 	if (!ctx.active_weapon->CanShoot())
 		return;
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 		auto& records = LagCompensation->records(i);
 
@@ -1257,12 +1260,10 @@ void CRagebot::Knifebot() {
 			}
 
 			LagCompensation->BacktrackEntity(backup_record);
-			delete backup_record;
 			return;
 		}
 
 		LagCompensation->BacktrackEntity(backup_record);
-		delete backup_record;
 	}
 }
 
@@ -1297,7 +1298,7 @@ void CRagebot::DormantAimbot() {
 		return;
 	}
 
-	for (int i = 0; i < ClientState->m_nMaxClients; i++) {
+	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
 
 		if (!player || !player->m_bDormant() || !player->IsAlive() || player->IsTeammate())
@@ -1324,8 +1325,8 @@ void CRagebot::DormantAimbot() {
 		ctx.cmd->buttons |= IN_ATTACK;
 
 		if (config.visuals.effects.client_impacts->get()) {
-			for (const auto& impact : bullet.impacts)
-				DebugOverlay->AddBoxOverlay(impact, Vector(-1, -1, -1), Vector(1, 1, 1), QAngle(),
+			for (int impact_idx = 0; impact_idx < bullet.num_impacts; impact_idx++)
+				DebugOverlay->AddBoxOverlay(bullet.impacts[impact_idx], Vector(-1, -1, -1), Vector(1, 1, 1), QAngle(),
 					config.visuals.effects.client_impacts_color->get().r,
 					config.visuals.effects.client_impacts_color->get().g,
 					config.visuals.effects.client_impacts_color->get().b,

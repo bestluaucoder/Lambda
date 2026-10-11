@@ -69,6 +69,7 @@ void CMenu::SetupUI() {
 	config.ragebot.aimbot.doubletap = aimbot->AddCheckBox("Double Tap");
 	config.ragebot.aimbot.doubletap_key = aimbot->AddKeyBind("Double Tap");
 	config.ragebot.aimbot.doubletap_options = aimbot->AddMultiCombo("Double Tap options", { "Break LC", "Lag Peek", "Immediate teleport", "Fast throw", "Recharge on error", "Unsafe recharge"});
+	config.ragebot.aimbot.doubletap_shift = aimbot->AddSliderInt("Double Tap shift", 1, 15, 14);
 	config.ragebot.aimbot.hide_shots = aimbot->AddCheckBox("Hide Shots");
 	config.ragebot.aimbot.hide_shots_key = aimbot->AddKeyBind("Hide Shots");
 	config.ragebot.aimbot.force_teleport = aimbot->AddKeyBind("Force Teleport");
@@ -343,6 +344,7 @@ void CMenu::SetupUI() {
 	config.misc.movement.edge_jump_key = movement->AddKeyBind("Edge jump");
 	config.misc.movement.infinity_duck = movement->AddCheckBox("Infinity duck");
 	config.misc.movement.quick_stop = movement->AddCheckBox("Quick stop");
+	config.misc.movement.fast_ladder = movement->AddCheckBox("Fast ladder");
 
 	config.skins.override_knife = models->AddCheckBox("Override knife");
 	config.skins.knife_model = models->AddComboBox("Knife model", SkinChanger->GetUIKnifeModels());
@@ -624,8 +626,6 @@ void CMenu::SetupUI() {
 	Config->refresh_button = configs->AddButton("Refresh");
 	Config->open_dir_button = configs->AddButton("Open Directory");
 
-	config.menu_misc.experimental_lagcomp = configs->AddCheckBox("Experimental LagComp");
-
 	Config->lua_list = scripts->AddComboBox("lualist", {});
 	Config->lua_button = scripts->AddButton("Load");
 	Config->lua_button_unload = scripts->AddButton("Unload");
@@ -644,9 +644,6 @@ void CMenu::SetupUI() {
 		Config->save_button->SetVisible(subtab == 0);
 		Config->refresh_button->SetVisible(subtab == 0);
 		Config->open_dir_button->SetVisible(subtab == 0);
-		
-		
-		config.menu_misc.experimental_lagcomp->SetVisible(subtab == 1);
 	});
 	
 	
@@ -658,7 +655,6 @@ void CMenu::SetupUI() {
 		Config->save_button->SetVisible(subtab == 0);
 		Config->refresh_button->SetVisible(subtab == 0);
 		Config->open_dir_button->SetVisible(subtab == 0);
-		config.menu_misc.experimental_lagcomp->SetVisible(subtab == 1);
 	}
 	
 	config.ragebot.selected_weapon->SetCallback([]() {
