@@ -1,4 +1,4 @@
-#include "Ragebot.h"
+﻿#include "Ragebot.h"
 #include "AutoWall.h"
 #include "../Misc/Prediction.h"
 #include "../../SDK/Interfaces.h"
@@ -122,7 +122,6 @@ void CRagebot::AutoStop(bool predict) {
 		return;
 
 	Vector vec_speed = Cheat.LocalPlayer->m_vecVelocity();
-	QAngle direction = Math::VectorAngles(vec_speed);
 
 	float target_speed = ctx.active_weapon->MaxSpeed() * 0.2f;
 
@@ -135,9 +134,17 @@ void CRagebot::AutoStop(bool predict) {
 			ctx.cmd->sidemove *= factor;
 		}
 
+		if (Cheat.LocalPlayer->m_fFlags() & FL_ONGROUND && !(ctx.cmd->buttons & IN_JUMP) && ctx.send_packet && config.antiaim.angles.body_yaw->get()) {
+			float forwardmove = ctx.cmd->command_number % 2 ? 1.01f : -1.01f;
+			float duck_factor = Cheat.LocalPlayer->m_flDuckAmount() * 0.34f + 1.f - Cheat.LocalPlayer->m_flDuckAmount();
+			ctx.cmd->forwardmove = forwardmove / duck_factor;
+			ctx.cmd->sidemove = 0.f;
+		}
+
 		return;
 	}
 
+	QAngle direction = Math::VectorAngles(vec_speed);
 	QAngle view; EngineClient->GetViewAngles(view);
 	direction.yaw = predict ? direction.yaw : (view.yaw - direction.yaw);
 	direction.Normalize();
@@ -149,14 +156,14 @@ void CRagebot::AutoStop(bool predict) {
 
 	if (!(Cheat.LocalPlayer->m_fFlags() & FL_ONGROUND)) {
 		static ConVar* sv_airaccelerate = CVar->FindVar("sv_airaccelerate");
-
 		wish_speed = std::clamp((vec_speed.Length2D() * 0.936f) / (sv_airaccelerate->GetFloat() * GlobalVars->frametime), 0.f, 450.f);
 	}
 
 	Vector nigated_direction = forward * -wish_speed;
 
-	ctx.cmd->sidemove = nigated_direction.y;
-	ctx.cmd->forwardmove = nigated_direction.x;
+	float duck_factor = Cheat.LocalPlayer->m_flDuckAmount() * 0.34f + 1.f - Cheat.LocalPlayer->m_flDuckAmount();
+	ctx.cmd->sidemove = nigated_direction.y / duck_factor;
+	ctx.cmd->forwardmove = nigated_direction.x / duck_factor;
 }
 
 float CRagebot::FastHitchance(LagRecord* target, float inaccuracy, int hitbox_radius) {
@@ -171,6 +178,30 @@ float CRagebot::CalcHitchance(QAngle angles, LagRecord* target, int hitbox) {
 		return FastHitchance(target, -1, 3.f);
 
 	int damagegroup = HitboxToDamagegroup(hitbox);
+
+	bool at_min_inaccuracy = false;
+	float weapon_inacc = EnginePrediction->WeaponInaccuracy();
+	float min_inacc = 0.f;
+
+	int wpn_id = ctx.active_weapon->m_iItemDefinitionIndex();
+	bool is_sniper = (wpn_id == Awp || wpn_id == Scar20 || wpn_id == G3SG1 || wpn_id == Ssg08);
+	bool scoped = is_sniper && Cheat.LocalPlayer->m_bIsScoped();
+	bool crouched = Cheat.LocalPlayer->m_fFlags() & FL_DUCKING;
+	int mode = scoped ? 1 : 0;
+
+	if (crouched)
+		min_inacc = ctx.weapon_info->flInaccuracyCrouch[mode];
+	else
+		min_inacc = ctx.weapon_info->flInaccuracyStand[mode];
+
+	if (weapon_inacc <= min_inacc * 1.1f)
+		at_min_inaccuracy = true;
+
+	if (at_min_inaccuracy) {
+		int idx = target->player->EntIndex();
+		if (spread_misses[idx] <= 2)
+			return 1.f;
+	}
 
 	Vector forward, right, up;
 	Math::AngleVectors(angles, forward, right, up);
@@ -503,7 +534,6 @@ void CRagebot::SelectBestPoint(ScannedTarget_t* target) {
 		if (point.record && GlobalVars->tickcount - point.record->update_tick < 0)
 			eff_priority -= 8;
 
-		
 		if (point.record) {
 			int bt = GlobalVars->tickcount - point.record->update_tick;
 			if (bt >= 0 && bt <= 4)
@@ -523,32 +553,32 @@ void CRagebot::SelectBestPoint(ScannedTarget_t* target) {
 		}
 	}
 
-	int& delay = delayed_ticks[target->player->EntIndex()];
-	if ((best_body_point.damage > 1.f && !best_body_point.dont_shoot) && best_head_point.damage > 1.f && settings.delay_shot->get() > 0) {
-		if (delay < settings.delay_shot->get())
-			best_head_point.damage = -1.f;
-		delay++;
-	}
-	else {
-		delay = 0;
-	}
+	int hp = target->player->m_iHealth();
 
-	if (best_head_point.record && best_body_point.damage < target->player->m_iHealth() && best_head_point.damage > best_body_point.damage && (best_head_point.record->shooting || (settings.aim_head_if_safe->get() && best_head_point.safe_point))) {
+	if (best_head_point.damage >= hp) {
 		target->best_point = best_head_point;
 		return;
 	}
 
-	if ((target->player != last_target && ctx.tickbase_shift == 0 && config.ragebot.aimbot.doubletap->get() && !config.ragebot.aimbot.force_teleport->get())) {
-		if (best_body_point.damage > target->player->m_iHealth() || best_head_point.damage < target->player->m_iHealth()) {
-			target->best_point = best_body_point;
-			return;
-		}
+	if (best_body_point.damage >= hp && !best_body_point.dont_shoot) {
+		target->best_point = best_body_point;
+		return;
+	}
 
+	if (best_head_point.damage >= target->minimum_damage) {
 		target->best_point = best_head_point;
 		return;
 	}
 
-	target->best_point = (best_body_point.damage > target->minimum_damage) ? best_body_point : best_head_point;
+	if (best_body_point.damage >= target->minimum_damage && !best_body_point.dont_shoot) {
+		target->best_point = best_body_point;
+		return;
+	}
+
+	if (best_head_point.damage > 1.f)
+		target->best_point = best_head_point;
+	else if (best_body_point.damage > 1.f)
+		target->best_point = best_body_point;
 }
 
 void CRagebot::CreateThreads() {
@@ -676,16 +706,6 @@ void CRagebot::ScanTarget(CBasePlayer* target) {
 	if (records.empty()) {
 		WorldESP->AddDebugMessage(std::string(("CRageBot::ScanTarget")).append((" -> Records Empty |")).append((" L") + std::to_string(__LINE__)));
 		return;
-	}
-
-	
-	
-	{
-		auto& recs = LagCompensation->records(target->EntIndex());
-		if (!recs.empty() && recs.back().breaking_lag_comp) {
-			WorldESP->AddDebugMessage(std::string("CRageBot::ScanTarget -> skip breaking_lag_comp"));
-			return;
-		}
 	}
 
 	float minimum_damage = CalcMinDamage(target);
@@ -872,28 +892,45 @@ void CRagebot::Run() {
 			hitchance *= 0.8f;
 	}
 
+	if (weapon_id == Ssg08 && !local_on_ground) {
+		if (ctx.active_weapon->GetInaccuracy() < 0.009f) {
+			for (auto& target : scanned_targets) {
+				if (target.best_point.damage > 1.f)
+					target.hitchance = 1.f;
+			}
+		}
+	}
+
 	for (const auto& target : scanned_targets) {
 		if (target.best_point.damage <= 1.f)
 			continue;
 
+		int idx = target.player->EntIndex();
+		float dyn_hc = hitchance;
+		if (spread_misses[idx] > 2) {
+			float diff = 1.f - hitchance;
+			dyn_hc += (std::max)(5.f / 100.f, (spread_misses[idx] - 2) * (diff / 6.f));
+			dyn_hc = std::clamp(dyn_hc, 0.f, 1.f);
+		}
+
 		float jump_max_hc = FastHitchance(target.best_point.record, min_jump_inaccuracy_tan);
 
 		if (target.best_point.damage > target.minimum_damage && ctx.cmd->command_number - last_target_shot < 256 && target.player == last_target) {
-			if (target.hitchance > hitchance) {
+			if (target.hitchance > dyn_hc) {
 				best_target = target;
 				should_autostop = true;
 				break;
 			}
-			else if (local_on_ground || (settings.auto_stop->get(2) && jump_max_hc >= hitchance * 0.2f)) {
+			else if (local_on_ground || (settings.auto_stop->get(2) && jump_max_hc >= dyn_hc * 0.2f)) {
 				should_autostop = true;
 			}
 		}
 
-		if (target.hitchance > hitchance && target.best_point.damage > max(best_target.best_point.damage, target.minimum_damage))
+		if (target.hitchance > dyn_hc && target.best_point.damage > (std::max)(best_target.best_point.damage, target.minimum_damage))
 			best_target = target;
 
 		if (target.best_point.damage > target.minimum_damage) {
-			if (local_on_ground || (settings.auto_stop->get(2) && jump_max_hc >= hitchance * 0.2f))
+			if (local_on_ground || (settings.auto_stop->get(2) && jump_max_hc >= dyn_hc * 0.2f))
 				should_autostop = true;
 
 			if (settings.auto_scope->get() && !Cheat.LocalPlayer->m_bIsScoped() && !Cheat.LocalPlayer->m_bResumeZoom() && ctx.weapon_info->nWeaponType == WEAPONTYPE_SNIPER)
@@ -901,7 +938,7 @@ void CRagebot::Run() {
 		}
 
 		if (target.best_point.damage > 2) {
-			if (settings.auto_stop->get(0) && (local_on_ground || (settings.auto_stop->get(2) && jump_max_hc >= hitchance)) && target.best_point.damage > target.minimum_damage * 0.4f)
+			if (settings.auto_stop->get(0) && (local_on_ground || (settings.auto_stop->get(2) && jump_max_hc >= dyn_hc)) && target.best_point.damage > target.minimum_damage * 0.4f)
 				should_autostop = true;
 
 			Exploits->block_charge = true;
@@ -962,14 +999,13 @@ void CRagebot::Run() {
 }
 
 
-struct ZeusPoint {
+struct TaserPoint {
 	Vector point;
 	QAngle angle;
-	float distance;
-	int tier;
+	float  distance;
 };
 
-static bool ZeusSelectPoint(CBasePlayer* player, LagRecord* record, float reach, ZeusPoint& out) {
+static bool TaserSelectPoint(CBasePlayer* player, LagRecord* record, float reach, TaserPoint& out) {
 	studiohdr_t* studio_model = ModelInfoClient->GetStudioModel(player->GetModel());
 
 	if (!studio_model)
@@ -980,24 +1016,14 @@ static bool ZeusSelectPoint(CBasePlayer* player, LagRecord* record, float reach,
 	if (!set)
 		return false;
 
-	struct ZeusScanEntry { int hitbox; int tier; };
-
-	static constexpr ZeusScanEntry scan_order[]{
-		{ HITBOX_STOMACH, 0 }, { HITBOX_PELVIS, 0 }, { HITBOX_LOWER_CHEST, 0 }, { HITBOX_CHEST, 0 },
-		{ HITBOX_UPPER_CHEST, 0 }, { HITBOX_NECK, 0 }, { HITBOX_HEAD, 0 },
-		{ HITBOX_RIGHT_THIGH, 1 }, { HITBOX_LEFT_THIGH, 1 },
-		{ HITBOX_RIGHT_UPPER_ARM, 1 }, { HITBOX_LEFT_UPPER_ARM, 1 },
-		{ HITBOX_RIGHT_CALF, 1 }, { HITBOX_LEFT_CALF, 1 },
-		{ HITBOX_RIGHT_FOREARM, 2 }, { HITBOX_LEFT_FOREARM, 2 }
+	static constexpr int scan_order[]{
+		HITBOX_STOMACH, HITBOX_PELVIS, HITBOX_LOWER_CHEST, HITBOX_CHEST, HITBOX_UPPER_CHEST, HITBOX_NECK, HITBOX_HEAD,
+		HITBOX_RIGHT_THIGH, HITBOX_LEFT_THIGH, HITBOX_RIGHT_UPPER_ARM, HITBOX_LEFT_UPPER_ARM,
+		HITBOX_RIGHT_CALF, HITBOX_LEFT_CALF, HITBOX_RIGHT_FOREARM, HITBOX_LEFT_FOREARM
 	};
 
-	bool found = false;
-
-	for (const ZeusScanEntry& entry : scan_order) {
-		if (found && entry.tier > out.tier)
-			break;
-
-		mstudiobbox_t* hitbox = set->GetHitbox(entry.hitbox);
+	for (int hitbox_index : scan_order) {
+		mstudiobbox_t* hitbox = set->GetHitbox(hitbox_index);
 
 		if (!hitbox || hitbox->flCapsuleRadius <= 0.f)
 			continue;
@@ -1008,16 +1034,15 @@ static bool ZeusSelectPoint(CBasePlayer* player, LagRecord* record, float reach,
 		Math::VectorTransform(hitbox->bbmin, bone_matrix, &mins);
 		Math::VectorTransform(hitbox->bbmax, bone_matrix, &maxs);
 
-		Vector axis = maxs - mins;
-		Vector closest = mins;
-
-		const float axis_length = axis.LengthSqr();
+		const Vector axis        = maxs - mins;
+		const float  axis_length = axis.LengthSqr();
+		Vector       closest     = mins;
 
 		if (axis_length > 0.0001f)
 			closest = mins + axis * std::clamp((ctx.shoot_position - mins).Dot(axis) / axis_length, 0.f, 1.f);
 
-		Vector to_eye = ctx.shoot_position - closest;
-		const float axis_distance = to_eye.Length();
+		const Vector to_eye        = ctx.shoot_position - closest;
+		const float  axis_distance = to_eye.Length();
 
 		if (axis_distance < 0.0001f)
 			continue;
@@ -1027,12 +1052,6 @@ static bool ZeusSelectPoint(CBasePlayer* player, LagRecord* record, float reach,
 		if (distance > reach)
 			continue;
 
-		if (found && entry.tier == out.tier && distance >= out.distance)
-			continue;
-
-		QAngle angle = Math::VectorAngles_p(closest - ctx.shoot_position);
-		angle.Normalize();
-
 		const Vector point = closest + to_eye * (min(hitbox->flCapsuleRadius, axis_distance) / axis_distance);
 
 		CGameTrace world = EngineTrace->TraceRay(ctx.shoot_position, point, CONTENTS_SOLID | CONTENTS_MOVEABLE | CONTENTS_WINDOW | CONTENTS_DEBRIS, Cheat.LocalPlayer);
@@ -1040,38 +1059,32 @@ static bool ZeusSelectPoint(CBasePlayer* player, LagRecord* record, float reach,
 		if (world.fraction < 1.f)
 			continue;
 
+		QAngle angle = Math::VectorAngles_p(point - ctx.shoot_position);
+		angle.Normalize();
+
 		const Vector reach_end = ctx.shoot_position + Math::AngleVectors(angle) * reach;
 
 		CGameTrace blocker = EngineTrace->TraceRay(ctx.shoot_position, reach_end, MASK_SHOT, Cheat.LocalPlayer);
 
-		if (blocker.hit_entity && blocker.hit_entity != player && blocker.hit_entity->IsPlayer() && (blocker.endpos - ctx.shoot_position).Length() < distance + 12.f)
+		if (blocker.hit_entity && blocker.hit_entity != player && blocker.hit_entity->IsPlayer() && (blocker.endpos - ctx.shoot_position).Length() < distance)
 			continue;
 
-		out.point = point;
-		out.angle = angle;
-		out.distance = distance;
-		out.tier = entry.tier;
-		found = true;
+		out = { point, angle, distance };
+		return true;
 	}
 
-	return found;
+	return false;
 }
 
 void CRagebot::Zeusbot() {
-	if (!ctx.active_weapon->CanShoot())
+	if (!ctx.active_weapon->CanShoot() || !ctx.weapon_info || ctx.weapon_info->flRange <= 0.f)
 		return;
 
-	float range = ctx.weapon_info ? ctx.weapon_info->flRange : 0.f;
-
-	if (range < 64.f || range > 512.f)
-		range = 150.f;
-
-	const float reach = range - 2.f;
-	const float scan_range = range + 96.f;
-	const int local_team = Cheat.LocalPlayer->m_iTeamNum();
+	const float reach       = ctx.weapon_info->flRange;
+	const int   local_team  = Cheat.LocalPlayer->m_iTeamNum();
 
 	LagRecord* best_record = nullptr;
-	ZeusPoint best{};
+	TaserPoint best{};
 
 	for (int i = 1; i <= ClientState->m_nMaxClients && i <= 64; i++) {
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(EntityList->GetClientEntity(i));
@@ -1094,17 +1107,16 @@ void CRagebot::Zeusbot() {
 
 		LagRecord* backup_record = LagCompensation->BackupData(player);
 
-		for (auto it = records.rbegin(); it != records.rend(); it = std::next(it)) {
+		for (auto it = records.rbegin(); it != records.rend(); ++it) {
 			LagRecord* record = &*it;
 
+			const float scan_range   = reach + (record->m_vecMaxs.x - record->m_vecMins.x) * 0.5f;
 			const float hull_distance = ((record->m_vecOrigin + (record->m_vecMaxs + record->m_vecMins) * 0.5f) - ctx.shoot_position).LengthSqr();
 
 			if (hull_distance > scan_range * scan_range)
 				continue;
 
 			if (!LagCompensation->ValidRecord(record)) {
-				WorldESP->AddDebugMessage(std::string(("CRageBot::ZeusBot")).append((" -> Invalid Record |")).append((" L") + std::to_string(__LINE__)));
-
 				if (record->breaking_lag_comp)
 					break;
 
@@ -1116,13 +1128,13 @@ void CRagebot::Zeusbot() {
 			LagCompensation->BacktrackEntity(record, false);
 			record->BuildMatrix();
 
-			ZeusPoint candidate{};
+			TaserPoint candidate{};
 
-			if (!ZeusSelectPoint(player, record, reach, candidate))
+			if (!TaserSelectPoint(player, record, reach, candidate))
 				continue;
 
-			if (!best_record || candidate.tier < best.tier || (candidate.tier == best.tier && candidate.distance < best.distance)) {
-				best = candidate;
+			if (!best_record || candidate.distance < best.distance) {
+				best        = candidate;
 				best_record = record;
 			}
 
@@ -1134,8 +1146,6 @@ void CRagebot::Zeusbot() {
 
 	if (!best_record)
 		return;
-
-	WorldESP->AddDebugMessage(std::string(("CRageBot::ZeusBot")).append((" -> Shoot |")).append((" L") + std::to_string(__LINE__)));
 
 	if (config.visuals.effects.client_impacts->get()) {
 		Color col = config.visuals.effects.client_impacts_color->get();

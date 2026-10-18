@@ -1,6 +1,5 @@
 #pragma once
 
-
 struct VPANEL;
 
 class IPanel

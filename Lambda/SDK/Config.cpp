@@ -355,6 +355,7 @@ void CConfig::Init() {
     add(config.misc.miscellaneous.ping_spike);
     add(config.misc.miscellaneous.ping_spike_amount);
     add(config.misc.miscellaneous.fps_boost);
+    add(config.misc.miscellaneous.shared_features);
     add(config.misc.movement.auto_jump);
     add(config.misc.movement.auto_strafe);
     add(config.misc.movement.auto_strafe_smooth);
@@ -444,8 +445,7 @@ void CConfig::parse(nlohmann::json& cfg) {
             for (auto& lcb : e->lua_callbacks)
                 lcb.func();
         }
-        catch (nlohmann::json::exception& e) {
-            Console->Error("item not found: " + item.name);
+        catch (nlohmann::json::exception&) {
         }
     }
 

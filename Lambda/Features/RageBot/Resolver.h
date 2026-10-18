@@ -68,6 +68,9 @@ struct ResolverDataStatic_t {
 	float prev_speed    = 0.f;
 	int   accel_side    = 0;
 
+	static constexpr int MOVE_YAW_HISTORY = 12;
+	std::array<float, MOVE_YAW_HISTORY> move_yaw_history = {};
+	int   move_yaw_head      = 0;
 	float move_yaw_delta_sum = 0.f;
 	int   move_yaw_samples   = 0;
 	int   move_yaw_side      = 0;
@@ -84,6 +87,10 @@ struct ResolverDataStatic_t {
 
 	float resolved_body_yaw    = 0.f;
 
+	int   last_side            = 0;
+	int   missed_side          = 0;
+	int   miss_streak          = 0;
+
 	void reset() {
 		lby_delta            = 0.f;
 		lby_last_update      = 0.f;
@@ -93,6 +100,8 @@ struct ResolverDataStatic_t {
 		eye_yaw_count        = 0;
 		prev_speed           = 0.f;
 		accel_side           = 0;
+		move_yaw_history.fill(0.f);
+		move_yaw_head        = 0;
 		move_yaw_delta_sum   = 0.f;
 		move_yaw_samples     = 0;
 		move_yaw_side        = 0;
@@ -105,6 +114,9 @@ struct ResolverDataStatic_t {
 		safe_tick_side       = 0;
 		safe_tick_simtime    = 0.f;
 		resolved_body_yaw    = 0.f;
+		last_side            = 0;
+		missed_side          = 0;
+		miss_streak          = 0;
 	}
 };
 

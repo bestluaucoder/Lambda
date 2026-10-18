@@ -88,6 +88,7 @@ void CMenu::Setup() {
     ImGui_ImplDX9_Init(DirectXDevice);
 
     pic::logo = Render->LoadImageFromMemory(ui_logo, sizeof(ui_logo), Vector2(128, 128));
+    pic::logo_small = Render->LoadImageFromMemory(ui_logo, sizeof(ui_logo), Vector2(16, 16));
     pic::tab::aimbot = Render->LoadImageFromMemory(aimbot, sizeof(aimbot), Vector2(20.f, 20.f));
     pic::tab::antiaim = Render->LoadImageFromMemory(anti_aimbot, sizeof(anti_aimbot), Vector2(20.f, 20.f));
     pic::tab::visuals = Render->LoadImageFromMemory(visuals, sizeof(visuals), Vector2(20.f, 20.f));
@@ -112,6 +113,11 @@ void CMenu::Release() {
 }
 
 void CMenu::Draw() {
+    static bool was_app_active = false;
+    if (was_app_active && !ctx.active_app)
+        ImGui::ClearActiveID();
+    was_app_active = ctx.active_app;
+
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();

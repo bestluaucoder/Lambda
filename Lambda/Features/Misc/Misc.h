@@ -2,6 +2,8 @@
 
 namespace Miscellaneous {
 	void Clantag();
+	void SharedFeatures();
+	void DrawSharedFeatures();
 	void Trashtalk(bool killed);
 	void FlushTrashtalk();
 	void FastThrow();

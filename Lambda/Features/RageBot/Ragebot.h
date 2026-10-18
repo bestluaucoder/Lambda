@@ -90,6 +90,10 @@ private:
 	int last_target_shot = 0;
 	bool dont_shoot_next_points = false;
 
+public:
+	int spread_misses[65] = {};
+	int total_misses[65] = {};
+
 	
 	std::atomic<bool> remove_threads = false;
 	int inited_threads = 0;

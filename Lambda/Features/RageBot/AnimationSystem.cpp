@@ -1,4 +1,4 @@
-#include "AnimationSystem.h"
+﻿#include "AnimationSystem.h"
 #include "LagCompensation.h"
 #include "../AntiAim/AntiAim.h"
 #include "Resolver.h"
@@ -17,7 +17,7 @@ void FixLegMovement(AnimationLayer* server_layers) {
 	if (!(Cheat.LocalPlayer->m_fFlags() & FL_ONGROUND))
 		return;
 
-	if (Cheat.LocalPlayer->m_vecVelocity().LengthSqr() < 4096)
+	if (Cheat.LocalPlayer->m_vecVelocity().Length2DSqr() < 10000.f)
 		return;
 
 	CCSGOPlayerAnimationState* animstate = Cheat.LocalPlayer->GetAnimstate();
@@ -338,6 +338,11 @@ void CAnimationSystem::UpdateAnimations(CBasePlayer* player, LagRecord* record, 
 	player->m_iEFlags() &= ~0x1000;
 
 	if (player->IsEnemy()) {
+		record->m_angEyeAngles = player->m_angEyeAngles();
+		record->m_fFlags = player->m_fFlags();
+		record->m_vecVelocity = player->m_vecVelocity();
+		record->m_vecOrigin = player->m_vecOrigin();
+
 		Resolver->Run(player, record, records);
 
 		*animstate = unupdated_animstate[idx];

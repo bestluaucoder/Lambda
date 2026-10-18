@@ -206,15 +206,24 @@ void CLagCompensation::OnNetUpdate() {
         }
 
 		if (prev_valid) {
-			float teleport_dist = cvars.sv_lagcompensation_teleport_dist ? cvars.sv_lagcompensation_teleport_dist->GetFloat() : 64.f;
-			float time_delta = new_record->m_flSimulationTime - prev_valid->m_flSimulationTime;
-
-			if (time_delta > GlobalVars->interval_per_tick)
-				teleport_dist *= (time_delta / GlobalVars->interval_per_tick);
+			static constexpr float teleport_dist_sq = 64.f * 64.f;
 
 			float dist_2d_sq = (prev_valid->m_vecOrigin - new_record->m_vecOrigin).Length2DSqr();
 
-			new_record->breaking_lag_comp = dist_2d_sq > teleport_dist * teleport_dist;
+			bool force_break = false;
+			if (prev_valid->shifting_tickbase && new_record->shifting_tickbase) {
+				if (!(prev_valid->m_fFlags & FL_ONGROUND) || !(new_record->m_fFlags & FL_ONGROUND))
+					force_break = true;
+			}
+
+			new_record->breaking_lag_comp = dist_2d_sq > teleport_dist_sq;
+
+			if (force_break) {
+				float vel_sq      = new_record->m_vecVelocity.LengthSqr();
+				float prev_vel_sq = prev_valid->m_vecVelocity.LengthSqr();
+				if (dist_2d_sq > 3000.f || vel_sq > 62500.f || prev_vel_sq > 62500.f)
+					new_record->breaking_lag_comp = true;
+			}
 		}
 
 		if (config.visuals.esp.shared_esp->get() && !EngineClient->IsVoiceRecording() && nc) {
@@ -249,130 +258,83 @@ LagRecord* CLagCompensation::ExtrapolateRecord(LagRecord* record, int ticks) {
 	if (ticks <= 0 || !record || !record->player)
 		return nullptr;
 
-	const float time = TICKS_TO_TIME(ticks);
-
 	auto& records = extrapolated_records[record->player->EntIndex()];
 
 	while (records.size() > 4)
 		records.pop_front();
 
 	LagRecord* new_record = &records.emplace_back();
-
 	*new_record = *record;
-	new_record->m_flSimulationTime += time;
-	new_record->update_tick += ticks;
+	new_record->m_flSimulationTime += TICKS_TO_TIME(ticks);
 
-	const float gravity = cvars.sv_gravity ? cvars.sv_gravity->GetFloat() : 800.f;
-	const float ival = GlobalVars->interval_per_tick;
-	const float friction = 4.f;
-	const float stop_speed = 100.f;
-	const float sv_accelerate = 5.5f;
+	const float gravity  = cvars.sv_gravity ? cvars.sv_gravity->GetFloat() : 800.f;
+	const float ival     = GlobalVars->interval_per_tick;
 
-	Vector velocity = new_record->m_vecVelocity;
-	int flags = new_record->m_fFlags;
-	bool on_ground = (flags & FL_ONGROUND) != 0;
+	Vector origin   = record->m_vecOrigin;
+	Vector velocity = record->m_vecVelocity;
+	int    flags    = record->m_fFlags;
+	bool   was_on_ground = (flags & FL_ONGROUND) != 0;
 
-	float max_speed = 250.f;
-	if (record->player->m_bIsScoped())
-		max_speed = 100.f;
-	else if ((flags & FL_DUCKING) || new_record->m_flDuckAmout > 0.5f)
-		max_speed = 100.f;
+	const Vector mins = record->player->GetCollideable()->OBBMins();
+	const Vector maxs = record->player->GetCollideable()->OBBMaxs();
 
 	for (int i = 0; i < ticks; i++) {
-		if (!on_ground) {
-			velocity.z -= gravity * ival * 0.5f;
+		if (!(flags & FL_ONGROUND))
+			velocity.z -= ival * gravity;
+		else if (!was_on_ground)
+			velocity.z = cvars.sv_jump_impulse->GetFloat() - ival * gravity;
 
-			float speed2d = velocity.Length2D();
-			if (speed2d > 0.1f) {
-				Vector wishdir = velocity;
-				wishdir.z = 0.f;
-				wishdir.Normalize();
+		Vector src = origin;
+		Vector end = src + (velocity * ival);
 
-				float wishspeed = (std::min)(speed2d, 30.f);
-				float currentspeed = velocity.Dot(wishdir);
-				float addspeed = wishspeed - currentspeed;
-				if (addspeed > 0.f) {
-					float accelspeed = 12.f * wishspeed * ival;
-					if (accelspeed > addspeed)
-						accelspeed = addspeed;
-					velocity += wishdir * accelspeed;
+		Ray_t ray;
+		ray.Init(src, end, mins, maxs);
+
+		CGameTrace trace;
+		CTraceFilterWorldAndPropsOnly filter;
+		EngineTrace->TraceRay(ray, MASK_PLAYERSOLID, &filter, &trace);
+
+		if (trace.fraction != 1.f) {
+			for (int j = 0; j < 2; j++) {
+				velocity -= trace.plane.normal * velocity.Dot(trace.plane.normal);
+
+				float dot = velocity.Dot(trace.plane.normal);
+				if (dot < 0.f) {
+					velocity.x -= dot * trace.plane.normal.x;
+					velocity.y -= dot * trace.plane.normal.y;
+					velocity.z -= dot * trace.plane.normal.z;
 				}
-			}
 
-			if (velocity.z < -gravity * 0.5f)
-				velocity.z = -gravity * 0.5f;
-		}
-		else {
-			velocity.z = 0.f;
+				end = trace.endpos + (velocity * (ival * (1.f - trace.fraction)));
+				ray.Init(trace.endpos, end, mins, maxs);
+				EngineTrace->TraceRay(ray, MASK_PLAYERSOLID, &filter, &trace);
 
-			float speed = velocity.Length2D();
-			if (speed > 0.1f) {
-				float control = speed < stop_speed ? stop_speed : speed;
-				float drop = control * friction * ival;
-
-				float new_speed = speed - drop;
-				if (new_speed < 0.f)
-					new_speed = 0.f;
-
-				new_speed /= speed;
-				velocity.x *= new_speed;
-				velocity.y *= new_speed;
-
-				Vector wishdir = velocity;
-				wishdir.z = 0.f;
-				wishdir.Normalize();
-
-				float wishspeed = (std::min)(speed, max_speed);
-				float currentspeed = velocity.Dot(wishdir);
-				float addspeed = wishspeed - currentspeed;
-				if (addspeed > 0.f) {
-					float accelspeed = sv_accelerate * ival * max_speed;
-					if (accelspeed > addspeed)
-						accelspeed = addspeed;
-					velocity += wishdir * accelspeed;
-				}
+				if (trace.fraction == 1.f)
+					break;
 			}
 		}
 
-		Vector next_origin = new_record->m_vecOrigin + velocity * ival;
+		origin = trace.endpos;
+		was_on_ground = (flags & FL_ONGROUND) != 0;
 
-		if (!on_ground) {
-			CGameTrace tr;
-			CTraceFilterWorldOnly filter;
-			Ray_t ray;
-			ray.Init(next_origin + Vector(0, 0, 2.f), next_origin - Vector(0, 0, 8.f));
-			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
+		Vector ground_end = origin;
+		ground_end.z -= 2.f;
+		ray.Init(origin, ground_end, mins, maxs);
+		EngineTrace->TraceRay(ray, MASK_PLAYERSOLID, &filter, &trace);
 
-			if (tr.fraction < 1.f && tr.plane.normal.z > 0.7f) {
-				next_origin.z = tr.endpos.z + 2.f;
-				velocity.z = 0.f;
-				on_ground = true;
-				flags |= FL_ONGROUND;
-			}
-		}
-		else {
-			CGameTrace tr;
-			CTraceFilterWorldOnly filter;
-			Ray_t ray;
-			ray.Init(next_origin, next_origin - Vector(0, 0, 2.f));
-			EngineTrace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr);
-
-			if (tr.fraction >= 1.f || tr.plane.normal.z <= 0.7f) {
-				on_ground = false;
-				flags &= ~FL_ONGROUND;
-			}
-		}
-
-		new_record->m_vecOrigin = next_origin;
+		flags &= ~FL_ONGROUND;
+		if (trace.DidHit() && trace.plane.normal.z > 0.7f)
+			flags |= FL_ONGROUND;
 	}
 
-	new_record->m_vecVelocity = velocity;
-	new_record->m_fFlags = flags;
-	new_record->m_vecAbsOrigin = new_record->m_vecOrigin;
+	new_record->m_vecOrigin    = origin;
+	new_record->m_vecAbsOrigin = origin;
+	new_record->m_vecVelocity  = velocity;
+	new_record->m_fFlags       = flags;
 
-	Utils::MatrixMove(new_record->aim_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
-	Utils::MatrixMove(new_record->opposite_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
-	Utils::MatrixMove(new_record->bone_matrix, 128, record->m_vecOrigin, new_record->m_vecOrigin);
+	Utils::MatrixMove(new_record->aim_matrix,      128, record->m_vecOrigin, origin);
+	Utils::MatrixMove(new_record->opposite_matrix, 128, record->m_vecOrigin, origin);
+	Utils::MatrixMove(new_record->bone_matrix,     128, record->m_vecOrigin, origin);
 
 	new_record->BuildMatrix();
 
@@ -395,35 +357,40 @@ float CLagCompensation::GetLerpTime() {
 }
 
 bool CLagCompensation::ValidRecord(LagRecord* record) {
-	if (!record || !record->player || record->shifting_tickbase || record->breaking_lag_comp || record->invalid)
+	if (!record || !record->player || record->invalid)
 		return false;
 
 	INetChannelInfo* nci = EngineClient->GetNetChannelInfo();
-	
-	float correct = 0.0f;
-	if (nci)
-		correct = nci->GetLatency(FLOW_OUTGOING);
+	if (!nci)
+		return false;
 
-	correct += GetLerpTime();
+	if (!cvars.cl_lagcompensation || !cvars.cl_lagcompensation->GetInt())
+		return false;
+
+	float rtt = nci->GetLatency(FLOW_OUTGOING) + nci->GetLatency(FLOW_INCOMING);
+	float correct = rtt + GetLerpTime();
 	correct = std::clamp(correct, 0.0f, cvars.sv_maxunlag->GetFloat());
 
-	float record_age = TICKS_TO_TIME(ctx.corrected_tickbase) - record->m_flSimulationTime;
-	
-	if (record_age < 0.f || record_age > cvars.sv_maxunlag->GetFloat())
+	int last_server_tick = ClientState->m_ClockDriftMgr.m_nServerTick;
+	float server_time = TICKS_TO_TIME(last_server_tick);
+
+	float deadtime = server_time + rtt - cvars.sv_maxunlag->GetFloat();
+	if (record->m_flSimulationTime <= deadtime)
 		return false;
 
-	float deltaTime = correct - record_age;
-	float choke_tolerance = TICKS_TO_TIME(record->m_nChokedTicks);
-	float tolerance = 0.2f + choke_tolerance - (ctx.tickbase_shift > 0 ? GlobalVars->interval_per_tick * 0.5f : 0.f);
-
-	if (std::abs(deltaTime) >= tolerance)
+	int possible_future_tick = last_server_tick + TIME_TO_TICKS(rtt) + 8;
+	if (TIME_TO_TICKS(record->m_flSimulationTime + GetLerpTime()) > possible_future_tick)
 		return false;
 
-	int tick_diff = GlobalVars->tickcount - record->update_tick;
-	if (tick_diff > TIME_TO_TICKS(cvars.sv_maxunlag->GetFloat()) + 2)
-		return false;
+	float delta_time = correct - (server_time - record->m_flSimulationTime);
 
-	return true;
+	if (Exploits->IsShifting() && ctx.tickbase_shift > 2) {
+		float dt1 = correct - (server_time - GlobalVars->interval_per_tick - record->m_flSimulationTime);
+		float dt2 = correct - (server_time + GlobalVars->interval_per_tick - record->m_flSimulationTime);
+		return std::abs(dt1) < 0.2f && std::abs(dt2) < 0.2f;
+	}
+
+	return std::abs(delta_time) < 0.2f;
 }
 
 LagRecord* CLagCompensation::GetLastRecord(int idx) {

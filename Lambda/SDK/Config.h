@@ -299,6 +299,7 @@ struct config_t {
             CKeyBind* ping_spike;
             CSliderInt* ping_spike_amount;
             CCheckBox* fps_boost;
+            CCheckBox* shared_features;
         } miscellaneous;
 
         struct movement_t {

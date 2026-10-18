@@ -257,6 +257,7 @@ struct CMenuTab {
 
 namespace pic {
 	inline DXImage logo;
+	inline DXImage logo_small;
 
 	namespace tab {
 		inline DXImage aimbot;

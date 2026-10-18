@@ -7,6 +7,7 @@
 #include "../Misc/Prediction.h"
 #include "../RageBot/AutoWall.h"
 #include "../RageBot/LagCompensation.h"
+#include "../RageBot/Ragebot.h"
 #include "../Visuals/ESP.h"
 
 #include "../Lua/Bridge/Bridge.h"
@@ -19,6 +20,7 @@ static const std::unordered_map<std::string_view, std::string> miss_color = {
 	{"prediction error", "\aFFE59E"},
 	{"occlusion", "\aFFE59E"},
 	{"resolver wrong side", "\aEAFFA6"},
+	{"shift mismatch", "\aFFE59E"},
 	{"hitbox shifted", "\aFFE59E"},
 	{"lagcomp failure", "\aEAFFA6"},
 	{"safepoint failed", "\aEAFFA6"},
@@ -325,6 +327,7 @@ void CShotManager::OnNetUpdate() {
 
 		if (shot->damage > 0) {
 			Resolver->OnHit(player, shot->record);
+			Ragebot->spread_misses[player->EntIndex()] = 0;
 
 			if (config.visuals.esp.hitmarker->get())
 				WorldESP->AddHitmarker(shot->hit_point);
@@ -347,8 +350,10 @@ void CShotManager::OnNetUpdate() {
 					else {
 						if ((shot->shoot_pos - shot->client_shoot_pos).LengthSqr() > 1.f)
 							shot->miss_reason = "prediction error";
-						else
+						else {
 							shot->miss_reason = "spread";
+							Ragebot->spread_misses[player->EntIndex()]++;
+						}
 					}
 				}
 			}
@@ -435,8 +440,10 @@ void CShotManager::OnNetUpdate() {
 			else if (!EngineTrace->ClipRayToPlayer(ray, MASK_SHOT_HULL | CONTENTS_GRATE, player, &trace) || trace.hit_entity != player) {
 				if ((shot->shoot_pos - shot->client_shoot_pos).LengthSqr() > 1.f || shot->hitchance == 1.f)
 					it->miss_reason = "prediction error";
-				else
+				else {
 					it->miss_reason = "spread";
+					Ragebot->spread_misses[player->EntIndex()]++;
+				}
 			}
 			else {
 				Vector target_hit_point = shot->client_impacts[0];
@@ -473,6 +480,8 @@ void CShotManager::OnNetUpdate() {
 							it->miss_reason = "lagcomp failure";
 						} else if (shot->safe_point) {
 							it->miss_reason = "safepoint failed";
+						} else if (shot->tickbase_shift != 0) {
+							it->miss_reason = "shift mismatch";
 						} else {
 							Resolver->OnMiss(player, shot->record);
 							it->miss_reason = "resolver wrong side";

@@ -141,6 +141,7 @@ void __fastcall hkHudUpdate(IBaseClientDLL* thisptr, void* edx, bool bActive) {
 	NadePrediction.Draw();
 
 	AutoPeek->Draw();
+	Miscellaneous::DrawSharedFeatures();
 	World->Crosshair();
 	DebugOverlay->RenderOverlays();
 
@@ -179,6 +180,7 @@ void __stdcall CreateMove(int sequence_number, float sample_frametime, bool acti
 	CVerifiedUserCmd* verified = Input->GetVerifiedCmd(sequence_number);
 
 	Miscellaneous::Clantag();
+	Miscellaneous::SharedFeatures();
 
 	Exploits->DefenseiveThisTick() = false;
 	Exploits->force_charge = false;
